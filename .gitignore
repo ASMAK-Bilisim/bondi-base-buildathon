@@ -1,0 +1,44 @@
+# Global ignores
+.DS_Store
+.env
+.vscode/*
+!.vscode/extensions.json
+*.log
+
+# bondi-app specific ignores
+bondi-app/logs
+bondi-app/*.log
+bondi-app/npm-debug.log*
+bondi-app/yarn-debug.log*
+bondi-app/yarn-error.log*
+bondi-app/pnpm-debug.log*
+bondi-app/lerna-debug.log*
+bondi-app/.npmrc
+bondi-app/node_modules
+bondi-app/dist
+bondi-app/dist-ssr
+bondi-app/*.local
+
+# bondi-contracts specific ignores
+bondi-contracts/.vscode/
+bondi-contracts/node_modules
+bondi-contracts/package-lock.json
+bondi-contracts/cache
+bondi-contracts/artifacts
+bondi-contracts/contracts/crytic-export
+bondi-contracts/crytic-export
+bondi-contracts/typechain
+bondi-contracts/typechain-types
+bondi-contracts/coverage
+bondi-contracts/coverage.json
+bondi-contracts/ignition/deployments/chain-31337
+
+# Common ignores for all subdirectories
+**/node_modules
+**/.env
+**/.idea
+**/*.suo
+**/*.ntvs*
+**/*.njsproj
+**/*.sln
+**/*.sw?
