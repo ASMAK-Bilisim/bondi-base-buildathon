@@ -7,10 +7,36 @@ export default buildModule("FundingWithMintables", (m) => {
   );
   const targetAmount = m.getParameter(
     "targetAmount",
-    BigInt(process.env.TARGET_AMOUNT || "100000000")
+    BigInt(process.env.TARGET_AMOUNT || "200000000000")
   );
-  const fundingPeriodLimitInDays = m.getParameter("fundingPeriodLimitInDays", process.env.FUNDING_PERIOD_LIMIT_DAYS || "30");
-  const usdcTokenAddress = m.getParameter("usdcTokenAddress", process.env.USDC_TOKEN_ADDRESS);
+  const fundingPeriodLimitInDays = m.getParameter(
+    "fundingPeriodLimitInDays",
+    process.env.FUNDING_PERIOD_LIMIT_DAYS || "60"
+  );
+  const usdcTokenAddress = m.getParameter(
+    "usdcTokenAddress",
+    process.env.USDC_TOKEN_ADDRESS || ""
+  );
+  const ogNftBaseUri = m.getParameter(
+    "ogNftBaseUri",
+    process.env.OG_NFT_BASE_URI || ""
+  );
+  const whaleNftBaseUri = m.getParameter(
+    "whaleNftBaseUri",
+    process.env.WHALE_NFT_BASE_URI || ""
+  );
+
+  console.log("Parsed values:");
+  console.log("minimumInvestmentAmount:", minimumInvestmentAmount.toString());
+  console.log("targetAmount:", targetAmount.toString());
+  console.log("fundingPeriodLimitInDays:", fundingPeriodLimitInDays);
+  console.log("usdcTokenAddress:", usdcTokenAddress);
+  console.log("ogNftBaseUri:", ogNftBaseUri);
+  console.log("whaleNftBaseUri:", whaleNftBaseUri);
+
+  if (!usdcTokenAddress) {
+    throw new Error("USDC_TOKEN_ADDRESS is not set in the environment variables");
+  }
 
   const funding = m.contract("Funding", [
     minimumInvestmentAmount,
@@ -25,13 +51,16 @@ export default buildModule("FundingWithMintables", (m) => {
   m.call(funding, "setOgNFTAddress", [ogNft], { id: "SetOGNFTAddress" });
   m.call(funding, "setWhaleNFTAddress", [whaleNft], { id: "SetWhaleNFTAddress" });
 
+  // Set base URIs for NFTs
+  m.call(ogNft, "setBaseURI", [ogNftBaseUri], { id: "SetOGNFTBaseURI" });
+  m.call(whaleNft, "setBaseURI", [whaleNftBaseUri], { id: "SetWhaleNFTBaseURI" });
+
   const bondToken = m.contract("BondToken", ["Bond Token", "BT"], { id: "BondTokenContract" });
 
   const bondDistribution = m.contract("BondDistribution", [bondToken, funding, usdcTokenAddress], { id: "BondDistributionContract" });
 
   m.call(bondToken, "addMinter", [bondDistribution], { id: "AddMinterToBondToken" });
 
-  // Set BondDistribution address in Funding contract
   m.call(funding, "setBondDistribution", [bondDistribution], { id: "SetBondDistribution" });
 
   return { funding, ogNft, whaleNft, bondToken, bondDistribution };

@@ -1,6 +1,8 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-ignition-ethers";
 import "hardhat-contract-sizer";
+import "./hardhat.base.config";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -14,13 +16,12 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic: process.env.MNEMONIC,
         path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 10 // This will derive 10 addresses
+        initialIndex: 0
       }
     }
   },
   solidity: {
-    version: "0.8.24",
+    version: "0.8.20",
     settings: {
       optimizer: {
         enabled: true
@@ -28,10 +29,7 @@ const config: HardhatUserConfig = {
     }
   },
   ignition: {
-    // blockPollingInterval: 1000,
-    // timeBeforeBumpingFees: 3 * 60 * 1000,
-    // maxFeeBumps: 4,
-    // requiredConfirmations: 5
+    // Add any Ignition-specific configurations here if needed
   },
   gasReporter: {
     enabled: !!process.env.REPORT_GAS

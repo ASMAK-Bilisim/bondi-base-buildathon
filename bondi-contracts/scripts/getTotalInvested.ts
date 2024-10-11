@@ -1,12 +1,18 @@
 import { ethers } from "hardhat";
 import { formatUnits } from "ethers";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 async function main() {
   const fundingAddress = process.env.FUNDING_ADDRESS;
-  const usdcAddress = process.env.MOCK_USDC_ADDRESS;
+  const usdcAddress = process.env.USDC_TOKEN_ADDRESS;
+
+  console.log("FUNDING_ADDRESS:", fundingAddress);
+  console.log("USDC_TOKEN_ADDRESS:", usdcAddress);
 
   if (!fundingAddress || !usdcAddress) {
-    throw new Error("Please set FUNDING_ADDRESS and MOCK_USDC_ADDRESS in the .env file");
+    throw new Error("Please set FUNDING_ADDRESS and USDC_TOKEN_ADDRESS in the .env file");
   }
 
   console.log("USDC Address:", usdcAddress);

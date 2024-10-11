@@ -2,6 +2,14 @@ import { ethers } from "hardhat";
 import { formatUnits } from "ethers";
 
 async function main() {
+  console.log("Environment variables:");
+  console.log("USDC_TOKEN_ADDRESS:", process.env.USDC_TOKEN_ADDRESS);
+  console.log("FUNDING_ADDRESS:", process.env.FUNDING_ADDRESS);
+  console.log("BOND_DISTRIBUTION_ADDRESS:", process.env.BOND_DISTRIBUTION_ADDRESS);
+  console.log("BOND_TOKEN_ADDRESS:", process.env.BOND_TOKEN_ADDRESS);
+  console.log("OG_NFT_ADDRESS:", process.env.OG_NFT_ADDRESS);
+  console.log("WHALE_NFT_ADDRESS:", process.env.WHALE_NFT_ADDRESS);
+
   const [deployer, user1, user2, user3, user4] = await ethers.getSigners();
 
   console.log("Checking derived addresses:");
@@ -11,13 +19,12 @@ async function main() {
   console.log("User 3:", user3.address);
   console.log("User 4:", user4.address);
 
-  // Replace these with the actual deployed addresses on Base Sepolia
-  const mockUSDCAddress = process.env.MOCK_USDC_ADDRESS;
+  const mockUSDCAddress = process.env.USDC_TOKEN_ADDRESS;
   const fundingAddress = process.env.FUNDING_ADDRESS;
   const bondDistributionAddress = process.env.BOND_DISTRIBUTION_ADDRESS;
 
   if (!mockUSDCAddress || !fundingAddress || !bondDistributionAddress) {
-    throw new Error("Please set the contract addresses in the .env file");
+    throw new Error("Please set all required contract addresses in the .env file");
   }
 
   const mockUSDC = await ethers.getContractAt("MockUSDC", mockUSDCAddress);

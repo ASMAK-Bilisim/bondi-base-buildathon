@@ -1,9 +1,13 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const fundingAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
-  const mockUSDCAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-  const bondDistributionAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; // Add this line
+  const fundingAddress = process.env.FUNDING_ADDRESS;
+  const mockUSDCAddress = process.env.USDC_TOKEN_ADDRESS;
+  const bondDistributionAddress = process.env.BOND_DISTRIBUTION_ADDRESS;
+
+  if (!fundingAddress || !mockUSDCAddress || !bondDistributionAddress) {
+    throw new Error("Please set all required addresses in the .env file");
+  }
 
   const funding = await ethers.getContractAt("Funding", fundingAddress);
   const mockUSDC = await ethers.getContractAt("MockUSDC", mockUSDCAddress);
@@ -14,35 +18,51 @@ async function main() {
   const targetAmount = await funding.targetAmount();
   console.log("Target Amount:", ethers.formatUnits(targetAmount, 6), "USDC");
 
+  const currentTotalInvested = await mockUSDC.balanceOf(fundingAddress);
+  console.log("Current Total Invested:", ethers.formatUnits(currentTotalInvested, 6), "USDC");
+
+  const remainingAmount = targetAmount - currentTotalInvested;
+  console.log("Remaining Amount to Invest:", ethers.formatUnits(remainingAmount, 6), "USDC");
+
   const investments = [
     { investor: investor1, amount: ethers.parseUnits("4000", 6) },
     { investor: investor2, amount: ethers.parseUnits("4500", 6) },
-    { investor: investor3, amount: ethers.parseUnits("25000", 6) },
-    { investor: investor4, amount: ethers.parseUnits("30000", 6) },
-    { investor: investor5, amount: ethers.parseUnits("36500", 6) },
+    { investor: investor3, amount: ethers.parseUnits("60000", 6) },
+    { investor: investor4, amount: ethers.parseUnits("65000", 6) },
+    { investor: investor5, amount: ethers.parseUnits("66500", 6) },
   ];
 
   console.log("\nMaking investments...");
 
-  for (const { investor, amount } of investments) {
-    // Approve USDC spending
-    await mockUSDC.connect(owner).transfer(investor.address, amount);
-    await mockUSDC.connect(investor).approve(fundingAddress, amount);
+  let totalNewInvestments = 0n;
 
-    // Make investment
-    await funding.connect(investor).invest(amount);
+  for (const { investor, amount } of investments) {
+    if (totalNewInvestments + amount > remainingAmount) {
+      const adjustedAmount = remainingAmount - totalNewInvestments;
+      if (adjustedAmount <= 0n) {
+        console.log(`Skipping investment from ${investor.address} as target amount is reached`);
+        continue;
+      }
+      console.log(`Adjusting investment amount for ${investor.address} to ${ethers.formatUnits(adjustedAmount, 6)} USDC`);
+      await mockUSDC.connect(owner).transfer(investor.address, adjustedAmount);
+      await mockUSDC.connect(investor).approve(fundingAddress, adjustedAmount);
+      await funding.connect(investor).invest(adjustedAmount);
+      totalNewInvestments += adjustedAmount;
+    } else {
+      await mockUSDC.connect(owner).transfer(investor.address, amount);
+      await mockUSDC.connect(investor).approve(fundingAddress, amount);
+      await funding.connect(investor).invest(amount);
+      totalNewInvestments += amount;
+    }
 
     console.log(`Investor ${investor.address} invested ${ethers.formatUnits(amount, 6)} USDC`);
+    console.log(`Total new investments: ${ethers.formatUnits(totalNewInvestments, 6)} USDC`);
 
-    const totalInvested = await mockUSDC.balanceOf(fundingAddress);
-    console.log(`Total invested: ${ethers.formatUnits(totalInvested, 6)} USDC`);
-
-    const bondDistribution = await ethers.getContractAt("BondDistribution", bondDistributionAddress);
     const distributionReady = await bondDistribution.distributionReady();
     console.log("Distribution ready:", distributionReady);
 
-    if (distributionReady) {
-      console.log("Bond token minting has been initiated!");
+    if (totalNewInvestments >= remainingAmount) {
+      console.log("Target amount reached. Stopping investments.");
       break;
     }
   }
