@@ -4,24 +4,20 @@ import MenuItem from "./MenuItem";
 import {
   GridViewIcon,
   Store01Icon,
-  PieChartIcon,
   CouponPercentIcon,
-  Medal01Icon,
   ScrollIcon,
-  Settings01Icon
+  MarketAnalysisIcon
 } from '@hugeicons/react';
 
 const menuItems = [
   { icon: GridViewIcon, label: "Home", path: "/" },
   { icon: Store01Icon, label: "Primary Market", path: "/primary-market" },
-  { icon: PieChartIcon, label: "Portfolio", path: "/portfolio" },
+  { icon: MarketAnalysisIcon, label: "CDS Market", path: "/cds-market" },
   { icon: CouponPercentIcon, label: "Coupons", path: "/coupons" },
-  { icon: Medal01Icon, label: "Achievements", path: "/achievements" },
 ];
 
 const otherItems = [
   { icon: ScrollIcon, label: "Docs", path: "https://docs.bondifinance.io", external: true },
-  { icon: Settings01Icon, label: "Settings", path: "/settings" },
 ];
 
 interface SidebarProps {
