@@ -1,32 +1,22 @@
-// just playing around
 import { task } from "hardhat/config";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-task("mint-erc20", "Mint ERC20Mock tokens to a specified address")
-  .addParam("contract", "The address of the ERC20Mock contract")
-  .addParam("to", "The address to mint tokens to")
+task("mintERC20", "Mint ERC20 tokens")
+  .addParam("to", "The address that will receive the minted tokens")
   .addParam("amount", "The amount of tokens to mint")
-  .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-    const { contract, to, amount } = taskArgs;
+  .setAction(async (taskArgs, hre) => {
+    const { to, amount } = taskArgs;
+    const mockUSDCAddress = process.env.MOCK_USDC_ADDRESS;
+    if (!mockUSDCAddress) {
+      throw new Error("MOCK_USDC_ADDRESS not set in .env file");
+    }
 
-    // Get the contract instance
-    const ERC20Mock = await hre.ethers.getContractAt("ERC20Mock", contract);
-
-    // Get the signer (assuming the first signer is the owner)
     const [owner] = await hre.ethers.getSigners();
+    const MockUSDC = await hre.ethers.getContractAt("MockUSDC", mockUSDCAddress);
 
     try {
-      // Mint tokens
-      const tx = await ERC20Mock.connect(owner).mint(to, amount);
+      const tx = await MockUSDC.connect(owner).claim();
       await tx.wait();
-
-      console.log(`Successfully minted ${amount} tokens to ${to}`);
-      console.log(`Transaction hash: ${tx.hash}`);
-
-      // Get and log the new balance
-      const balance = await ERC20Mock.balanceOf(to);
-      console.log(`New balance of ${to}: ${balance.toString()} tokens`);
-
+      console.log(`Claimed tokens for ${owner.address}`);
     } catch (error) {
       console.error("Error minting tokens:", error);
     }

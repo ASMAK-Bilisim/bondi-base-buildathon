@@ -1,36 +1,51 @@
 import { ethers } from "hardhat";
+import { formatUnits } from "ethers";
 
 async function main() {
-  const DeployMockUSDC = await ethers.getContractFactory("MockUSDC");
-  const mockUSDC = await DeployMockUSDC.attach("0x5FbDB2315678afecb367f032d93F642f64180aa3");
+  const [deployer, user1, user2, user3, user4] = await ethers.getSigners();
 
-  const Funding = await ethers.getContractFactory("Funding");
-  const funding = await Funding.attach("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0");
+  console.log("Checking derived addresses:");
+  console.log("Deployer:", deployer.address);
+  console.log("User 1:", user1.address);
+  console.log("User 2:", user2.address);
+  console.log("User 3:", user3.address);
+  console.log("User 4:", user4.address);
 
-  const BondDistribution = await ethers.getContractFactory("BondDistribution");
-  const bondDistribution = await BondDistribution.attach("0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9");
+  // Replace these with the actual deployed addresses on Base Sepolia
+  const mockUSDCAddress = process.env.MOCK_USDC_ADDRESS;
+  const fundingAddress = process.env.FUNDING_ADDRESS;
+  const bondDistributionAddress = process.env.BOND_DISTRIBUTION_ADDRESS;
 
-  console.log("Checking deployed contracts...");
+  if (!mockUSDCAddress || !fundingAddress || !bondDistributionAddress) {
+    throw new Error("Please set the contract addresses in the .env file");
+  }
+
+  const mockUSDC = await ethers.getContractAt("MockUSDC", mockUSDCAddress);
+  const funding = await ethers.getContractAt("Funding", fundingAddress);
+  const bondDistribution = await ethers.getContractAt("BondDistribution", bondDistributionAddress);
+
+  console.log("\nChecking deployed contracts on Base Sepolia...");
   console.log("MockUSDC address:", await mockUSDC.getAddress());
   console.log("Funding address:", await funding.getAddress());
   console.log("BondDistribution address:", await bondDistribution.getAddress());
 
   try {
-    // Remove the line trying to access _minimumInvestmentAmount
+    const targetAmount = await funding.targetAmount();
+    console.log("Target Amount:", formatUnits(targetAmount, 6));
     
     const bondPriceSet = await funding.bondPriceSet();
     console.log("Bond price set:", bondPriceSet);
     
-    const bondDistributionAddress = await funding.bondDistribution();
-    console.log("BondDistribution address from Funding contract:", bondDistributionAddress);
-  } catch (error) {
+    const bondDistributionAddressFromFunding = await funding.bondDistribution();
+    console.log("BondDistribution address from Funding contract:", bondDistributionAddressFromFunding);
+  } catch (error: any) {
     console.error("Error calling Funding contract:", error.message);
   }
 
   try {
     const bondPrice = await bondDistribution.bondPrice();
-    console.log("Current bond price:", ethers.formatUnits(bondPrice, 6));
-  } catch (error) {
+    console.log("Current bond price:", formatUnits(bondPrice, 6));
+  } catch (error: any) {
     console.error("Error calling BondDistribution contract:", error.message);
   }
 }

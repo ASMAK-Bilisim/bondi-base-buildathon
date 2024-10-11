@@ -32,46 +32,23 @@ function App() {
 
   useEffect(() => {
     console.log('Selected contract changed:', selectedContract);
+    // Reset all fields when contract selection changes
+    setMinimumInvestmentAmount('');
+    setTargetAmount('');
+    setFundingPeriodLimit('');
+    setBondPrice('');
+    setMode(null);
+    setStatus('');
   }, [selectedContract]);
 
   const connectWithPrivateKey = async () => {
     try {
-      const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545'); // Replace with your RPC URL
+      const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
       const wallet = new ethers.Wallet(privateKey, provider);
       setSigner(wallet);
     } catch (error) {
       console.error('Invalid private key:', error);
       setStatus('Invalid private key. Please try again.');
-    }
-  };
-
-  const setMinimumInvestment = async () => {
-    if (signer && selectedContract && minimumInvestmentAmount) {
-      try {
-        const contract = new ethers.Contract(selectedContract, FundingABI.abi, signer);
-        setStatus('Setting minimum investment amount...');
-        const tx = await contract.setMinimumInvestmentAmount(ethers.utils.parseUnits(minimumInvestmentAmount, 6));
-        await tx.wait();
-        setStatus('Minimum investment amount set successfully!');
-      } catch (error) {
-        console.error('Failed to set minimum investment amount:', error);
-        setStatus('Failed to set minimum investment amount. Please try again.');
-      }
-    }
-  };
-
-  const initiateMinting = async () => {
-    if (signer && selectedContract && bondPrice) {
-      try {
-        const contract = new ethers.Contract(selectedContract, FundingABI.abi, signer);
-        setStatus('Initiating minting...');
-        const tx = await contract.setBondPriceAndInitiateMinting(ethers.utils.parseUnits(bondPrice, 6));
-        await tx.wait();
-        setStatus('Minting initiated successfully!');
-      } catch (error) {
-        console.error('Failed to initiate minting:', error);
-        setStatus('Failed to initiate minting. Please try again.');
-      }
     }
   };
 
@@ -102,6 +79,26 @@ function App() {
         setStatus('Failed to adjust funding parameters. Please try again.');
       }
     }
+  };
+
+  const initiateMinting = async () => {
+    if (signer && selectedContract && bondPrice) {
+      try {
+        const contract = new ethers.Contract(selectedContract, FundingABI.abi, signer);
+        setStatus('Initiating minting...');
+        const tx = await contract.setBondPriceAndInitiateMinting(ethers.utils.parseUnits(bondPrice, 6));
+        await tx.wait();
+        setStatus('Minting initiated successfully!');
+      } catch (error) {
+        console.error('Failed to initiate minting:', error);
+        setStatus('Failed to initiate minting. Please try again.');
+      }
+    }
+  };
+
+  const goBack = () => {
+    setMode(null);
+    setStatus('');
   };
 
   return (
@@ -185,6 +182,11 @@ function App() {
                 Set Bond Price and Initiate Minting
               </button>
             </>
+          )}
+          {mode && (
+            <button onClick={goBack} className="w-full bg-app-accent text-app-light px-4 py-2 rounded hover:bg-opacity-90">
+              Go Back
+            </button>
           )}
           {status && <p className="mt-4 text-app-body-2">{status}</p>}
         </div>

@@ -1,8 +1,13 @@
 import { ethers } from "hardhat";
+import { formatUnits } from "ethers";
 
 async function main() {
-  const fundingAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
-  const usdcAddress = process.env.USDC_TOKEN_ADDRESS;
+  const fundingAddress = process.env.FUNDING_ADDRESS;
+  const usdcAddress = process.env.MOCK_USDC_ADDRESS;
+
+  if (!fundingAddress || !usdcAddress) {
+    throw new Error("Please set FUNDING_ADDRESS and MOCK_USDC_ADDRESS in the .env file");
+  }
 
   console.log("USDC Address:", usdcAddress);
 
@@ -14,7 +19,7 @@ async function main() {
     console.log("MockUSDC contract loaded");
 
     const balance = await USDC.balanceOf(fundingAddress);
-    console.log(`Total invested: ${ethers.formatUnits(balance, 6)} USDC`);
+    console.log(`Total invested: ${formatUnits(balance, 6)} USDC`);
 
     const investorCount = await Funding.getInvestorAmount();
     console.log(`Number of investors: ${investorCount}`);

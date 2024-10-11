@@ -5,7 +5,7 @@ import {
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import hre, { ethers } from "hardhat";
-import { ERC20Mock, Funding, InvestorNFT } from "../typechain-types";
+import { MockUSDC, Funding, InvestorNFT } from "../typechain-types";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 // Expressed in wei
@@ -16,7 +16,7 @@ const THIRTY_DAYS_IN_SECONDS = THIRTY_DAYS * 86400;
 
 describe("Funding", function () {
 	let funding: Funding;
-	let usdc: ERC20Mock;
+	let usdc: MockUSDC;
 	let whale: InvestorNFT;
 	let og: InvestorNFT;
 	let owner: SignerWithAddress;
@@ -33,8 +33,8 @@ describe("Funding", function () {
 		owner = owner_;
 		otherAccount = otherAccount_;
 		emptyAccount = emptyAccount_;
-		const USDCMock = await hre.ethers.getContractFactory("ERC20Mock");
-		usdc = await USDCMock.deploy(owner);
+		const USDCMock = await hre.ethers.getContractFactory("MockUSDC");
+		usdc = await USDCMock.deploy();
 
 		const Funding = await hre.ethers.getContractFactory("Funding");
 		funding = await Funding.deploy(
@@ -56,8 +56,8 @@ describe("Funding", function () {
 		describe("Failed deployment", () => {
 			it("Should fail with zero minimumInvestmentAmount", async () => {
 				const [owner_] = await hre.ethers.getSigners();
-				const USDCMock = await hre.ethers.getContractFactory("ERC20Mock");
-				const usdc_ = await USDCMock.deploy(await owner_.getAddress());
+				const USDCMock = await hre.ethers.getContractFactory("MockUSDC");
+				const usdc_ = await USDCMock.deploy();
 
 				const Funding = await hre.ethers.getContractFactory("Funding");
 				await expect(Funding.deploy(
@@ -69,8 +69,8 @@ describe("Funding", function () {
 			});
 			it("Should fail with zero targetAmount", async () => {
 				const [owner_] = await hre.ethers.getSigners();
-				const USDCMock = await hre.ethers.getContractFactory("ERC20Mock");
-				const usdc_ = await USDCMock.deploy(await owner_.getAddress());
+				const USDCMock = await hre.ethers.getContractFactory("MockUSDC");
+				const usdc_ = await USDCMock.deploy();
 
 				const Funding = await hre.ethers.getContractFactory("Funding");
 				await expect(Funding.deploy(
@@ -82,8 +82,8 @@ describe("Funding", function () {
 			});
 			it("Should fail with old fundingPeriodLimit", async () => {
 				const [owner_] = await hre.ethers.getSigners();
-				const USDCMock = await hre.ethers.getContractFactory("ERC20Mock");
-				const usdc_ = await USDCMock.deploy(await owner_.getAddress());
+				const USDCMock = await hre.ethers.getContractFactory("MockUSDC");
+				const usdc_ = await USDCMock.deploy();
 
 				const Funding = await hre.ethers.getContractFactory("Funding");
 				await expect(Funding.deploy(

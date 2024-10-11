@@ -1,14 +1,18 @@
 import { ethers } from "hardhat";
-import { formatUnits } from "@ethersproject/units";
+import { formatUnits } from "ethers";
 
 async function main() {
-  // Contract addresses
-  const fundingAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
-  const mockUSDCAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-  const bondTokenAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
-  const bondDistributionAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
-  const whaleNFTAddress = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707";
-  const ogNFTAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
+  // Replace these with the actual deployed addresses on Base Sepolia
+  const fundingAddress = process.env.FUNDING_ADDRESS;
+  const mockUSDCAddress = process.env.MOCK_USDC_ADDRESS;
+  const bondTokenAddress = process.env.BOND_TOKEN_ADDRESS;
+  const bondDistributionAddress = process.env.BOND_DISTRIBUTION_ADDRESS;
+  const whaleNFTAddress = process.env.WHALE_NFT_ADDRESS;
+  const ogNFTAddress = process.env.OG_NFT_ADDRESS;
+
+  if (!fundingAddress || !mockUSDCAddress || !bondTokenAddress || !bondDistributionAddress || !whaleNFTAddress || !ogNFTAddress) {
+    throw new Error("Please set all contract addresses in the .env file");
+  }
 
   // Get contract instances
   const funding = await ethers.getContractAt("Funding", fundingAddress);
@@ -18,16 +22,15 @@ async function main() {
   const whaleNFT = await ethers.getContractAt("InvestorNFT", whaleNFTAddress);
   const ogNFT = await ethers.getContractAt("InvestorNFT", ogNFTAddress);
 
-  console.log("Checking all contracts...\n");
+  console.log("Checking all contracts on Base Sepolia...\n");
 
   // Check Funding contract
   console.log("Funding Contract:");
-  const minimumInvestmentAmount = await funding.minimumInvestmentAmount();
-  console.log("- Minimum Investment Amount:", formatUnits(minimumInvestmentAmount, 6));
   const targetAmount = await funding.targetAmount();
   console.log("- Target Amount:", formatUnits(targetAmount, 6));
-  const fundingPeriodLimit = await funding.fundingPeriodLimit();
-  console.log("- Funding Period Limit:", new Date(Number(fundingPeriodLimit) * 1000).toLocaleString());
+  // Comment out the fundingPeriodLimit check if it doesn't exist in the contract
+  // const fundingPeriodLimit = await funding.fundingPeriodLimit();
+  // console.log("- Funding Period Limit:", new Date(Number(fundingPeriodLimit) * 1000).toLocaleString());
   const investorCount = await funding.getInvestorAmount();
   console.log("- Current Investor Count:", investorCount.toString());
 
