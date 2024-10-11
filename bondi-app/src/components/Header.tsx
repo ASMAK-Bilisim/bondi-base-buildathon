@@ -78,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
 
   return (
     <header className="w-full font-semibold py-4 px-6 relative bg-[#F2FBF9]">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="max-w-7xl 3xl:max-w-[1800px] 4xl:max-w-[1920px] mx-auto flex items-center justify-between">
         <nav className="flex flex-wrap gap-8 justify-start items-center">
           <a href="https://www.bondifinance.io" className={linkStyle}>Home</a>
           <a href="https://www.bondifinance.io/blog" className={linkStyle}>Blog</a>

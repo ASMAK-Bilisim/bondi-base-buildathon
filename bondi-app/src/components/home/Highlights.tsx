@@ -88,9 +88,9 @@ const Highlights: React.FC = () => {
         <div className="absolute inset-x-0 bottom-[5%] flex justify-center">
           <Link 
             to={currentItem.link}
-            className="w-[40%] max-w-[199px] py-2 sm:py-3 px-3 sm:px-4 bg-[#F2FBF9] hover:bg-[#D2DBD9] transition-colors duration-300 rounded-[8px] flex items-center justify-center"
+            className="w-[40%] max-w-[199px] py-2 sm:py-3 3xl:py-4 4xl:py-5 px-3 sm:px-4 3xl:px-5 4xl:px-6 bg-[#F2FBF9] hover:bg-[#D2DBD9] transition-colors duration-300 rounded-[8px] flex items-center justify-center"
           >
-            <span className="font-inter font-bold text-[10px] sm:text-[12px] md:text-[14px] text-[#071F1E] text-center whitespace-nowrap">
+            <span className="font-inter font-bold text-[10px] sm:text-[12px] md:text-[14px] 3xl:text-[16px] 4xl:text-[18px] text-[#071F1E] text-center whitespace-nowrap">
               {currentItem.buttonText}
             </span>
           </Link>
@@ -100,7 +100,7 @@ const Highlights: React.FC = () => {
             onClick={() => changeSlide('left')}
             className="text-white opacity-60 hover:opacity-100 transition-opacity duration-300"
           >
-            <CircleArrowLeft01Icon size={24} />
+            <CircleArrowLeft01Icon size={24} className="3xl:w-8 3xl:h-8 4xl:w-10 4xl:h-10" />
           </button>
         </div>
         <div className="absolute top-1/2 right-4 transform -translate-y-1/2">
@@ -108,7 +108,7 @@ const Highlights: React.FC = () => {
             onClick={() => changeSlide('right')}
             className="text-white opacity-60 hover:opacity-100 transition-opacity duration-300"
           >
-            <CircleArrowRight01Icon size={24} />
+            <CircleArrowRight01Icon size={24} className="3xl:w-8 3xl:h-8 4xl:w-10 4xl:h-10" />
           </button>
         </div>
       </div>

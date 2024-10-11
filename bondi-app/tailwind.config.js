@@ -88,8 +88,10 @@ export default {
 
 				'2xl': '1400px', // Add this new breakpoint
 		  
-				'3xl': '1536px',
+				'3xl': '1680px',
 				// => @media (min-width: 1536px) { ... }
+
+				'4xl': '1920px',
 		  
 			},
 		},

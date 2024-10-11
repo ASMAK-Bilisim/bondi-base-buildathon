@@ -15,10 +15,11 @@
     "class-variance-authority": "^0.7.0",
     "date-fns": "^3.6.0",
     "ethers": "^5.7.2",
-    "framer-motion": "^11.5.4",
+    "framer-motion": "^11.11.7",
     "react": "^18.3.1",
     "react-circular-progressbar": "^2.1.0",
     "react-dom": "^18.3.1",
+    "react-pageflip": "^2.0.3",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.26.1",
     "recharts": "^2.12.7"

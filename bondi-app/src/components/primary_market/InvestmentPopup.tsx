@@ -50,7 +50,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
     [address, BOND_CONTRACT_ADDRESS]
   );
 
-  const { data: investedAmountData, isLoading: isInvestedAmountLoading } = useContractRead(
+  const { data: investedAmountData, isLoading: isInvestedAmountLoading, refetch: refetchInvestedAmount } = useContractRead(
     bondContract,
     "investedAmountPerInvestor",
     [address]
@@ -60,6 +60,13 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   const { mutateAsync: invest, isLoading: isInvestLoading } = useContractWrite(bondContract, "invest");
 
   const navigate = useNavigate();
+
+  // Effect to refetch invested amount on component mount and address change
+  useEffect(() => {
+    if (address) {
+      refetchInvestedAmount();
+    }
+  }, [address, refetchInvestedAmount]);
 
   useEffect(() => {
     if (allowanceData && !isAllowanceLoading) {
@@ -203,6 +210,10 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
       await sdk.getProvider().waitForTransaction(investTx.receipt.transactionHash);
 
       console.log("Investment successful:", investTx);
+
+      // After successful investment, refetch the invested amount
+      await refetchInvestedAmount();
+
       setIsInvestmentComplete(true);
     } catch (error) {
       console.error("Error investing:", error);

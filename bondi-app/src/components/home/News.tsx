@@ -85,9 +85,9 @@ const News: React.FC = () => {
       >
         <Link 
           to={currentItem.link}
-          className="absolute left-[5%] bottom-[5%] w-[40%] max-w-[221px] h-[14%] min-h-[30px] max-h-[50px] bg-[#F49C4A] hover:bg-[#e08b39] transition-colors duration-300 rounded-[8px] flex items-center justify-center"
+          className="absolute left-[5%] bottom-[5%] w-[40%] max-w-[221px] h-[14%] min-h-[30px] max-h-[50px] 3xl:max-h-[60px] 4xl:max-h-[70px] bg-[#F49C4A] hover:bg-[#e08b39] transition-colors duration-300 rounded-[8px] flex items-center justify-center"
         >
-          <span className="font-inter font-bold text-[10px] sm:text-[12px] md:text-[16px] leading-[24px] text-white text-center">
+          <span className="font-inter font-bold text-[10px] sm:text-[12px] md:text-[16px] 3xl:text-[18px] 4xl:text-[20px] leading-[24px] text-white text-center">
             {currentItem.buttonText}
           </span>
         </Link>
@@ -95,7 +95,7 @@ const News: React.FC = () => {
           {newsItems.map((_, index) => (
             <div 
               key={index}
-              className={`w-3 h-3 rounded-full cursor-pointer ${index === currentIndex ? 'bg-white' : 'bg-white bg-opacity-60'}`}
+              className={`w-3 h-3 3xl:w-4 3xl:h-4 4xl:w-5 4xl:h-5 rounded-full cursor-pointer ${index === currentIndex ? 'bg-white' : 'bg-white bg-opacity-60'}`}
               onClick={() => setCurrentIndex(index)}
             />
           ))}

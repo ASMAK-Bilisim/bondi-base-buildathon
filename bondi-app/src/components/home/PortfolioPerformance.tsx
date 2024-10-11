@@ -68,12 +68,12 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
 
     return (
       <>
-        <header className="flex gap-5 justify-between w-full">
+        <header className="flex gap-5 justify-between w-full mb-4 3xl:mb-5 4xl:mb-6">
           <div 
-            className="flex gap-2.5 text-xs leading-none text-right cursor-pointer"
+            className="flex gap-2.5 text-xs 3xl:text-sm 4xl:text-base leading-none text-right cursor-pointer"
             onClick={handlePortfolioClick}
           >
-            <PieChartIcon className="w-6 h-6 text-teal-900" />
+            <PieChartIcon className="w-6 h-6 3xl:w-7 3xl:h-7 4xl:w-8 4xl:h-8 text-teal-900" />
             <h1 className="my-auto basis-auto hover:underline">BTC/USDT Price</h1>
           </div>
           <div className="relative">
@@ -105,10 +105,10 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
             )}
           </div>
         </header>
-        <p className="self-start text-2xl font-extrabold leading-10 text-right">
+        <p className="self-start text-2xl 3xl:text-3xl 4xl:text-4xl font-extrabold leading-10 text-right">
           ${portfolioValue.toFixed(2)}
         </p>
-        <div className="h-44 w-full mt-4">
+        <div className="h-44 3xl:h-52 4xl:h-60 w-full mt-4 3xl:mt-5 4xl:mt-6">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -164,7 +164,7 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
   };
 
   return (
-    <section className="flex overflow-hidden flex-col px-6 pt-5 pb-4 font-medium text-teal-900 bg-[#F2FBF9] rounded-xl border-teal-900 border-solid border-[0.25px] w-full h-[300px]">
+    <section className="flex overflow-hidden flex-col px-6 3xl:px-5 4xl:px-4 pt-5 3xl:pt-6 4xl:pt-7 pb-4 3xl:pb-5 4xl:pb-6 font-medium text-teal-900 bg-[#F2FBF9] rounded-xl border-teal-900 border-solid border-[0.25px] w-full h-[300px] 3xl:h-[350px] 4xl:h-[400px]">
       {renderContent()}
     </section>
   );

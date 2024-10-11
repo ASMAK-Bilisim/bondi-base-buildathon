@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
-export const Layout: React.FC = () => {
+interface LayoutProps {
+  children?: ReactNode;
+}
+
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => {
@@ -25,7 +29,7 @@ export const Layout: React.FC = () => {
           <main className="flex-grow overflow-hidden">
             <div className="h-full bg-[#D4E7E2] rounded-tl-[12px] p-6 pb-0 overflow-hidden">
               <div className="max-w-[1450px] mx-auto h-full overflow-y-auto">
-                <Outlet />
+                {children || <Outlet />}
               </div>
             </div>
           </main>
