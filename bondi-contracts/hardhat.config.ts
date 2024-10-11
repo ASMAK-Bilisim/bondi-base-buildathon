@@ -1,8 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
-import "@nomicfoundation/hardhat-ignition-ethers";
 import "hardhat-contract-sizer";
-import "./hardhat.base.config";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -16,12 +14,13 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic: process.env.MNEMONIC,
         path: "m/44'/60'/0'/0",
-        initialIndex: 0
+        initialIndex: 0,
+        count: 10 // This will derive 10 addresses
       }
     }
   },
   solidity: {
-    version: "0.8.20",
+    version: "0.8.24",
     settings: {
       optimizer: {
         enabled: true

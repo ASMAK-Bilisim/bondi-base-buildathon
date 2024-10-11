@@ -1,4 +1,7 @@
 import { ethers } from "hardhat";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 async function main() {
   const fundingAddress = process.env.FUNDING_ADDRESS;
@@ -11,58 +14,43 @@ async function main() {
   try {
     const funding = await ethers.getContractAt("Funding", fundingAddress);
     
-    console.log("Contract ABI loaded successfully");
+    console.log("Contract attached successfully");
 
-    // Try to call a simple view function first
-    const usdcTokenAddress = await funding.usdcToken();
-    console.log("USDC Token Address:", usdcTokenAddress);
+    // List of functions to check
+    const functions = [
+      "usdcToken",
+      "targetAmount",
+      "whaleNFT",
+      "ogNFT",
+      "getInvestorAmount",
+      "bondPriceSet",
+      "bondDistribution"
+    ];
 
-    // Now try to call targetAmount
-    const targetAmount = await funding.targetAmount();
-    console.log("Target Amount:", ethers.formatUnits(targetAmount, 6), "USDC");
-
-    // Remove the line trying to access _minimumInvestmentAmount
-    // We'll need to add a getter function in the Funding contract if we want to access this
-
-    // Remove the line trying to access fundingPeriodLimit
-    // We'll need to add a getter function in the Funding contract if we want to access this
-
-    const whaleNFTAddress = await funding.whaleNFT();
-    console.log("Whale NFT Address:", whaleNFTAddress);
-
-    const ogNFTAddress = await funding.ogNFT();
-    console.log("OG NFT Address:", ogNFTAddress);
-
-    const investorCount = await funding.getInvestorAmount();
-    console.log("Current Investor Count:", investorCount.toString());
-
-    const bondPriceSet = await funding.bondPriceSet();
-    console.log("Bond Price Set:", bondPriceSet);
-
-    const distributionReady = await bondDistribution.distributionReady();
-    console.log("Distribution Ready:", distributionReady);
-
-    if (bondPriceSet) {
-      const bondPrice = await bondDistribution.bondPrice();
-      console.log("Bond Price:", ethers.formatUnits(bondPrice, 6), "USDC per BT");
-    }
-
-    console.log("\nInvestor Details:");
-    const [, investor1, investor2, investor3, investor4, investor5] = await ethers.getSigners();
-    const investors = [investor1, investor2, investor3, investor4, investor5];
-
-    for (let i = 0; i < investors.length; i++) {
-      const investor = investors[i];
-      const investedAmount = await funding.investedAmountPerInvestor(investor.address);
-      console.log(`Investor ${i + 1} (${investor.address}):`);
-      console.log(`  Invested Amount: ${ethers.formatUnits(investedAmount.investedAmount, 6)} USDC`);
-      
-      if (distributionReady) {
-        const claimableTokens = await bondDistribution.getClaimableTokens(investor.address);
-        console.log(`  Claimable Bond Tokens: ${ethers.formatUnits(claimableTokens, 18)} BT`);
+    for (const func of functions) {
+      try {
+        const result = await funding[func]();
+        console.log(`${func}:`, result.toString());
+      } catch (error: any) {
+        console.log(`Error calling ${func}:`, error.message);
       }
-      console.log();
     }
+
+    // Try to get investor details
+    console.log("\nAttempting to get investor details...");
+    const signers = await ethers.getSigners();
+
+    for (let i = 1; i <= 5; i++) {
+      const investor = signers[i];
+      try {
+        const investedAmount = await funding.investedAmountPerInvestor(investor.address);
+        console.log(`Investor ${i} (${investor.address}):`);
+        console.log(`  Invested Amount: ${ethers.formatUnits(investedAmount.investedAmount, 6)} USDC`);
+      } catch (error: any) {
+        console.log(`Error getting details for investor ${i}:`, error.message);
+      }
+    }
+
   } catch (error: any) {
     console.error("Error interacting with Funding contract:", error.message);
     if (error.data) {
