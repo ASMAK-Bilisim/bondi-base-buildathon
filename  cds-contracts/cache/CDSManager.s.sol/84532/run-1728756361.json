@@ -1,0 +1,16 @@
+{
+  "transactions": [
+    {
+      "rpc": "wss://base-sepolia-rpc.publicnode.com"
+    },
+    {
+      "rpc": "wss://base-sepolia-rpc.publicnode.com"
+    },
+    {
+      "rpc": "wss://base-sepolia-rpc.publicnode.com"
+    },
+    {
+      "rpc": "wss://base-sepolia-rpc.publicnode.com"
+    }
+  ]
+}
