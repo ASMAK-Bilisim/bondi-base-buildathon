@@ -1,8 +1,7 @@
 {
-  "DeployMockUSDC#MockUSDC": "0x30313a4b56d4010Db1ceA20169F32273CA82B1b9",
-  "FundingWithMintables#BondTokenContract": "0xd376802c2976ea6651500a9E6b8990D855a3BA8a",
-  "FundingWithMintables#FundingContract": "0x0CAcA42280CFE7787684C03e4b2515905dae88c2",
-  "FundingWithMintables#BondDistributionContract": "0x5Ee5F98D6C7f7321f782dde1aE5eb4f666C67186",
-  "FundingWithMintables#OGInvestorNFT": "0x74cf016466912aEA994B88ff3823ECAb7879BA29",
-  "FundingWithMintables#WhaleInvestorNFT": "0x4A8014ed1BFCad1bc5eE27E55cE8Eb93c5c91169"
+  "FundingWithMintables#BondTokenContract": "0xacDF08331028821DFE4115E98a41470a087C624d",
+  "FundingWithMintables#FundingContract": "0xb19E40B76d780184ef74bcB3AEE631Ba8D26733a",
+  "FundingWithMintables#BondDistributionContract": "0x64C08f38F0Bb5E5E07d7c17171d1507523B2B186",
+  "FundingWithMintables#OGInvestorNFT": "0xC47227CF81A927923fd89f9E8b82b013b92a8a25",
+  "FundingWithMintables#WhaleInvestorNFT": "0x9489eA1b777173FA096E9089958d914c5a6B97eC"
 }

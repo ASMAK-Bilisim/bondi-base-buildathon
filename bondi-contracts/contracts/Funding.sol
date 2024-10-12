@@ -258,6 +258,14 @@ contract Funding is AccessControl, Pausable, ReentrancyGuard {
         }
     }
 
+    function getMinimumInvestmentAmount() public view returns (uint256) {
+        return _minimumInvestmentAmount;
+    }
+
+    function getFundingPeriodLimit() public view returns (uint256) {
+        return _fundingPeriodLimit;
+    }
+
     function setBondDistribution(address _bondDistribution) external onlyRole(DEFAULT_ADMIN_ROLE) {
         bondDistribution = BondDistribution(_bondDistribution);
     }

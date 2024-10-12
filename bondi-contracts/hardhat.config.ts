@@ -15,7 +15,7 @@ const config: HardhatUserConfig = {
         mnemonic: process.env.MNEMONIC,
         path: "m/44'/60'/0'/0",
         initialIndex: 0,
-        count: 10 // This will derive 10 addresses
+        count: 30 // This will derive 10 addresses
       }
     }
   },

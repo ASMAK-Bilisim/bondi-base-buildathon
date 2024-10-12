@@ -13,7 +13,21 @@ async function main() {
   const mockUSDC = await ethers.getContractAt("MockUSDC", mockUSDCAddress);
   const bondDistribution = await ethers.getContractAt("BondDistribution", bondDistributionAddress);
 
-  const [owner, investor1, investor2, investor3, investor4, investor5] = await ethers.getSigners();
+  const signers = await ethers.getSigners();
+  const owner = signers[0];
+  const investors = signers.slice(1, 6); // Get investors at indices 1, 2, 3, 4, 5
+
+  /*
+  console.log("Sending 0.001 ETH to each investor...");
+  for (const investor of investors) {
+    const tx = await owner.sendTransaction({
+      to: investor.address,
+      value: ethers.parseEther("0.001")
+    });
+    await tx.wait();
+    console.log(`Sent 0.001 ETH to ${investor.address}`);
+  }
+  */
 
   const targetAmount = await funding.targetAmount();
   console.log("Target Amount:", ethers.formatUnits(targetAmount, 6), "USDC");
@@ -24,12 +38,15 @@ async function main() {
   const remainingAmount = targetAmount - currentTotalInvested;
   console.log("Remaining Amount to Invest:", ethers.formatUnits(remainingAmount, 6), "USDC");
 
+  const ownerUSDCBalance = await mockUSDC.balanceOf(owner.address);
+  console.log("Owner USDC Balance:", ethers.formatUnits(ownerUSDCBalance, 6), "USDC");
+
   const investments = [
-    { investor: investor1, amount: ethers.parseUnits("4000", 6) },
-    { investor: investor2, amount: ethers.parseUnits("4500", 6) },
-    { investor: investor3, amount: ethers.parseUnits("60000", 6) },
-    { investor: investor4, amount: ethers.parseUnits("65000", 6) },
-    { investor: investor5, amount: ethers.parseUnits("66500", 6) },
+    { investor: investors[0], amount: ethers.parseUnits("4000", 6) },
+    { investor: investors[1], amount: ethers.parseUnits("4500", 6) },
+    { investor: investors[2], amount: ethers.parseUnits("60000", 6) },
+    { investor: investors[3], amount: ethers.parseUnits("65000", 6) },
+    { investor: investors[4], amount: ethers.parseUnits("66500", 6) },
   ];
 
   console.log("\nMaking investments...");
@@ -37,33 +54,42 @@ async function main() {
   let totalNewInvestments = 0n;
 
   for (const { investor, amount } of investments) {
-    if (totalNewInvestments + amount > remainingAmount) {
-      const adjustedAmount = remainingAmount - totalNewInvestments;
-      if (adjustedAmount <= 0n) {
-        console.log(`Skipping investment from ${investor.address} as target amount is reached`);
-        continue;
-      }
-      console.log(`Adjusting investment amount for ${investor.address} to ${ethers.formatUnits(adjustedAmount, 6)} USDC`);
-      await mockUSDC.connect(owner).transfer(investor.address, adjustedAmount);
-      await mockUSDC.connect(investor).approve(fundingAddress, adjustedAmount);
-      await funding.connect(investor).invest(adjustedAmount);
-      totalNewInvestments += adjustedAmount;
-    } else {
+    try {
+      console.log(`\nProcessing investment for ${investor.address}`);
+      
+      console.log("Transferring USDC to investor...");
       await mockUSDC.connect(owner).transfer(investor.address, amount);
+      
+      const investorBalance = await mockUSDC.balanceOf(investor.address);
+      console.log(`Investor USDC balance: ${ethers.formatUnits(investorBalance, 6)} USDC`);
+
+      console.log("Approving USDC for Funding contract...");
       await mockUSDC.connect(investor).approve(fundingAddress, amount);
-      await funding.connect(investor).invest(amount);
+      
+      const allowance = await mockUSDC.allowance(investor.address, fundingAddress);
+      console.log(`Allowance for Funding contract: ${ethers.formatUnits(allowance, 6)} USDC`);
+
+      console.log("Investing in Funding contract...");
+      const investTx = await funding.connect(investor).invest(amount);
+      await investTx.wait();
+
+      console.log(`Investment successful: ${ethers.formatUnits(amount, 6)} USDC`);
       totalNewInvestments += amount;
-    }
 
-    console.log(`Investor ${investor.address} invested ${ethers.formatUnits(amount, 6)} USDC`);
-    console.log(`Total new investments: ${ethers.formatUnits(totalNewInvestments, 6)} USDC`);
+      console.log(`Total new investments: ${ethers.formatUnits(totalNewInvestments, 6)} USDC`);
 
-    const distributionReady = await bondDistribution.distributionReady();
-    console.log("Distribution ready:", distributionReady);
+      const distributionReady = await bondDistribution.distributionReady();
+      console.log("Distribution ready:", distributionReady);
 
-    if (totalNewInvestments >= remainingAmount) {
-      console.log("Target amount reached. Stopping investments.");
-      break;
+      if (totalNewInvestments >= remainingAmount) {
+        console.log("Target amount reached. Stopping investments.");
+        break;
+      }
+    } catch (error: any) {
+      console.error(`Error during investment for ${investor.address}:`, error.message);
+      if (error.data) {
+        console.error("Error data:", error.data);
+      }
     }
   }
 

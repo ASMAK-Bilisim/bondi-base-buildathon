@@ -1,10 +1,13 @@
 import { ethers } from "hardhat";
 import { formatUnits } from "ethers";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 async function main() {
   // Replace these with the actual deployed addresses on Base Sepolia
   const fundingAddress = process.env.FUNDING_ADDRESS;
-  const mockUSDCAddress = process.env.MOCK_USDC_ADDRESS;
+  const mockUSDCAddress = process.env.USDC_TOKEN_ADDRESS; // Changed from MOCK_USDC_ADDRESS to USDC_TOKEN_ADDRESS
   const bondTokenAddress = process.env.BOND_TOKEN_ADDRESS;
   const bondDistributionAddress = process.env.BOND_DISTRIBUTION_ADDRESS;
   const whaleNFTAddress = process.env.WHALE_NFT_ADDRESS;

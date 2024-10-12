@@ -19,11 +19,12 @@ async function main() {
   console.log("Claiming Bond Tokens for investors...");
 
   const signers = await ethers.getSigners();
+  const investors = signers.slice(1, 6); // Get investors at indices 1, 2, 3, 4, 5
 
-  for (let i = 1; i <= 5; i++) {
-    const investor = signers[i];
+  for (let i = 0; i < investors.length; i++) {
+    const investor = investors[i];
     
-    console.log(`\nInvestor ${i} (${investor.address}):`);
+    console.log(`\nInvestor ${i + 1} (Index ${i + 1}) (${investor.address}):`);
     
     try {
       const claimableTokensBefore = await bondDistribution.getClaimableTokens(investor.address);
@@ -42,7 +43,7 @@ async function main() {
       const bondBalanceAfter = await bondToken.balanceOf(investor.address);
       console.log(`  Bond token balance after: ${ethers.formatUnits(bondBalanceAfter, 18)} BT`);
     } catch (error: any) {
-      console.error(`  Error for investor ${i}:`, error.message);
+      console.error(`  Error for investor ${i + 1}:`, error.message);
     }
   }
 

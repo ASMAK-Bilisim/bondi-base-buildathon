@@ -28,11 +28,12 @@ async function main() {
 
     // Check individual investor amounts
     const signers = await ethers.getSigners();
+    const investors = signers.slice(1, 6); // Get investors at indices 1, 2, 3, 4, 5
 
-    for (let i = 1; i <= 5; i++) {
-      const investor = signers[i];
+    for (let i = 0; i < investors.length; i++) {
+      const investor = investors[i];
       const investedAmount = await funding.investedAmountPerInvestor(investor.address);
-      console.log(`Investor ${i} (${investor.address}) invested: ${ethers.formatUnits(investedAmount.investedAmount, 6)} USDC`);
+      console.log(`Investor ${i + 1} (Index ${i + 1}) (${investor.address}) invested: ${ethers.formatUnits(investedAmount.investedAmount, 6)} USDC`);
     }
   } catch (error: any) {
     console.error("Error occurred:", error.message);

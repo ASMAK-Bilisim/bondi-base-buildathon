@@ -16,38 +16,56 @@ async function main() {
     
     console.log("Contract attached successfully");
 
-    // List of functions to check
-    const functions = [
-      "usdcToken",
-      "targetAmount",
-      "whaleNFT",
-      "ogNFT",
-      "getInvestorAmount",
-      "bondPriceSet",
-      "bondDistribution"
-    ];
+    // Check target amount
+    const targetAmount = await funding.targetAmount();
+    console.log("Target Amount:", ethers.formatUnits(targetAmount, 6), "USDC");
 
-    for (const func of functions) {
-      try {
-        const result = await funding[func]();
-        console.log(`${func}:`, result.toString());
-      } catch (error: any) {
-        console.log(`Error calling ${func}:`, error.message);
-      }
+    // Check minimum investment amount
+    try {
+      const minimumInvestmentAmount = await funding.getMinimumInvestmentAmount();
+      console.log("Minimum Investment Amount:", ethers.formatUnits(minimumInvestmentAmount, 6), "USDC");
+    } catch (error: any) {
+      console.log("Error getting minimum investment amount:", error.message);
     }
+
+    // Check funding period limit
+    try {
+      const fundingPeriodLimit = await funding.getFundingPeriodLimit();
+      const fundingPeriodLimitDate = new Date(Number(fundingPeriodLimit) * 1000);
+      console.log("Funding Period Limit:", fundingPeriodLimitDate.toLocaleString());
+    } catch (error: any) {
+      console.log("Error getting funding period limit:", error.message);
+    }
+
+    // Other contract details
+    console.log("\nOther contract details:");
+    const usdcToken = await funding.usdcToken();
+    const whaleNFT = await funding.whaleNFT();
+    const ogNFT = await funding.ogNFT();
+    const investorCount = await funding.getInvestorAmount();
+    const bondPriceSet = await funding.bondPriceSet();
+    const bondDistribution = await funding.bondDistribution();
+
+    console.log("USDC Token:", usdcToken);
+    console.log("Whale NFT:", whaleNFT);
+    console.log("OG NFT:", ogNFT);
+    console.log("Investor Count:", investorCount.toString());
+    console.log("Bond Price Set:", bondPriceSet);
+    console.log("Bond Distribution:", bondDistribution);
 
     // Try to get investor details
     console.log("\nAttempting to get investor details...");
     const signers = await ethers.getSigners();
+    const investors = signers.slice(1, 6); // Get investors at indices 1, 2, 3, 4, 5
 
-    for (let i = 1; i <= 5; i++) {
-      const investor = signers[i];
+    for (let i = 0; i < investors.length; i++) {
+      const investor = investors[i];
       try {
         const investedAmount = await funding.investedAmountPerInvestor(investor.address);
-        console.log(`Investor ${i} (${investor.address}):`);
+        console.log(`Investor ${i + 1} (Index ${i + 1}) (${investor.address}):`);
         console.log(`  Invested Amount: ${ethers.formatUnits(investedAmount.investedAmount, 6)} USDC`);
       } catch (error: any) {
-        console.log(`Error getting details for investor ${i}:`, error.message);
+        console.log(`Error getting details for investor ${i + 1} (Index ${i + 1}):`, error.message);
       }
     }
 
