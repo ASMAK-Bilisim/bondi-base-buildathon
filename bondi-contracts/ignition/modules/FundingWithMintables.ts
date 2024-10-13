@@ -1,4 +1,8 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+import { config } from 'dotenv';
+
+// Load environment variables
+config();
 
 export default buildModule("FundingWithMintables", (m) => {
   const minimumInvestmentAmount = m.getParameter(
@@ -55,7 +59,10 @@ export default buildModule("FundingWithMintables", (m) => {
   m.call(ogNft, "setBaseURI", [ogNftBaseUri], { id: "SetOGNFTBaseURI" });
   m.call(whaleNft, "setBaseURI", [whaleNftBaseUri], { id: "SetWhaleNFTBaseURI" });
 
-  const bondToken = m.contract("BondToken", ["Bond Token", "BT"], { id: "BondTokenContract" });
+  const bondToken = m.contract("BondToken", [
+    process.env.BOND_TOKEN_NAME || "Bond Token",
+    process.env.BOND_TOKEN_SYMBOL || "BT"
+  ], { id: "BondTokenContract" });
 
   const bondDistribution = m.contract("BondDistribution", [bondToken, funding, usdcTokenAddress], { id: "BondDistributionContract" });
 

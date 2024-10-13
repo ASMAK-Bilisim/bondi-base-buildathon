@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { ethers, utils } from 'ethers';
 import FundingABI from './FundingABI.json';
 
-const FUNDING_CONTRACTS = [
-  { address: '0x034cafC355FF6b152ed6781F12bc82379C77E5F7', name: 'Alpha Funding Contract' },
-  { address: '0x62eDeCd612368877b88a72095e9f148a0734a025', name: 'Beta Funding Contract' },
-  { address: '0xb19E40B76d780184ef74bcB3AEE631Ba8D26733a', name: 'Omega Funding Contract' },
-];
-
 const ADMIN_PRIVATE_KEY = import.meta.env.VITE_ADMIN_PRIVATE_KEY;
-const BASE_SEPOLIA_RPC = "https://sepolia.base.org";
-const BASE_SEPOLIA_CHAIN_ID = 84532;
+const BASE_SEPOLIA_RPC = import.meta.env.VITE_BASE_SEPOLIA_RPC;
+const BASE_SEPOLIA_CHAIN_ID = Number(import.meta.env.VITE_BASE_SEPOLIA_CHAIN_ID);
+
+const FUNDING_CONTRACTS = [
+  { address: import.meta.env.VITE_ALPHA_FUNDING_CONTRACT, name: 'Alpha Funding Contract' },
+  { address: import.meta.env.VITE_BETA_FUNDING_CONTRACT, name: 'Beta Funding Contract' },
+  { address: import.meta.env.VITE_OMEGA_FUNDING_CONTRACT, name: 'Omega Funding Contract' },
+];
 
 const formatNumberWithCommas = (value: string) => {
   return value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -291,7 +291,7 @@ function App() {
           )}
           <div className="bg-app-accent bg-opacity-10 p-4 rounded-lg text-xs text-app-primary-2 break-words">
             <p className="font-bold mb-2">Disclaimer:</p>
-            <p className="mb-2">This is a demo: Wallet with private key 539afa1ff6584161fda224ce66483b8ff77160a9e1a67b4c44076cb6dd1166d8 is the deployer of smart contracts and it has the sole authority to manage funding contracts and mint bonds upon real life purchase.</p>
+            <p className="mb-2">This is a demo: Wallet with private key 531e96f15be337b94df3f39d961f032fe8deee0c8e9000ff700ea1308a8ff936 is the deployer of smart contracts and it has the sole authority to manage funding contracts and mint bonds upon real life purchase.</p>
             <p>The real product will have multisigs with different authorities for different tasks. Preliminary implementation can be seen on codebase and explained in README.md</p>
           </div>
         </div>
