@@ -14,7 +14,7 @@ async function main() {
   const whaleNFT = await ethers.getContractAt("InvestorNFT", whaleNFTAddress);
 
   const signers = await ethers.getSigners();
-  const investors = signers.slice(1, 6); // Get investors at indices 1, 2, 3, 4, 5
+  const investors = signers.slice(1, 11); // Get investors at indices 1 to 10
 
   console.log("Checking NFT balances for investors...");
 

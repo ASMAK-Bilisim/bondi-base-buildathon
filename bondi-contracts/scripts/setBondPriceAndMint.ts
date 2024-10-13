@@ -25,7 +25,7 @@ async function main() {
 
     // Attempt to set bond price and initiate minting
     console.log("Attempting to set bond price and initiate minting...");
-    const bondPrice = ethers.parseUnits("70", 6); // 1 BT = 90 USDC
+    const bondPrice = ethers.parseUnits("70", 6); // real purchase price
     
     try {
       const tx = await funding.connect(deployer).setBondPriceAndInitiateMinting(bondPrice);

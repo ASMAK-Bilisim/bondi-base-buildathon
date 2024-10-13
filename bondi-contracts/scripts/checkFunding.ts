@@ -56,7 +56,7 @@ async function main() {
     // Try to get investor details
     console.log("\nAttempting to get investor details...");
     const signers = await ethers.getSigners();
-    const investors = signers.slice(1, 6); // Get investors at indices 1, 2, 3, 4, 5
+    const investors = signers.slice(1, 11); // Get investors at indices 1 to 10
 
     for (let i = 0; i < investors.length; i++) {
       const investor = investors[i];

@@ -1,7 +1,7 @@
 {
-  "FundingWithMintables#BondTokenContract": "0xacDF08331028821DFE4115E98a41470a087C624d",
-  "FundingWithMintables#FundingContract": "0xb19E40B76d780184ef74bcB3AEE631Ba8D26733a",
-  "FundingWithMintables#BondDistributionContract": "0x64C08f38F0Bb5E5E07d7c17171d1507523B2B186",
-  "FundingWithMintables#OGInvestorNFT": "0xC47227CF81A927923fd89f9E8b82b013b92a8a25",
-  "FundingWithMintables#WhaleInvestorNFT": "0x9489eA1b777173FA096E9089958d914c5a6B97eC"
+  "FundingWithMintables#BondTokenContract": "0x578677a379EC1d24554bA9e79c2B4804f717D8d0",
+  "FundingWithMintables#FundingContract": "0x9A3b1cCbb3A095F62282b0290Eb2Fd93f1CF528F",
+  "FundingWithMintables#BondDistributionContract": "0x6651E48A1839A4097902d8c0D9914Ad036c61875",
+  "FundingWithMintables#OGInvestorNFT": "0x8595Bd6d11Dd0F0b180FBed4bF28B7a9Ec2f9CAe",
+  "FundingWithMintables#WhaleInvestorNFT": "0x5490dA08d583D1eD2Ae955764D90746c0E6C3495"
 }

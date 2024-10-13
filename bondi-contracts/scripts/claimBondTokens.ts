@@ -9,7 +9,7 @@ async function main() {
   const bondTokenAddress = process.env.BOND_TOKEN_ADDRESS;
 
   if (!fundingAddress || !bondDistributionAddress || !bondTokenAddress) {
-    throw new Error("Please set FUNDING_ADDRESS, BOND_DISTRIBUTION_ADDRESS, and BOND_TOKEN_ADDRESS in the .env file");
+    throw new Error("Please set all required addresses in the .env file");
   }
 
   const funding = await ethers.getContractAt("Funding", fundingAddress);
@@ -19,7 +19,7 @@ async function main() {
   console.log("Claiming Bond Tokens for investors...");
 
   const signers = await ethers.getSigners();
-  const investors = signers.slice(1, 6); // Get investors at indices 1, 2, 3, 4, 5
+  const investors = signers.slice(1, 11); // Get investors at indices 1 to 10
 
   for (let i = 0; i < investors.length; i++) {
     const investor = investors[i];

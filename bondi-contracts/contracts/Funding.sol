@@ -98,6 +98,12 @@ contract Funding is AccessControl, Pausable, ReentrancyGuard {
         if (amountOfInvestorsToRefund > _investors.length) revert FundingInvestorsAmountToRefundTooBig();
         _;
     }
+    
+    /// @dev Funding contract methods that can only be called before bond price is set (minting has started)(actual purchase of bonds happened IRL)
+    modifier onlyBeforeDistribution() {
+        require(!bondPriceSet, "Bond price already set, cannot modify parameters");
+        _;
+    }
 
     // Constructor
 
@@ -139,19 +145,19 @@ contract Funding is AccessControl, Pausable, ReentrancyGuard {
     // Setter methods
 
     /// @dev New target cannot be less than current one
-    function setTargetAmount(uint256 targetAmount_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setTargetAmount(uint256 targetAmount_) public onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforeDistribution {
         if (targetAmount_ <= targetAmount) revert FundingTargetTooSmall();
         targetAmount = targetAmount_;
     }
 
     /// @dev New funding period limit cannot be previous to current one
-    function incrementFundingPeriodLimit(uint256 daysToAddToFundingPeriodLimit_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function incrementFundingPeriodLimit(uint256 daysToAddToFundingPeriodLimit_) public onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforeDistribution {
         if (daysToAddToFundingPeriodLimit_ == 0) revert FundingPeriodCannotBeZero();
         _fundingPeriodLimit += daysToAddToFundingPeriodLimit_ * 1 days;
     }
 
     /// @dev New minimum investment amount cannot be zero
-    function setMinimumInvestmentAmount(uint256 minimumInvestmentAmount_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMinimumInvestmentAmount(uint256 minimumInvestmentAmount_) public onlyRole(DEFAULT_ADMIN_ROLE) onlyBeforeDistribution {
         if (minimumInvestmentAmount_ == 0) revert FundingMinimumCannotBeZero();
         _minimumInvestmentAmount = minimumInvestmentAmount_;
     }
