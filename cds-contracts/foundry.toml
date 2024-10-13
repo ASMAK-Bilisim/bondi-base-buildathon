@@ -1,0 +1,7 @@
+[profile.default]
+private_key = "8a47b9185e7257d37a75d3ed26e2ad84ac27da9721289ec72f0a1ead4c80219a"
+src = "src"
+out = "out"
+libs = ["lib"]
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

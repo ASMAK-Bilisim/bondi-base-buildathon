@@ -33,6 +33,11 @@ bondi-contracts/coverage
 bondi-contracts/coverage.json
 bondi-contracts/ignition/deployments/chain-31337
 
+# cds-contracts specific ignores
+cds-contracts/lib/
+cds-contracts/broadcast/
+cds-contracts/cache/
+cds-contracts/out/
 # Common ignores for all subdirectories
 **/node_modules
 **/.env
