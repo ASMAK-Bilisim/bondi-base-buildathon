@@ -62,4 +62,3 @@ To run the test suite for the project:
 ```bash
 forge test
 ```
-```
