@@ -2,11 +2,11 @@ import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import Home from "../pages/Home";
 import PrimaryMarket from "../pages/PrimaryMarket";
-import Portfolio from "../pages/Portfolio";
+import SingleBondPage from "../pages/SingleBondPage";
 import Coupons from "../pages/Coupons";
-import Achievements from "../pages/Achievements";
 import KYCMenu from "../pages/KYCMenu";
 import { KYCProvider } from '../components/contexts/KYCContext';
+import CDSMarket from "../pages/CDSMarket";
 
 export const router = createBrowserRouter([
 	{
@@ -26,19 +26,19 @@ export const router = createBrowserRouter([
 				element: <PrimaryMarket />,
 			},
 			{
-				path: "portfolio",
-				element: <Portfolio />,
+				path: "primary-market/:bondId",
+				element: <SingleBondPage />,
+			},
+			{
+				path: "cds-market",
+				element: <CDSMarket />,
 			},
 			{
 				path: "coupons",
 				element: <Coupons />,
 			},
 			{
-				path: "achievements",
-				element: <Achievements />,
-			},
-			{
-				path: "kyc", // Add this new route
+				path: "kyc",
 				element: <KYCMenu />,
 			},
 			// Settings route can be added here when implemented

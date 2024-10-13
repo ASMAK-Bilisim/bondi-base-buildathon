@@ -1,15 +1,28 @@
-import { ethers } from 'ethers';
+export const CDS_MANAGER_ADDRESS = '0xA6c4B0743cA53D875fa6572FbDaF22EE88c4016A';
+export const MOCK_USDC_ADDRESS = '0x161410d974A28dD839fb9175032538F62B258c4b';
+// USDC address for Base Sepolia testnet
+export const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
 
-export const BOND_CONTRACT_ADDRESS = '0xE8E8973Cb3b4ff1466ae13Fc9DFE39A0b27EA1c4';
+// Zeta contract addresses
+export const ZETA_FUNDING_CONTRACT = '0x2959B79bd099A1D74A37e05426BF044D9E4E5685';
+export const ZETA_BOND_TOKEN = '0x63976d1fB668B646BA47e1Fd856E50D0853a1b2b';
+export const ZETA_OG_NFT = '0xdF22356916F5274164674449b40265978F3f37C7';
+export const ZETA_WHALE_NFT = '0x6B4a84963a7d91Ab2D5C866A7d1184C56dB71D85';
 
+// Alpha contract addresses
+export const ALPHA_FUNDING_CONTRACT = '0xf6a2Ac21A57Ef4AdEDaaab1ea9C851C7C0aa180d';
+export const ALPHA_BOND_TOKEN = '0x2eA4523B6D9b9920F0A544b6c10A58c583F01B65';
+export const ALPHA_OG_NFT = '0xB54a78FD797c5359eD7058238EA7c09b079A8371';
+export const ALPHA_WHALE_NFT = '0x7EAC7C79B74926d2Ce5D66BA81869d88Fd81E6a7';
+
+// Beta contract addresses
+export const BETA_FUNDING_CONTRACT = '0x29F5f610c9ddb26180f05e8E5993e7DdDb94Dc17';
+export const BETA_BOND_TOKEN = '0xc41cB648A9bd0e4C4FCc9011218967fE8CB33107';
+export const BETA_OG_NFT = '0xb7C5ad42cBDFBc20da6544aE32a3FD4FA1F6e5F3';
+export const BETA_WHALE_NFT = '0x25C0C3787535AaB94E6e5A18bF8F008f8b62b04B';
+
+// Keep the existing ABIs and other constants
 export const contractABI = [
-  {
-    "inputs": [],
-    "name": "targetAmount",
-    "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
   {
     "inputs": [
       {
@@ -35,6 +48,332 @@ export const contractABI = [
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "AccessControlBadConfirmation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "neededRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "AccessControlUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EnforcedPause",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExpectedPause",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "invested",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minimum",
+        "type": "uint256"
+      }
+    ],
+    "name": "FundingBelowMinimum",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingCannotBeZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "currentBalance",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "target",
+        "type": "uint256"
+      }
+    ],
+    "name": "FundingExceedsTargetAmount",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "available",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      }
+    ],
+    "name": "FundingInsufficientBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingInvestorsAmountToRefundTooBig",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingMinimumCannotBeZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingNoInvestorsToRefund",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingNoRegisteredFunds",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingPeriodCannotBeZero",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "finishedAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "FundingPeriodFinished",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "finishesAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "FundingPeriodOngoing",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingTargetAmountReached",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingTargetCannotBeZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FundingTargetTooSmall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvestorNFTCannotBeZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "investor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvestmentMade",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amountOfInvestors",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "RefundedInvestors",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "previousAdminRole",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newAdminRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "RoleAdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Unpaused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "investor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawalMade",
+    "type": "event"
   },
   {
     "inputs": [],
@@ -64,7 +403,33 @@ export const contractABI = [
   },
   {
     "inputs": [],
-    "name": "_minimumInvestmentAmount",
+    "name": "bondDistribution",
+    "outputs": [
+      {
+        "internalType": "contract BondDistribution",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "bondPriceSet",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getFundingPeriodLimit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -78,6 +443,19 @@ export const contractABI = [
   {
     "inputs": [],
     "name": "getInvestorAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMinimumInvestmentAmount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -200,13 +578,19 @@ export const contractABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "minimumInvestmentAmount",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "index",
         "type": "uint256"
+      }
+    ],
+    "name": "investors",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -297,6 +681,32 @@ export const contractABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_bondDistribution",
+        "type": "address"
+      }
+    ],
+    "name": "setBondDistribution",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_bondPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "setBondPriceAndInitiateMinting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "minimumInvestmentAmount_",
         "type": "uint256"
@@ -367,6 +777,19 @@ export const contractABI = [
   },
   {
     "inputs": [],
+    "name": "targetAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -407,10 +830,1042 @@ export const contractABI = [
   }
 ];
 
-// Create a contract instance
-export const getContractInstance = (provider: ethers.providers.Provider) => {
-  return new ethers.Contract(BOND_CONTRACT_ADDRESS, contractABI, provider);
-};
+export const cdsManagerABI = 
+  [
+    {
+      "type": "constructor",
+      "inputs": [
+          {
+              "name": "_usdcToken",
+              "type": "address",
+              "internalType": "address"
+          },
+          {
+              "name": "_admin",
+              "type": "address",
+              "internalType": "address"
+          }
+      ],
+      "stateMutability": "nonpayable"
+  },
+  {
+      "type": "function",
+      "name": "acceptDefault",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+  },
+  {
+      "type": "function",
+      "name": "addBond",
+      "inputs": [
+          {
+              "name": "bondAddress",
+              "type": "address",
+              "internalType": "address"
+          },
+          {
+              "name": "nextCouponAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+          },
+          {
+              "name": "nextCouponDate",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "outputs": [
+          {
+              "name": "",
+              "type": "bytes32",
+              "internalType": "bytes32"
+          }
+      ],
+      "stateMutability": "nonpayable"
+  },
+  {
+      "type": "function",
+      "name": "admin",
+      "inputs": [],
+      "outputs": [
+          {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+          }
+      ],
+      "stateMutability": "view"
+  },
+  {
+      "type": "function",
+      "name": "bondsAndExpiration",
+      "inputs": [
+          {
+              "name": "",
+              "type": "bytes32",
+              "internalType": "bytes32"
+          }
+      ],
+      "outputs": [
+          {
+              "name": "bondAddress",
+              "type": "address",
+              "internalType": "address"
+          },
+          {
+              "name": "nextCouponAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+          },
+          {
+              "name": "nextCouponDate",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "stateMutability": "view"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_cdsID",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyCDS",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+      "type": "function",
+      "name": "cdsContracts",
+      "inputs": [
+          {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "outputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "internalType": "uint256"
+          },
+          {
+              "name": "bondAddressAndExpiration",
+              "type": "bytes32",
+              "internalType": "bytes32"
+          },
+          {
+              "name": "creator",
+              "type": "address",
+              "internalType": "address"
+          },
+          {
+              "name": "buyer",
+              "type": "address",
+              "internalType": "address"
+          },
+          {
+              "name": "premium",
+              "type": "uint256",
+              "internalType": "uint256"
+          },
+          {
+              "name": "isActive",
+              "type": "bool",
+              "internalType": "bool"
+          },
+          {
+              "name": "isClaimed",
+              "type": "bool",
+              "internalType": "bool"
+          },
+          {
+              "name": "isAccused",
+              "type": "bool",
+              "internalType": "bool"
+          }
+      ],
+      "stateMutability": "view"
+  },
+  {
+      "type": "function",
+      "name": "cdsCount",
+      "inputs": [],
+      "outputs": [
+          {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "stateMutability": "view"
+  },
+  {
+      "type": "function",
+      "name": "createCDS",
+      "inputs": [
+          {
+              "name": "_bondAndExpiration",
+              "type": "bytes32",
+              "internalType": "bytes32"
+          },
+          {
+              "name": "premium",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+  },
+  {
+      "type": "function",
+      "name": "getBond",
+      "inputs": [
+          {
+              "name": "bondAndExpiration",
+              "type": "bytes32",
+              "internalType": "bytes32"
+          }
+      ],
+      "outputs": [
+          {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+          },
+          {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+          },
+          {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "stateMutability": "view"
+  },
+  {
+      "type": "function",
+      "name": "getCDS",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "outputs": [
+          {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+          },
+          {
+              "name": "",
+              "type": "bytes32",
+              "internalType": "bytes32"
+          },
+          {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+          },
+          {
+              "name": "",
+              "type": "address",
+              "internalType": "address"
+          },
+          {
+              "name": "",
+              "type": "uint256",
+              "internalType": "uint256"
+          },
+          {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+          },
+          {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+          },
+          {
+              "name": "",
+              "type": "bool",
+              "internalType": "bool"
+          }
+      ],
+      "stateMutability": "view"
+  },
+  {
+      "type": "function",
+      "name": "recoverCollateral",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+  },
+  {
+      "type": "function",
+      "name": "rejectDefault",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+  },
+  {
+      "type": "function",
+      "name": "requestDefaultVerification",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "internalType": "uint256"
+          }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+  },
+  {
+      "type": "event",
+      "name": "BondAdded",
+      "inputs": [
+          {
+              "name": "bondAddress",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+          },
+          {
+              "name": "nextCouponAmount",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+          },
+          {
+              "name": "nextCouponDate",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+          },
+          {
+              "name": "bondAndExpiration",
+              "type": "bytes32",
+              "indexed": false,
+              "internalType": "bytes32"
+          }
+      ],
+      "anonymous": false
+  },
+  {
+      "type": "event",
+      "name": "CDSBought",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "indexed": true,
+              "internalType": "uint256"
+          },
+          {
+              "name": "buyer",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+          }
+      ],
+      "anonymous": false
+  },
+  {
+      "type": "event",
+      "name": "CDSClaimed",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "indexed": true,
+              "internalType": "uint256"
+          },
+          {
+              "name": "buyer",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+          }
+      ],
+      "anonymous": false
+  },
+  {
+      "type": "event",
+      "name": "CDSCreated",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "indexed": true,
+              "internalType": "uint256"
+          },
+          {
+              "name": "creator",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+          },
+          {
+              "name": "bondAddress",
+              "type": "address",
+              "indexed": false,
+              "internalType": "address"
+          },
+          {
+              "name": "premium",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+          },
+          {
+              "name": "couponDate",
+              "type": "uint256",
+              "indexed": false,
+              "internalType": "uint256"
+          }
+      ],
+      "anonymous": false
+  },
+  {
+      "type": "event",
+      "name": "CollateralRecovered",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "indexed": true,
+              "internalType": "uint256"
+          },
+          {
+              "name": "creator",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+          }
+      ],
+      "anonymous": false
+  },
+  {
+      "type": "event",
+      "name": "DefaultAccepted",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "indexed": true,
+              "internalType": "uint256"
+          },
+          {
+              "name": "admin",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+          }
+      ],
+      "anonymous": false
+  },
+  {
+      "type": "event",
+      "name": "DefaultRejected",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "indexed": true,
+              "internalType": "uint256"
+          },
+          {
+              "name": "admin",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+          }
+      ],
+      "anonymous": false
+  },
+  {
+      "type": "event",
+      "name": "DefaultRequested",
+      "inputs": [
+          {
+              "name": "cdsID",
+              "type": "uint256",
+              "indexed": true,
+              "internalType": "uint256"
+          },
+          {
+              "name": "buyer",
+              "type": "address",
+              "indexed": true,
+              "internalType": "address"
+          }
+      ],
+      "anonymous": false
+  }
 
-// USDC address for Base Sepolia testnet
-export const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+  // Add other relevant functions from the CDS manager contract
+];
+
+export const mockUsdcABI = [
+
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "allowance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "needed",
+          "type": "uint256"
+        }
+      ],
+      "name": "ERC20InsufficientAllowance",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "balance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "needed",
+          "type": "uint256"
+        }
+      ],
+      "name": "ERC20InsufficientBalance",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "approver",
+          "type": "address"
+        }
+      ],
+      "name": "ERC20InvalidApprover",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "receiver",
+          "type": "address"
+        }
+      ],
+      "name": "ERC20InvalidReceiver",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "ERC20InvalidSender",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        }
+      ],
+      "name": "ERC20InvalidSpender",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableInvalidOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "ETH_CLAIM_AMOUNT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ETH_CLAIM_COOLDOWN",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "INITIAL_SUPPLY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "USDC_CLAIM_AMOUNT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "USDC_CLAIM_COOLDOWN",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        }
+      ],
+      "name": "allowance",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "name": "claimETH",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "claimUSDC",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "lastETHClaimTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "lastUSDCClaimTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "symbol",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  // Add other relevant functions from the mock USDC contract
+];

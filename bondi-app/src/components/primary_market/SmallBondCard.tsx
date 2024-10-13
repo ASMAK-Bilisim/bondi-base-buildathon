@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../common/Button';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
@@ -9,6 +9,8 @@ import InvestmentPopup from './InvestmentPopup';
 import { useAddress, useContract, useContractRead } from "@thirdweb-dev/react";
 import { ethers } from 'ethers';
 import { Bond } from '../../hooks/usePrimaryMarketBonds';
+import { MOCK_USDC_ADDRESS, contractABI } from '../../constants/contractInfo';
+import { useNavigate } from 'react-router-dom';
 
 // Utility function to format numbers correctly
 const formatNumber = (value: string | number): string => {
@@ -40,25 +42,54 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     financialMetricsPdfLink,
     modificationCriteria,
     contractAddress,
-    totalInvestmentTarget,
-    reachedInvestment,
+    bondTokenAddress,
+    ogNftAddress,
+    whaleNftAddress,
   } = data;
 
+  const [reachedInvestment, setReachedInvestment] = useState<number>(0);
+  const [targetAmount, setTargetAmount] = useState<number>(0);
   const animatedCreditScore = useAnimatedProgress(creditScore, 1500);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInvestmentPopupOpen, setIsInvestmentPopupOpen] = useState(false);
 
   const address = useAddress();
-  const { contract } = useContract(contractAddress);
+  const { contract: mockUsdcContract } = useContract(MOCK_USDC_ADDRESS);
+  const { contract: fundingContract } = useContract(contractAddress, contractABI);
+
+  const { data: fundingContractBalance, isLoading: isBalanceLoading } = useContractRead(
+    mockUsdcContract,
+    "balanceOf",
+    [contractAddress]
+  );
+
+  const { data: targetAmountData, isLoading: isTargetAmountLoading } = useContractRead(
+    fundingContract,
+    "targetAmount"
+  );
 
   const { data: investedAmountData } = useContractRead(
-    contract,
+    fundingContract,
     "investedAmountPerInvestor",
     [address]
   );
 
+  useEffect(() => {
+    if (fundingContractBalance && !isBalanceLoading) {
+      const balance = ethers.utils.formatUnits(fundingContractBalance.toString().replace(/,/g, ''), 6);
+      setReachedInvestment(parseFloat(balance));
+    }
+  }, [fundingContractBalance, isBalanceLoading]);
+
+  useEffect(() => {
+    if (targetAmountData && !isTargetAmountLoading) {
+      const target = ethers.utils.formatUnits(targetAmountData.toString().replace(/,/g, ''), 6);
+      setTargetAmount(parseFloat(target));
+    }
+  }, [targetAmountData, isTargetAmountLoading]);
+
   const investedAmount = investedAmountData 
-    ? ethers.utils.formatUnits(formatNumber(investedAmountData.toString()), 6) 
+    ? ethers.utils.formatUnits(investedAmountData.toString().replace(/,/g, ''), 6) 
     : "0";
 
   const getColorsForCreditScore = (score: number): [string, string, string] => {
@@ -71,7 +102,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
 
   const [startColor, midColor, endColor] = getColorsForCreditScore(animatedCreditScore);
 
-  const investmentProgress = (reachedInvestment / totalInvestmentTarget) * 100;
+  const investmentProgress = targetAmount > 0 ? (reachedInvestment / targetAmount) * 100 : 0;
 
   const getProgressBarColor = (progress: number) => {
     return progress < 10 ? '#e55f0b' : '#4fc484';
@@ -91,6 +122,17 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     year: 'numeric'
   });
 
+  // Format number for display, keeping commas and dots
+  const formatDisplayNumber = (value: number): string => {
+    return value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  };
+
+  const navigate = useNavigate();
+
+  const handleCheckDetails = () => {
+    navigate(`/primary-market/${data.isin}`);
+  };
+
   return (
     <div className="bg-[#f2fbf9] rounded-lg shadow-lg overflow-hidden w-full mb-4">
       <div className="p-4 sm:p-6 pb-4">
@@ -105,6 +147,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
               intent="secondary" 
               size="small" 
               className="w-36 xs:w-28 lg:w-40 py-0.5 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px]"
+              onClick={handleCheckDetails}
             />
             <Button 
               label="Invest Now" 
@@ -157,17 +200,17 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                 </div>
               </div>
               <div>
-                <div className="flex justify-between items-center mb-2 md:-mt-5 xl:mb-1">
-                  <div>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-left">
                     <h3 className="text-[16px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[13px] font-bold text-[#1c544e]">Reached Investment (USDC)</h3>
                     <span className="text-[18px] xl:text-[18px] lg:text-[16px] md:text-[15px] sm:text-[14px] xs:text-[15px] text-[#1c544e] font-bold">
-                      {`$${parseFloat(reachedInvestment).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                      {`$${formatDisplayNumber(reachedInvestment)}`}
                     </span>
                   </div>
                   <div className="text-right">
                     <h3 className="text-[16px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[13px] font-bold text-[#1c544e]">Target Investment</h3>
                     <span className="text-[18px] xl:text-[18px] lg:text-[16px] md:text-[15px] sm:text-[14px] xs:text-[15px] text-[#1c544e] font-bold">
-                      {`$${parseFloat(totalInvestmentTarget).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                      {`$${formatDisplayNumber(targetAmount)}`}
                     </span>
                   </div>
                 </div>
@@ -296,6 +339,10 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
             maturityDate,
             currentPrice,
             isin,
+            contractAddress,
+            bondTokenAddress,
+            ogNftAddress,
+            whaleNftAddress,
           }}
         />
       )}

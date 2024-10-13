@@ -1,26 +1,24 @@
 import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Calendar03Icon, ArrowDown01Icon, PieChartIcon } from "@hugeicons/react";
+import { Calendar03Icon, ArrowDown01Icon } from "@hugeicons/react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { usePortfolioData } from "../../hooks/usePortfolioData";
 import { format } from 'date-fns';
 
 interface PortfolioPerformanceProps {
   onTimeRangeChange?: (range: string) => void;
+  chartName?: string;
+  bondPrice?: number;
 }
 
 const timeRanges = ["1 Day", "1 Week", "1 Month", "6 Months", "1 Year", "2 Years", "YTD"];
 
 const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
   onTimeRangeChange = () => {},
+  chartName = "BTC/USD Price",
+  bondPrice
 }) => {
-  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { portfolioValue, performanceData, timeRange, setTimeRange, isLoading, error } = usePortfolioData();
-
-  const handlePortfolioClick = () => {
-    navigate("/portfolio");
-  };
+  const { performanceData, timeRange, setTimeRange, isLoading, error } = usePortfolioData();
 
   const handleTimeRangeChange = (range: string) => {
     setTimeRange(range);
@@ -35,7 +33,7 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
         console.error('Invalid date:', value);
         return 'Invalid Date';
       }
-      return timeRange === '1 Day' ? format(date, 'MMM dd, HH:mm') : format(date, 'MMM dd, yyyy');
+      return timeRange === '1 Day' ? format(date, 'MMM dd HH:mm') : format(date, 'MMM dd yyyy');
     } catch (err) {
       console.error('Error formatting date:', err);
       return 'Error';
@@ -69,12 +67,8 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
     return (
       <>
         <header className="flex gap-5 justify-between w-full mb-4 3xl:mb-5 4xl:mb-6">
-          <div 
-            className="flex gap-2.5 text-xs 3xl:text-sm 4xl:text-base leading-none text-right cursor-pointer"
-            onClick={handlePortfolioClick}
-          >
-            <PieChartIcon className="w-6 h-6 3xl:w-7 3xl:h-7 4xl:w-8 4xl:h-8 text-teal-900" />
-            <h1 className="my-auto basis-auto hover:underline">BTC/USDT Price</h1>
+          <div className="flex gap-2.5 text-xs 3xl:text-sm 4xl:text-base leading-none text-right">
+            <h1 className="my-auto basis-auto">{chartName}</h1>
           </div>
           <div className="relative">
             <button
@@ -106,7 +100,7 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
           </div>
         </header>
         <p className="self-start text-2xl 3xl:text-3xl 4xl:text-4xl font-extrabold leading-10 text-right">
-          ${portfolioValue.toFixed(2)}
+          ${bondPrice ? bondPrice.toFixed(2) : 'N/A'}
         </p>
         <div className="h-44 3xl:h-52 4xl:h-60 w-full mt-4 3xl:mt-5 4xl:mt-6">
           {chartData.length > 0 ? (

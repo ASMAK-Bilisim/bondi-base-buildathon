@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { BOND_CONTRACT_ADDRESS, contractABI, USDC_ADDRESS } from '../constants/contractInfo';
+import { contractABI, MOCK_USDC_ADDRESS } from '../constants/contractInfo';
 import { useContractRead, useContract, useSDK } from '@thirdweb-dev/react';
 
 const formatNumber = (value: string | number | undefined): string => {
@@ -11,9 +11,9 @@ const formatNumber = (value: string | number | undefined): string => {
   return value.toString();
 };
 
-export const useContractInfo = () => {
-  const { contract } = useContract(BOND_CONTRACT_ADDRESS, contractABI);
-  const { contract: usdcContract } = useContract(USDC_ADDRESS);
+export const useContractInfo = (contractAddress: string) => {
+  const { contract } = useContract(contractAddress, contractABI);
+  const { contract: usdcContract } = useContract(MOCK_USDC_ADDRESS);
   const sdk = useSDK();
 
   const [contractUSDCBalance, setContractUSDCBalance] = useState("0");
@@ -25,7 +25,7 @@ export const useContractInfo = () => {
   const { data: contractBalanceData, isLoading: isBalanceLoading, error: balanceError } = useContractRead(
     usdcContract,
     "balanceOf",
-    [BOND_CONTRACT_ADDRESS]
+    [contractAddress]
   );
 
   const { data: targetAmountData, isLoading: isTargetLoading, error: targetError } = useContractRead(
@@ -35,15 +35,18 @@ export const useContractInfo = () => {
 
   const { data: minInvestmentData, isLoading: isMinInvestmentLoading, error: minInvestmentError } = useContractRead(
     contract,
-    "minimumInvestmentAmount"
+    "getMinimumInvestmentAmount"
   );
+
+  const { data: bondTokenAddressData } = useContractRead(contract, "bondDistribution");
+  const { data: ogNFTAddressData } = useContractRead(contract, "ogNFT");
 
   useEffect(() => {
     const fetchContractCreationDate = async () => {
       if (sdk) {
         try {
           const provider = sdk.getProvider();
-          const contractCode = await provider.getCode(BOND_CONTRACT_ADDRESS);
+          const contractCode = await provider.getCode(contractAddress);
           if (contractCode === '0x') {
             console.error('Contract not found at the specified address');
             return;
@@ -57,7 +60,7 @@ export const useContractInfo = () => {
           let right = currentBlockNumber;
           while (left <= right) {
             const mid = Math.floor((left + right) / 2);
-            const code = await provider.getCode(BOND_CONTRACT_ADDRESS, mid);
+            const code = await provider.getCode(contractAddress, mid);
             if (code === '0x') {
               left = mid + 1;
             } else {
@@ -127,6 +130,9 @@ export const useContractInfo = () => {
     daysRemaining,
     isLoading,
     error,
-    contractAddress: BOND_CONTRACT_ADDRESS  // Add this line
+    contractAddress,
+    mockUsdcAddress: MOCK_USDC_ADDRESS,
+    bondTokenAddress: bondTokenAddressData,
+    ogNftAddress: ogNFTAddressData,
   };
 };

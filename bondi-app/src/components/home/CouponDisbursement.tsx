@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CouponPercentIcon, LinkSquare01Icon, SquareUnlock01Icon, SquareLock01Icon } from "@hugeicons/react";
-import { format, parseISO, isFuture } from 'date-fns';
-import { usePrimaryMarketBonds } from "../../hooks/usePrimaryMarketBonds";
+import { format } from 'date-fns';
+import { useCouponData } from "../../hooks/useCouponData";
 
 interface Coupon {
   id: string;
@@ -14,20 +14,8 @@ interface Coupon {
 
 const CouponDisbursement: React.FC = () => {
   const navigate = useNavigate();
-  const { bonds } = usePrimaryMarketBonds();
+  const { coupons, isLoading, error } = useCouponData();
   const [hoveredCouponId, setHoveredCouponId] = useState<string | null>(null);
-
-  const coupons = useMemo(() => {
-    return bonds.flatMap(bond => 
-      bond.couponDates.map((date, index) => ({
-        id: `${bond.isin}-${index}`,
-        date: parseISO(date),
-        amount: (bond.bondYield / 2) * (bond.totalInvestmentTarget / 100), // Assuming semi-annual coupons
-        token: `bt${bond.companyName.split(' ')[0].toUpperCase()}`,
-        isRedeemable: !isFuture(parseISO(date))
-      }))
-    ).sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [bonds]);
 
   const handleCouponsClick = () => {
     navigate("/coupons");
@@ -80,6 +68,14 @@ const CouponDisbursement: React.FC = () => {
       </div>
     </div>
   );
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
 
   return (
     <section className="flex flex-col px-2 sm:px-5 md:px-3 lg:px-5 3xl:px-5 4xl:px-4 pt-3 sm:pt-5 md:pt-4 lg:pt-5 3xl:pt-6 4xl:pt-7 pb-2 sm:pb-4 md:pb-3 lg:pb-4 3xl:pb-5 4xl:pb-6 font-inter text-[#1c544e] bg-[#F2FBF9] rounded-xl border-teal-900 border-solid border-[0.25px] w-full h-[300px] 3xl:h-[350px] 4xl:h-[400px]">

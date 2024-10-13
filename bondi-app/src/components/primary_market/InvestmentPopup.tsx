@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CancelSquareIcon, Exchange01Icon, SquareLock01Icon, SquareUnlock01Icon } from "@hugeicons/react";
 import { useAddress, useContract, useContractRead, useContractWrite, useSDK } from "@thirdweb-dev/react";
 import { ethers } from 'ethers';
-import { USDC_ADDRESS, BOND_CONTRACT_ADDRESS, contractABI } from '../../constants/contractInfo';
+import { MOCK_USDC_ADDRESS, contractABI } from '../../constants/contractInfo';
 import { useContractInfo } from '../../hooks/useContractInfo';
 import { useNavigate } from 'react-router-dom';
 import 'react-circular-progressbar/dist/styles.css';
@@ -12,10 +12,14 @@ interface InvestmentPopupProps {
   bondData: {
     companyName: string;
     companyLogo: string;
-    bondYield: number;
     maturityDate: string;
     currentPrice: number;
     isin: string;
+    contractAddress: string;
+    bondTokenAddress: string;
+    ogNftAddress: string;
+    whaleNftAddress: string;
+    bondYield: number;
   };
 }
 
@@ -31,35 +35,39 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   const [isInvestmentComplete, setIsInvestmentComplete] = useState(false);
   const [isOGNFTUnlocked, setIsOGNFTUnlocked] = useState(false);
   const [isWhaleNFTUnlocked, setIsWhaleNFTUnlocked] = useState(false);
+  const [isAmountValid, setIsAmountValid] = useState(false);
+  const [approvedAmount, setApprovedAmount] = useState<ethers.BigNumber>(ethers.constants.Zero);
 
   const address = useAddress();
   const sdk = useSDK();
-  const { contract: usdcContract } = useContract(USDC_ADDRESS);
-  const { contract: bondContract } = useContract(BOND_CONTRACT_ADDRESS, contractABI);
-  const { minInvestmentAmount, targetAmount, isLoading: isContractInfoLoading } = useContractInfo();
+  const { contract: mockUsdcContract } = useContract(MOCK_USDC_ADDRESS);
+  const { contract: fundingContract } = useContract(bondData.contractAddress, contractABI);
+  const { minInvestmentAmount, targetAmount, isLoading: isContractInfoLoading } = useContractInfo(bondData.contractAddress);
 
   const { data: balanceData, isLoading: isBalanceLoading } = useContractRead(
-    usdcContract,
+    mockUsdcContract,
     "balanceOf",
     [address]
   );
 
   const { data: allowanceData, isLoading: isAllowanceLoading, refetch: refetchAllowance } = useContractRead(
-    usdcContract,
+    mockUsdcContract,
     "allowance",
-    [address, BOND_CONTRACT_ADDRESS]
+    [address, bondData.contractAddress]
   );
 
   const { data: investedAmountData, isLoading: isInvestedAmountLoading, refetch: refetchInvestedAmount } = useContractRead(
-    bondContract,
+    fundingContract,
     "investedAmountPerInvestor",
     [address]
   );
 
-  const { mutateAsync: approveUSDC, isLoading: isApproveLoading } = useContractWrite(usdcContract, "approve");
-  const { mutateAsync: invest, isLoading: isInvestLoading } = useContractWrite(bondContract, "invest");
+  const { mutateAsync: approveMockUSDC, isLoading: isApproveLoading } = useContractWrite(mockUsdcContract, "approve");
+  const { mutateAsync: invest, isLoading: isInvestLoading } = useContractWrite(fundingContract, "invest");
 
   const navigate = useNavigate();
+
+  const WHALE_THRESHOLD = ethers.utils.parseUnits("5000", 6); // 5000 USDC
 
   // Effect to refetch invested amount on component mount and address change
   useEffect(() => {
@@ -71,6 +79,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   useEffect(() => {
     if (allowanceData && !isAllowanceLoading) {
       const allowance = ethers.BigNumber.from(allowanceData);
+      setApprovedAmount(allowance);
       setIsApproved(allowance.gt(ethers.constants.Zero));
     }
   }, [allowanceData, isAllowanceLoading]);
@@ -92,10 +101,22 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   useEffect(() => {
     if (isInvestmentComplete) {
       setIsOGNFTUnlocked(true);
-      const whaleThreshold = parseFloat(targetAmount) * 0.025;
-      setIsWhaleNFTUnlocked(parseFloat(amount) >= whaleThreshold);
+      
+      // Calculate total invested amount (previous investment + current investment)
+      const previousInvestment = ethers.utils.parseUnits(investedAmount, 6);
+      const currentInvestment = ethers.utils.parseUnits(amount, 6);
+      const totalInvestment = previousInvestment.add(currentInvestment);
+      
+      setIsWhaleNFTUnlocked(totalInvestment.gte(WHALE_THRESHOLD));
     }
-  }, [isInvestmentComplete, amount, targetAmount]);
+  }, [isInvestmentComplete, amount, investedAmount]);
+
+  useEffect(() => {
+    if (!isContractInfoLoading && minInvestmentAmount) {
+      const amountInUSDC = isUSDC ? parseFloat(amount) : parseFloat(amount) * bondData.currentPrice;
+      setIsAmountValid(amountInUSDC >= parseFloat(minInvestmentAmount));
+    }
+  }, [amount, isUSDC, minInvestmentAmount, isContractInfoLoading, bondData.currentPrice]);
 
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-US', { 
@@ -181,43 +202,60 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
     if (!address) return;
     setIsApproving(true);
     try {
+      const amountToApprove = ethers.utils.parseUnits(amount || "0", 6);
       const maxUint256 = ethers.constants.MaxUint256;
-      await approveUSDC({ args: [BOND_CONTRACT_ADDRESS, maxUint256] });
+      
+      const approvalAmount = amountToApprove.gt(maxUint256) ? maxUint256 : amountToApprove;
+
+      const approvalTx = await approveMockUSDC({ args: [bondData.contractAddress, approvalAmount] });
+      await sdk?.getProvider().waitForTransaction(approvalTx.receipt.transactionHash);
+
       await refetchAllowance();
+      setApprovedAmount(approvalAmount);
       setIsApproved(true);
     } catch (error) {
-      console.error("Error approving USDC:", error);
+      console.error("Error approving Mock USDC:", error);
     } finally {
       setIsApproving(false);
     }
   };
 
   const handleInvest = async () => {
-    if (!address || !sdk) return;
+    if (!address || !sdk || !amount || amount === '0.0000') {
+      console.error("Invalid investment amount or address not connected");
+      return;
+    }
+
+    const amountToInvest = ethers.utils.parseUnits(amount, 6);
+    
+    if (amountToInvest.gt(approvedAmount)) {
+      // If the investment amount is greater than the approved amount, we need to approve again
+      await handleApprove();
+      return;
+    }
+
     setIsInvesting(true);
     try {
-      const amountToInvest = ethers.utils.parseUnits(amount, 6);
-      
-      // Check if approval is needed
-      if (!isApproved) {
-        await handleApprove();
+      if (amountToInvest.lt(ethers.utils.parseUnits(minInvestmentAmount, 6))) {
+        throw new Error(`Minimum investment amount is ${minInvestmentAmount} USDC`);
       }
 
-      // Now, call the invest function on the bond contract
       const investTx = await invest({ args: [amountToInvest] });
-
-      // Wait for the transaction to be mined
       await sdk.getProvider().waitForTransaction(investTx.receipt.transactionHash);
 
-      console.log("Investment successful:", investTx);
-
-      // After successful investment, refetch the invested amount
       await refetchInvestedAmount();
 
       setIsInvestmentComplete(true);
-    } catch (error) {
+      setIsOGNFTUnlocked(true);
+      
+      // Check if total investment (including this one) is at least 5000 USDC
+      const previousInvestment = ethers.utils.parseUnits(investedAmount, 6);
+      const totalInvestment = previousInvestment.add(amountToInvest);
+      setIsWhaleNFTUnlocked(totalInvestment.gte(WHALE_THRESHOLD));
+
+    } catch (error: any) {
       console.error("Error investing:", error);
-      // You might want to show an error message to the user here
+      // Show error message to the user
     } finally {
       setIsInvesting(false);
     }
@@ -247,18 +285,9 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
           {/* Left Panel */}
           <div className="w-1/2 overflow-y-auto relative">
             {isInvestmentComplete ? (
-              <div className="bg-[#071f1e] h-full flex flex-col items-center justify-center relative overflow-hidden">
-                {/* Updated convexical glow effect */}
-                <div 
-                  className="absolute top-0 left-0 right-0 h-60 opacity-20"
-                  style={{
-                    background: 'radial-gradient(ellipse at top, #d8feaa 0%, rgba(216, 254, 170, 0) 70%)',
-                    transform: 'scaleY(0.7)',
-                    transformOrigin: 'top'
-                  }}
-                ></div>
-                
-                <div className="flex flex-col items-start space-y-12 p-8 relative z-10">
+              <div className="h-full bg-[#071f1e] flex flex-col items-center justify-center relative">
+                <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#d8feaa] to-transparent opacity-30 rounded-t-md"></div>
+                <div className="flex flex-col items-center space-y-12 p-8 relative z-10">
                   <div className="flex items-center">
                     <div className="w-16">
                       {isOGNFTUnlocked ? (
@@ -269,7 +298,9 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                     </div>
                     <div className="ml-4">
                       <h3 className="text-[#f2fbf9] text-[22px] font-bold">OG NFT</h3>
-                      <p className="text-[#f2fbf9] text-[14px] mt-1 opacity-70">Participate in the first funding phase</p>
+                      <p className="text-[#f2fbf9] text-[14px] mt-1 opacity-70">
+                        Make your first investment in this funding contract
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center">
@@ -282,13 +313,13 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                     </div>
                     <div className="ml-4">
                       <h3 className="text-[#f2fbf9] text-[22px] font-bold">Whale NFT</h3>
-                      <p className="text-[#f2fbf9] text-[14px] mt-1 opacity-70">Commit at least $5,000</p>
+                      <p className="text-[#f2fbf9] text-[14px] mt-1 opacity-70">Total investment of at least 5,000 USDC</p>
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              // Original left panel content
+              // Original left panel content (investment details)
               <div className="h-full flex flex-col justify-center p-8">
                 <div className="mb-4">
                   <img src={bondData.companyLogo} alt={`${bondData.companyName} logo`} className="w-14 h-14" />
@@ -302,27 +333,33 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                     <span>{formatCurrency(bondData.currentPrice)}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span>Yield to Maturity:</span>
+                    <span>{bondData.bondYield.toFixed(2)}%</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span>Maturity Date:</span>
                     <span>{bondData.maturityDate}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Yield to Maturity:</span>
-                    <span>{bondData.bondYield}%</span>
-                  </div>
                 </div>
 
-                <h3 className="mt-8 mb-4 text-[#1C544E] text-base font-bold">Commitment Terms</h3>
-                <ol className="list-decimal list-inside space-y-4 text-xs text-[#1C544E]">
-                  <li>The first funding phase features the initial commitment period. During this period, you can join the funding phase by putting 10% of your total investment.</li>
-                  <li>When the commitments reach 10% of the target investment amount, the funding phase proceeds to the pending payment phase, where users have two weeks to pay the remaining 90% of their investments.</li>
-                  <li>If the target investment amount is not reached before the two-week deadline, funding phase is cancelled and user funds are refunded.</li>
+                <h3 className="mt-8 mb-4 text-[#1C544E] text-base font-bold">Description</h3>
+                <ol className="list-decimal list-inside space-y-4 text-[14px] text-[#1C544E]">
+                  <div>
+                    You can buy Bond Tokens (BTs) by contributing to the funding contracts. Here’s how it works:
+                  </div>
+	                  <li>You can send your funds to the smart contract during this period to secure your share in the bond offering.</li>
+	                  <li>Once the funding target is reached, bond tokens (BTs) will be available for you to claim directly from the platform.</li>
+	                  <li>If the funding target isn’t reached by the deadline, you’ll automatically get a refund, with your funds returned to your wallet.</li>
+                  <div>
+                    As a bonus, when you make your first deposit, you’ll receive an OG NFT as a reward. And if you deposit $5,000 or more, you’ll unlock a special Whale NFT, which will guarantee your allocation in the future Bondi protocol token.
+                  </div>
                 </ol>
               </div>
             )}
           </div>
 
-          {/* Middle line with shadow effect only to the left */}
-          {!isInvestmentComplete && (
+           {/* Middle line with shadow effect only to the left */}
+           {!isInvestmentComplete && (
             <div className="absolute top-0 bottom-0 right-1/2 w-6 pointer-events-none">
               <div className="absolute top-0 bottom-0 w-6 bg-gradient-to-l from-[#E0E0E0] to-transparent opacity-30"></div>
             </div>
@@ -346,7 +383,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                     </p>
                   </div>
                 </div>
-                <div className="w-full px-16">
+                <div className="w-full px-16 mt-16">
                   <button 
                     onClick={handleGoHome}
                     className="w-full bg-[#1C544E] text-white text-xl font-medium py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300"
@@ -398,18 +435,18 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                     </div>
                   </div>
 
-                  <p className="text-sm text-[#1C544E] opacity-60 mb-8">{calculateEquivalent()}</p>
+                  <p className="text-sm text-[#1C544E] opacity-60 mb-2">{calculateEquivalent()}</p>
+                  <p className="text-sm text-[#1C544E] mb-4">
+                    Minimum investment: {minInvestmentAmount} USDC
+                  </p>
+
+                  {!isAmountValid && (
+                    <p className="text-sm text-red-500 mb-4">
+                      Please enter at least the minimum investment amount.
+                    </p>
+                  )}
 
                   <div className="space-y-4 text-xs text-[#1C544E] mb-8">
-                    <div className="flex justify-between">
-                      <span>Minimum Investment:</span>
-                      <span>
-                        {isContractInfoLoading 
-                          ? 'Loading...' 
-                          : `${formatCurrency(parseFloat(minInvestmentAmount))} USDC`
-                        }
-                      </span>
-                    </div>
                     <div className="flex justify-between items-center">
                       <span>Your Balance:</span>
                       <div className="text-right">
@@ -434,19 +471,23 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                     Please note that the price and Yield to Maturity (YTM) indicated during the Funding Phase are provisional and do not represent the final figures. Once the bonds are purchased in real life, you will be notified, and the realized price and YTM will be displayed when you mint your bond tokens.
                   </p>
 
-                  <button 
-                    onClick={isApproved ? handleInvest : handleApprove}
-                    disabled={isApproving || isApproveLoading || isInvesting || isInvestLoading}
-                    className="w-full bg-[#1C544E] text-white text-xl font-medium py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {isApproving || isApproveLoading 
-                      ? 'Approving...' 
-                      : isInvesting || isInvestLoading 
-                        ? 'Investing...' 
-                        : isApproved 
-                          ? 'Invest' 
-                          : 'Approve USDC'}
-                  </button>
+                  {isApproved && amount && amount !== '0.0000' && ethers.utils.parseUnits(amount, 6).lte(approvedAmount) ? (
+                    <button 
+                      onClick={handleInvest}
+                      disabled={isInvesting || !isAmountValid}
+                      className="w-full bg-[#1C544E] text-white text-xl font-medium py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {isInvesting ? 'Investing...' : 'Invest'}
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleApprove}
+                      disabled={isApproving || !isAmountValid || !amount || amount === '0.0000'}
+                      className="w-full bg-[#1C544E] text-white text-xl font-medium py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {isApproving ? 'Approving...' : 'Approve USDC'}
+                    </button>
+                  )}
                 </div>
               </>
             )}

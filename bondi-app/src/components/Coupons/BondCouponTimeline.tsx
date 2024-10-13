@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { format, parseISO, isBefore } from 'date-fns';
+import React, { useState } from 'react';
+import { format, isBefore } from 'date-fns';
 import { LinkSquare02Icon, CheckmarkBadge02Icon, SquareLock01Icon } from '@hugeicons/react';
 import Button from '../common/Button';
-import { useAddress, useContract, useContractWrite, useContractRead } from "@thirdweb-dev/react";
-import { ethers } from 'ethers';
-import { BOND_CONTRACT_ADDRESS, contractABI } from '../../constants/contractInfo';
+import { useAddress, useContract, useContractWrite } from "@thirdweb-dev/react";
+import { contractABI } from '../../constants/contractInfo';
 import TearingCoupon from './TearingCoupon';
 import { animated, useTransition } from 'react-spring';
+import { useCouponData } from '../../hooks/useCouponData';
 
 interface Coupon {
   id: string;
-  date: string;
+  date: Date;
   amount: number;
-  isRedeemed: boolean;
+  token: string;
+  isRedeemable: boolean;
 }
 
 interface BondCouponTimelineProps {
   tokenName: string;
-  coupons: Coupon[];
   contractAddress: string;
 }
 
@@ -38,37 +38,19 @@ const SerratedCoupon: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ childr
 
 const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
   tokenName,
-  coupons,
   contractAddress,
 }) => {
   const currentDate = new Date();
   const [redeemedCoupons, setRedeemedCoupons] = useState<string[]>([]);
   const [tearingCouponId, setTearingCouponId] = useState<string | null>(null);
-  const [hasInvested, setHasInvested] = useState(false);
-  const [investedAmount, setInvestedAmount] = useState<string>('0.00');
   const address = useAddress();
   const { contract: bondContract } = useContract(contractAddress, contractABI);
   const { mutateAsync: redeemCoupon, isLoading } = useContractWrite(bondContract, "redeemCoupon");
 
-  const { data: investedAmountData, isLoading: isInvestedAmountLoading, refetch: refetchInvestedAmount } = useContractRead(
-    bondContract,
-    "investedAmountPerInvestor",
-    [address]
-  );
+  const { coupons, bondTokens } = useCouponData();
 
-  useEffect(() => {
-    if (address) {
-      refetchInvestedAmount();
-    }
-  }, [address, refetchInvestedAmount]);
-
-  useEffect(() => {
-    if (investedAmountData) {
-      const formattedInvestedAmount = ethers.utils.formatUnits(investedAmountData.investedAmount.toString(), 6);
-      setInvestedAmount(formattedInvestedAmount);
-      setHasInvested(parseFloat(formattedInvestedAmount) > 0);
-    }
-  }, [investedAmountData]);
+  const bondToken = bondTokens.find(token => token.address === contractAddress);
+  const bondCoupons = coupons.filter(coupon => coupon.token === tokenName);
 
   const handleRedeemCoupon = async (couponId: string, amount: number) => {
     if (!address) {
@@ -92,14 +74,14 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
     setTearingCouponId(null);
   };
 
-  const transitions = useTransition(coupons, {
+  const transitions = useTransition(bondCoupons, {
     keys: coupon => coupon.id,
     from: { opacity: 0, transform: 'translateX(50px)' },
     enter: { opacity: 1, transform: 'translateX(0px)' },
     leave: { opacity: 0, transform: 'translateX(-50px)' },
   });
 
-  if (!hasInvested) {
+  if (!bondToken || bondToken.balance === 0) {
     return null; // Don't render anything if the user hasn't invested
   }
 
@@ -146,7 +128,7 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
 
           <div className="flex space-x-0.5 relative z-20 pr-6">
             {transitions((style, coupon, _, index) => {
-              const couponDate = parseISO(coupon.date);
+              const couponDate = coupon.date;
               const isPastCoupon = isBefore(couponDate, currentDate);
               const isRedeemable = isPastCoupon && !coupon.isRedeemed && !redeemedCoupons.includes(coupon.id);
               const isRedeemed = coupon.isRedeemed || redeemedCoupons.includes(coupon.id);
@@ -231,7 +213,7 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
                   key={coupon.id}
                   style={{
                     ...style,
-                    zIndex: isTearing ? 50 : coupons.length - index,
+                    zIndex: isTearing ? 50 : bondCoupons.length - index,
                   }}
                   className="relative flex-shrink-0 w-72 h-48"
                 >
