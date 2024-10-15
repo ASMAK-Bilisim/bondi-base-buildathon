@@ -171,15 +171,17 @@ function App() {
         
         setStatus(statusMessage);
         await fetchContractValues(selectedContract);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to adjust funding parameters:', error);
         
         let errorMessage = 'An unexpected error occurred. Please try again.';
         
-        if (error.message.includes('execution reverted')) {
-          errorMessage = 'Transaction was reverted by the contract. Please check your inputs.';
-        } else if (error.message.includes('replacement fee too low')) {
-          errorMessage = 'Transaction failed due to network congestion. Please try again.';
+        if (error instanceof Error) {
+          if (error.message.includes('execution reverted')) {
+            errorMessage = 'Transaction was reverted by the contract. Please check your inputs.';
+          } else if (error.message.includes('replacement fee too low')) {
+            errorMessage = 'Transaction failed due to network congestion. Please try again.';
+          }
         }
         
         setStatus(`Failed to adjust funding parameters: ${errorMessage}`);
@@ -197,18 +199,17 @@ function App() {
     }
 
     try {
-      await provider.call(tx, tx.blockNumber);
+      await provider.call(tx as ethers.providers.TransactionRequest, tx.blockNumber);
       return 'Transaction succeeded';
-    } catch (err) {
+    } catch (err: unknown) {
       if (typeof err === 'object' && err !== null) {
         if ('data' in err) {
-          const result = err.data;
+          const result = (err as { data: string }).data;
           if (typeof result === 'string') {
-            // It's a revert reason string
             return ethers.utils.toUtf8String('0x' + result.slice(138));
           }
-        } else if ('message' in err) {
-          const match = err.message.match(/execution reverted: (.*)/);
+        } else if ('message' in err && typeof (err as { message: string }).message === 'string') {
+          const match = (err as { message: string }).message.match(/execution reverted: (.*)/);
           if (match) {
             return match[1];
           }
@@ -229,12 +230,12 @@ function App() {
         await tx.wait();
 
         setStatus('Minting initiated successfully!');
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to initiate minting:', error);
         
         let errorMessage = 'An unexpected error occurred. Please try again.';
         
-        if (error.message) {
+        if (error instanceof Error && error.message) {
           if (error.message.includes('Bond price already set')) {
             errorMessage = 'Bond price already set';
           } else if (error.message.includes('Target amount not reached')) {
@@ -242,7 +243,6 @@ function App() {
           } else if (error.message.includes('Funding period has ended')) {
             errorMessage = 'Funding period has ended';
           } else if (error.message.includes('execution reverted:')) {
-            // Extract the exact revert reason
             const match = error.message.match(/execution reverted: (.*?)"/);
             if (match && match[1]) {
               errorMessage = match[1];
