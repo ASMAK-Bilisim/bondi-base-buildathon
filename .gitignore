@@ -13,6 +13,7 @@ bondi-app/yarn-debug.log*
 bondi-app/yarn-error.log*
 bondi-app/pnpm-debug.log*
 bondi-app/lerna-debug.log*
+bondi-app/.npmrc
 bondi-app/node_modules
 bondi-app/dist
 bondi-app/dist-ssr

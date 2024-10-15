@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@hugeicons/react": "^0.6.2",
+    "react-icons": "^4.10.1",
     "@thirdweb-dev/react": "^4.9.4",
     "@thirdweb-dev/sdk": "^4.0.99",
     "thirdweb": "^5.61.5",
