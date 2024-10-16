@@ -2,18 +2,16 @@ import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import MenuItem from "./MenuItem";
 import {
-  GridViewIcon,
   Store01Icon,
   CouponPercentIcon,
   ScrollIcon,
   MarketAnalysisIcon
 } from '@hugeicons/react';
+import { useKYC } from './contexts/KYCContext'; // Import the useKYC hook
 
 const menuItems = [
-  { icon: GridViewIcon, label: "Home", path: "/" },
   { icon: Store01Icon, label: "Primary Market", path: "/primary-market" },
   { icon: MarketAnalysisIcon, label: "CDS Market", path: "/cds-market" },
-  { icon: CouponPercentIcon, label: "Coupons", path: "/coupons" },
 ];
 
 const otherItems = [
@@ -26,6 +24,12 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isCompact }) => {
   const location = useLocation();
+  const { isKYCCompleted } = useKYC(); // Use the KYC context
+
+  // Add Coupons menu item only if KYC is completed
+  const fullMenuItems = isKYCCompleted
+    ? [...menuItems, { icon: CouponPercentIcon, label: "Coupons", path: "/coupons" }]
+    : menuItems;
 
   return (
     <aside 
@@ -47,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCompact }) => {
               Menu
             </h2>
             <div className="flex flex-col">
-              {menuItems.map((item, index) => (
+              {fullMenuItems.map((item, index) => (
                 <Link key={item.path} to={item.path} className={`block transition-all duration-300 ${index > 0 ? 'mt-[7%]' : ''}`}>
                   <MenuItem
                     icon={item.icon}

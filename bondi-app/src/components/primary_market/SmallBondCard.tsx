@@ -11,6 +11,7 @@ import { ethers } from 'ethers';
 import { Bond } from '../../hooks/usePrimaryMarketBonds';
 import { MOCK_USDC_ADDRESS, contractABI } from '../../constants/contractInfo';
 import { useNavigate } from 'react-router-dom';
+import { useKYC } from '../contexts/KYCContext'; // Import the useKYC hook
 
 // Utility function to format numbers correctly
 const formatNumber = (value: string | number): string => {
@@ -74,6 +75,8 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     [address]
   );
 
+  const { isKYCCompleted } = useKYC(); // Use the KYC context
+
   useEffect(() => {
     if (fundingContractBalance && !isBalanceLoading) {
       const balance = ethers.utils.formatUnits(fundingContractBalance.toString().replace(/,/g, ''), 6);
@@ -133,6 +136,15 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     navigate(`/primary-market/${data.isin}`);
   };
 
+  const handleInvestOrKYC = () => {
+    if (isKYCCompleted) {
+      setIsInvestmentPopupOpen(true);
+    } else {
+      // Navigate to KYC page or open KYC modal
+      navigate('/kyc');
+    }
+  };
+
   return (
     <div className="bg-[#f2fbf9] rounded-lg shadow-lg overflow-hidden w-full mb-4">
       <div className="p-4 sm:p-6 pb-4">
@@ -150,11 +162,12 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
               onClick={handleCheckDetails}
             />
             <Button 
-              label="Invest Now" 
-              intent="primary" 
+              label={isKYCCompleted ? "Invest Now" : "Complete KYC"}
+              intent={isKYCCompleted ? "primary" : "secondary"}
               size="small" 
-              className="w-36 xs:w-28 lg:w-40 py-0.5 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px]"
-              onClick={() => setIsInvestmentPopupOpen(true)}
+              className={`w-36 xs:w-28 lg:w-40 py-0.5 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px] ${!isKYCCompleted && 'opacity-50 cursor-not-allowed'}`}
+              onClick={handleInvestOrKYC}
+              disabled={!isKYCCompleted}
             />
           </div>
         </div>
@@ -170,7 +183,9 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
               </div>
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full md:my-4">
                 <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">Yield to Maturity</h2>
-                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[16px] font-bold text-[#1c544e]">{bondYield}%</p>
+                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[16px] font-bold text-[#1c544e]">
+                  {bondYield.toFixed(2)}%
+                </p>
               </div>
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full">
                 <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">Maturity Date</h2>
@@ -329,7 +344,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
         />
       )}
       
-      {isInvestmentPopupOpen && (
+      {isKYCCompleted && isInvestmentPopupOpen && (
         <InvestmentPopup
           onClose={() => setIsInvestmentPopupOpen(false)}
           bondData={{

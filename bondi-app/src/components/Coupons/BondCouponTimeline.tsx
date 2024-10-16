@@ -14,6 +14,7 @@ interface Coupon {
   amount: number;
   token: string;
   isRedeemable: boolean;
+  isRedeemed?: boolean; // Added isRedeemed property
 }
 
 interface BondCouponTimelineProps {
@@ -50,7 +51,7 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
   const { coupons, bondTokens } = useCouponData();
 
   const bondToken = bondTokens.find(token => token.address === contractAddress);
-  const bondCoupons = coupons.filter(coupon => coupon.token === tokenName);
+  const bondCoupons = coupons.filter(coupon => coupon.token === tokenName && !coupon.isRedeemed);
 
   const handleRedeemCoupon = async (couponId: string, amount: number) => {
     if (!address) {
@@ -61,11 +62,18 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
     console.log(`Starting redemption for coupon ${couponId}`);
     setTearingCouponId(couponId);
 
-    // Simulate contract call for now
-    console.log(`Redeeming coupon ${couponId} for amount ${amount}`);
-    // Uncomment the following line when ready to make actual contract calls
-    // const data = await redeemCoupon({ args: [couponId, ethers.utils.parseUnits(amount.toString(), 6)] });
-    // console.info("Contract call success", data);
+    try {
+      // Uncomment the following lines when ready to make actual contract calls
+      // const data = await redeemCoupon({ args: [couponId, ethers.utils.parseUnits(amount.toString(), 6)] });
+      // console.info("Contract call success", data);
+
+      // Simulate successful redemption
+      setRedeemedCoupons(prev => [...prev, couponId]);
+      setTearingCouponId(null);
+    } catch (error) {
+      console.error("Error redeeming coupon:", error);
+      setTearingCouponId(null);
+    }
   };
 
   const handleTearComplete = (couponId: string) => {
@@ -130,8 +138,8 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
             {transitions((style, coupon, _, index) => {
               const couponDate = coupon.date;
               const isPastCoupon = isBefore(couponDate, currentDate);
-              const isRedeemable = isPastCoupon && !coupon.isRedeemed && !redeemedCoupons.includes(coupon.id);
-              const isRedeemed = coupon.isRedeemed || redeemedCoupons.includes(coupon.id);
+              const isRedeemable = isPastCoupon && !coupon.isRedeemable && !redeemedCoupons.includes(coupon.id);
+              const isRedeemed = coupon.isRedeemable || redeemedCoupons.includes(coupon.id);
               const isTearing = tearingCouponId === coupon.id;
               
               const couponContent = (

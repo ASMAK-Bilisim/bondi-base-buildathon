@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePrimaryMarketBonds } from '../hooks/usePrimaryMarketBonds';
-import PortfolioPerformance from '../components/home/PortfolioPerformance';
+import PortfolioPerformance from '../components/PortfolioPerformance';
 import BondCouponSchedule from '../components/primary_market/BondCouponSchedule';
 import { DollarSquareIcon, Calendar03Icon, PercentSquareIcon, DiplomaIcon, InformationSquareIcon } from '@hugeicons/react';
 

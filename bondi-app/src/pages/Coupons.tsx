@@ -1,48 +1,84 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import BondCouponTimeline from '../components/Coupons/BondCouponTimeline';
 import { usePrimaryMarketBonds } from '../hooks/usePrimaryMarketBonds';
-import { format, addMonths, parseISO, isBefore } from 'date-fns';
+import { useAddress, useContract, useContractRead } from "@thirdweb-dev/react";
+import { ethers } from 'ethers';
+import { contractABI } from '../constants/contractInfo';
 
 const Coupons: React.FC = () => {
-  const { bonds, isLoading, error } = usePrimaryMarketBonds();
+  const { bonds, isLoading: isBondsLoading, error: bondsError } = usePrimaryMarketBonds();
+  const address = useAddress();
+  const [investedBonds, setInvestedBonds] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  // Use a single contract instance for all bonds
+  const { contract } = useContract(bonds[0]?.contractAddress, contractABI);
 
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
+  // Use a single useContractRead for all bonds
+  const { data: investedAmountsData, isLoading: isInvestedAmountsLoading } = useContractRead(
+    contract,
+    "investedAmountPerInvestor",
+    [address]
+  );
 
-  // Function to generate sample coupons for each bond
-  const generateCoupons = (bond: any) => {
-    const coupons = [];
-    const startDate = parseISO(bond.maturityDate);
-    const couponAmount = (bond.bondYield / 2) * (bond.totalInvestmentTarget / 100); // Assuming semi-annual coupons
-    const today = new Date();
+  useEffect(() => {
+    const fetchInvestedBonds = async () => {
+      if (!address || isBondsLoading || bondsError || bonds.length === 0 || isInvestedAmountsLoading || !investedAmountsData) return;
 
-    for (let i = 0; i < 5; i++) {
-      const couponDate = addMonths(startDate, -6 * (i + 1)); // Semi-annual coupons, counting backwards from maturity
-      coupons.push({
-        id: `${bond.isin}-${i}`,
-        date: format(couponDate, 'yyyy-MM-dd'),
-        amount: couponAmount,
-        isRedeemable: isBefore(couponDate, today),
-        isRedeemed: false // Set all coupons as not redeemed initially
+      setIsLoading(true);
+      
+      const investedBondsData = bonds.filter((bond, index) => {
+        const investedAmount = investedAmountsData[index]?.investedAmount;
+        return investedAmount && ethers.BigNumber.from(investedAmount).gt(0);
+      }).map((bond, index) => {
+        const investedAmount = ethers.utils.formatUnits(investedAmountsData[index].investedAmount, 6);
+        return { ...bond, investedAmount };
       });
-    }
 
-    return coupons.reverse(); // Reverse to show earliest date first
-  };
+      setInvestedBonds(investedBondsData);
+      setIsLoading(false);
+    };
+
+    fetchInvestedBonds();
+  }, [address, bonds, isBondsLoading, bondsError, investedAmountsData, isInvestedAmountsLoading]);
+
+  if (isLoading || isBondsLoading || isInvestedAmountsLoading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-app-primary-2"></div>
+      </div>
+    );
+  }
+
+  if (bondsError) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-center text-[#1c544e]">
+          <h2 className="text-2xl font-bold mb-4">Error</h2>
+          <p>{bondsError.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (investedBonds.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-center text-[#1c544e]">
+          <h2 className="text-2xl font-bold mb-4">No Active Investments</h2>
+          <p>You haven't invested in any bonds yet. Visit the Primary Market to start investing!</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6">
-      <div className="space-y-6">
-        {bonds.map((bond) => (
+    <div className="h-full overflow-y-auto">
+      <div className="p-6 space-y-6">
+        {investedBonds.map((bond) => (
           <BondCouponTimeline
             key={bond.isin}
             tokenName={`bt${bond.companyName.split(' ')[0].toUpperCase()}`}
-            coupons={generateCoupons(bond)}
             contractAddress={bond.contractAddress}
           />
         ))}

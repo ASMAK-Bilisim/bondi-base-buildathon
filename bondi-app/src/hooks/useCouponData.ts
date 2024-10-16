@@ -10,6 +10,7 @@ interface Coupon {
   amount: number;
   token: string;
   isRedeemable: boolean;
+  isRedeemed?: boolean; // Added isRedeemed property
 }
 
 interface BondTokenInfo {
@@ -63,7 +64,8 @@ export const useCouponData = () => {
                 date: couponDate,
                 amount: couponAmount,
                 token: bondName,
-                isRedeemable: couponDate <= now
+                isRedeemable: couponDate <= now,
+                isRedeemed: false, // Initialize isRedeemed as false
               });
             }
           }
@@ -78,7 +80,7 @@ export const useCouponData = () => {
     };
 
     fetchCoupons();
-  }, [address, bonds, bondTokens]);
+  }, [address, bonds, bondTokens]); // Ensure dependencies are correct
 
   return { coupons, isLoading, error, bondTokens };
 };

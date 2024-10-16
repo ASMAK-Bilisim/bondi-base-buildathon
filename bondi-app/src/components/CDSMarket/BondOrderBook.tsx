@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useContract, useContractWrite, useAddress, useContractRead, useSDK } from "@thirdweb-dev/react";
 import { ethers } from 'ethers';
 import { MOCK_USDC_ADDRESS, mockUsdcABI, CDS_MANAGER_ADDRESS, cdsManagerABI } from '../../constants/contractInfo';
-import Modal from '../../components/common/Modal';
-import { DollarSquareIcon, Calendar03Icon, PercentSquareIcon, DiplomaIcon } from '@hugeicons/react';
+import { DollarSquareIcon, Calendar03Icon, PercentSquareIcon, DiplomaIcon, InformationSquareIcon } from '@hugeicons/react';
+import { useNotifications } from '../../components/contexts/NotificationContext';
 
 interface BondInfo {
   hash: string;
@@ -32,13 +32,12 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
   const [isCreatingOffer, setIsCreatingOffer] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
   const [isBuyMode, setIsBuyMode] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
   const [isBuyApproved, setIsBuyApproved] = useState(false);
   const [isBuyApproving, setIsBuyApproving] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const address = useAddress();
   const sdk = useSDK();
+  const { addNotification } = useNotifications();
 
   const { contract: usdcContract } = useContract(MOCK_USDC_ADDRESS, mockUsdcABI);
   const { mutateAsync: approveUSDC } = useContractWrite(usdcContract, "approve");
@@ -54,6 +53,9 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
     "allowance",
     [address, CDS_MANAGER_ADDRESS]
   );
+
+  const [showOwnOffers, setShowOwnOffers] = useState(false);
+  const [ownOffers, setOwnOffers] = useState<any[]>([]);
 
   useEffect(() => {
     if (allowanceData && !isAllowanceLoading) {
@@ -83,6 +85,13 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
     }
   }, [premium, bondInfo.nextCouponAmount]);
 
+  useEffect(() => {
+    if (address && cdsOffers.length > 0) {
+      const userOffers = cdsOffers.filter(offer => offer.creator.toLowerCase() === address.toLowerCase());
+      setOwnOffers(userOffers);
+    }
+  }, [address, cdsOffers]);
+
   const handleApprove = async () => {
     if (!address) return;
     setIsApproving(true);
@@ -90,8 +99,16 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
       const collateralAmount = ethers.BigNumber.from(bondInfo.nextCouponAmount);
       await approveUSDC({ args: [CDS_MANAGER_ADDRESS, collateralAmount] });
       await refetchAllowance();
+      addNotification({
+        title: "Approval Successful",
+        message: "USDC spending approved for creating CDS offer.",
+      });
     } catch (error) {
       console.error("Error approving USDC:", error);
+      addNotification({
+        title: "Approval Failed",
+        message: `Error approving USDC: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
     } finally {
       setIsApproving(false);
     }
@@ -99,7 +116,10 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
 
   const handleCreateOffer = async () => {
     if (!address) {
-      alert("Please connect your wallet to create an offer");
+      addNotification({
+        title: "Action Required",
+        message: "Please connect your wallet to create an offer",
+      });
       return;
     }
 
@@ -113,12 +133,17 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
       });
       console.log("Offer creation transaction:", JSON.stringify(offerTx, (_, v) => typeof v === 'bigint' ? v.toString() : v));
 
-      setModalMessage('Offer created successfully!');
-      setIsModalOpen(true);
+      addNotification({
+        title: "Offer Created",
+        message: "Your CDS offer has been created successfully!",
+      });
       setPremium('');
     } catch (error) {
       console.error("Error creating offer:", error);
-      alert("There was an error creating your offer. Please try again.");
+      addNotification({
+        title: "Offer Creation Failed",
+        message: `Error creating offer: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
     } finally {
       setIsCreatingOffer(false);
     }
@@ -144,10 +169,16 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
 
       console.log("USDC approval for buy successful");
       setIsBuyApproved(true);
+      addNotification({
+        title: "Approval Successful",
+        message: "USDC spending approved for buying CDS.",
+      });
     } catch (error) {
       console.error("Error approving USDC for buy:", error);
-      setModalMessage(`Error approving USDC: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setIsModalOpen(true);
+      addNotification({
+        title: "Approval Failed",
+        message: `Error approving USDC: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
     } finally {
       setIsBuyApproving(false);
     }
@@ -159,7 +190,10 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
 
   const handleBuyCDS = async () => {
     if (!address) {
-      alert("Please connect your wallet to buy a CDS");
+      addNotification({
+        title: "Action Required",
+        message: "Please connect your wallet to buy a CDS",
+      });
       return;
     }
     setIsBuying(true);
@@ -189,8 +223,10 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
             // Remove the purchased offer from the local state
             setCdsOffers(prevOffers => prevOffers.filter(offer => offer.cdsID !== cdsID));
             
-            setModalMessage('CDS purchased successfully!');
-            setIsModalOpen(true);
+            addNotification({
+              title: "Purchase Successful",
+              message: "CDS purchased successfully!",
+            });
           } catch (error: any) {
             if (error.message.includes("CDS already sold")) {
               console.log(`CDS ${cdsID} already sold, trying next offer`);
@@ -212,8 +248,10 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
 
     } catch (error: any) {
       console.error("Error buying CDS:", error);
-      setModalMessage(`Error buying CDS: ${error.message}`);
-      setIsModalOpen(true);
+      addNotification({
+        title: "Purchase Failed",
+        message: `Error buying CDS: ${error.message}`,
+      });
     } finally {
       setIsBuying(false);
       setIsBuyApproved(false);  // Reset approval state after purchase attempt
@@ -222,15 +260,17 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
 
   const groupOffersByPrice = (offers: any[]): GroupedOffer[] => {
     const groupedOffers = offers.reduce((acc, offer) => {
+      // Skip offers created by the current user
+      if (offer.creator.toLowerCase() === address?.toLowerCase()) {
+        return acc;
+      }
+
       const price = Math.floor(parseFloat(ethers.utils.formatUnits(offer.premium, 6))); // Round down to nearest integer
       if (!acc[price]) {
         acc[price] = { count: 0, offers: [] };
       }
       acc[price].count += 1;
-      acc[price].offers.push({
-        ...offer,
-        isOwnOffer: offer.creator.toLowerCase() === address?.toLowerCase()
-      });
+      acc[price].offers.push(offer);
       return acc;
     }, {});
 
@@ -281,7 +321,7 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
         // Set a timeout to change isFetching to false after 10 seconds
         setTimeout(() => {
           setIsFetching(false);
-        }, 10000);
+        }, 2000);
       }
     };
 
@@ -328,8 +368,34 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
           </div>
         </div>
 
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-app-primary-2 mb-2">Order Book</h3>
+        <div className="mb-4 mt-6 relative">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-semibold text-app-primary-2">Order Book</h3>
+            <div className="relative">
+              <InformationSquareIcon 
+                className="h-5 w-5 text-app-primary-2 cursor-help"
+                onMouseEnter={() => setShowOwnOffers(true)}
+                onMouseLeave={() => setShowOwnOffers(false)}
+              />
+              {showOwnOffers && (
+                <div className="absolute right-0 mt-2 p-3 bg-white border border-app-primary-2 rounded-lg shadow-lg z-10 w-80">
+                  <p className="text-xs font-semibold text-app-primary-2 mb-2">Your own offers are hidden from you in the order book.</p>
+                  {ownOffers.length > 0 ? (
+                    <ul className="text-xs text-[#071f1e] space-y-1">
+                      {ownOffers.map((offer, index) => (
+                        <li key={index} className="p-1 border border-app-primary-2 border-opacity-20 rounded flex justify-between items-center">
+                          <span>CDS ID: {offer.cdsID}</span>
+                          <span className="text-right">Premium: {ethers.utils.formatUnits(offer.premium, 6)} USDC</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-[#071f1e]">You have no active offers.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
           <div className="border border-app-primary-2 rounded-lg overflow-hidden bg-white"> 
             <div className="flex justify-between bg-app-primary-2 px-3 py-2 text-xs font-semibold text-white">
               <span>Price (USDC)</span>
@@ -432,17 +498,6 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
           )
         )}
       </div>
-
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <h3 className="text-lg font-bold text-app-primary-2 mb-4">Transaction Status</h3>
-        <p className="text-gray-600 mb-6 text-sm">{modalMessage}</p>
-        <button
-          onClick={() => setIsModalOpen(false)}
-          className="w-full bg-app-primary-2 text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors duration-300"
-        >
-          Close
-        </button>
-      </Modal>
     </div>
   );
 };
@@ -453,25 +508,17 @@ interface OrderBookEntryProps {
 }
 
 const OrderBookEntry: React.FC<OrderBookEntryProps> = ({ groupedOffer, isBestOffer }) => {
-  const hasOwnOffer = groupedOffer.offers.some(offer => offer.isOwnOffer);
-  
   return (
     <div 
       className={`
-        flex justify-between items-center py-2 px-3 text-xs relative
+        flex justify-between items-center py-2 px-3 text-xs
         ${isBestOffer ? 'bg-[#d8feaa] bg-opacity-20' : ''}
-        ${hasOwnOffer ? 'bg-[#f49c4a] bg-opacity-20' : ''}
       `}
     >
       <span className={`font-medium ${isBestOffer ? 'text-app-primary-2' : 'text-gray-700'}`}>
         {groupedOffer.price}
       </span>
       <span className="text-gray-600">{groupedOffer.count}</span>
-      {hasOwnOffer && (
-        <span className="absolute inset-0 flex items-center justify-center text-[#f49c4a] font-medium text-xs">
-          (Your offer)
-        </span>
-      )}
     </div>
   );
 };

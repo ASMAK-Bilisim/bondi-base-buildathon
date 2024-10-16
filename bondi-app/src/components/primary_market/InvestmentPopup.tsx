@@ -436,32 +436,29 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                   </div>
 
                   <p className="text-sm text-[#1C544E] opacity-60 mb-2">{calculateEquivalent()}</p>
-                  <p className="text-sm text-[#1C544E] mb-4">
-                    Minimum investment: {minInvestmentAmount} USDC
-                  </p>
-
                   {!isAmountValid && (
                     <p className="text-sm text-red-500 mb-4">
                       Please enter at least the minimum investment amount.
                     </p>
                   )}
-
                   <div className="space-y-4 text-xs text-[#1C544E] mb-8">
                     <div className="flex justify-between items-center">
+                      <span>Minimum investment:</span>
+                      <p className="font-bold">
+                        {isContractInfoLoading ? 'Loading...' : `${formatCurrency(parseFloat(minInvestmentAmount))} USDC`}
+                      </p>
+                    </div>
+                    <div className="flex justify-between items-center">
                       <span>Your Balance:</span>
-                      <div className="text-right">
-                        <p className="font-bold">
-                          {isBalanceLoading ? 'Loading...' : `${formatCurrency(parseFloat(userBalance))} USDC`}
-                        </p>
-                      </div>
+                      <p className="font-bold">
+                        {isBalanceLoading ? 'Loading...' : `${formatCurrency(parseFloat(userBalance))} USDC`}
+                      </p>
                     </div>
                     <div className="flex justify-between items-center">
                       <span>Already Invested:</span>
-                      <div className="text-right">
-                        <p className="font-bold">
-                          {isInvestedAmountLoading ? 'Loading...' : `${formatCurrency(parseFloat(investedAmount))} USDC`}
-                        </p>
-                      </div>
+                      <p className="font-bold">
+                        {isInvestedAmountLoading ? 'Loading...' : `${formatCurrency(parseFloat(investedAmount))} USDC`}
+                      </p>
                     </div>
                   </div>
                 </div>

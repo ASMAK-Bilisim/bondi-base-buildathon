@@ -21,7 +21,8 @@ export const useContractInfo = (contractAddress: string) => {
   const [minInvestmentAmount, setMinInvestmentAmount] = useState("0");
   const [contractCreationDate, setContractCreationDate] = useState<Date | null>(null);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
-
+  const [whaleNftAddress, setWhaleNftAddress] = useState<string>('');
+  
   const { data: contractBalanceData, isLoading: isBalanceLoading, error: balanceError } = useContractRead(
     usdcContract,
     "balanceOf",
@@ -40,6 +41,7 @@ export const useContractInfo = (contractAddress: string) => {
 
   const { data: bondTokenAddressData } = useContractRead(contract, "bondDistribution");
   const { data: ogNFTAddressData } = useContractRead(contract, "ogNFT");
+  const { data: whaleNFTAddressData } = useContractRead(contract, "whaleNFT"); // Fetching whaleNFT
 
   useEffect(() => {
     const fetchContractCreationDate = async () => {
@@ -88,7 +90,7 @@ export const useContractInfo = (contractAddress: string) => {
     };
 
     fetchContractCreationDate();
-  }, [sdk]);
+  }, [sdk, contractAddress]);
 
   useEffect(() => {
     if (contractBalanceData) {
@@ -117,10 +119,14 @@ export const useContractInfo = (contractAddress: string) => {
         console.error('Error formatting minimum investment amount:', error);
       }
     }
-  }, [contractBalanceData, targetAmountData, minInvestmentData]);
+
+    if (whaleNFTAddressData) {
+      setWhaleNftAddress(whaleNFTAddressData);
+    }
+  }, [contractBalanceData, targetAmountData, minInvestmentData, whaleNFTAddressData]);
 
   const isLoading = isBalanceLoading || isTargetLoading || isMinInvestmentLoading;
-  const error = balanceError || targetError || minInvestmentError;
+  const errorCombined = balanceError || targetError || minInvestmentError;
 
   return { 
     contractBalance: contractUSDCBalance,
@@ -129,10 +135,11 @@ export const useContractInfo = (contractAddress: string) => {
     contractCreationDate,
     daysRemaining,
     isLoading,
-    error,
+    error: errorCombined,
     contractAddress,
     mockUsdcAddress: MOCK_USDC_ADDRESS,
     bondTokenAddress: bondTokenAddressData,
     ogNftAddress: ogNFTAddressData,
+    whaleNftAddress, // Included whaleNftAddress in return
   };
 };

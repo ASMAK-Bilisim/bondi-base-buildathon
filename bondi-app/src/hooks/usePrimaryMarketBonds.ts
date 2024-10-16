@@ -137,6 +137,7 @@ export const usePrimaryMarketBonds = () => {
           bondTokenAddress: zeta.bondTokenAddress,
           ogNftAddress: zeta.ogNftAddress,
           whaleNftAddress: zeta.whaleNftAddress,
+          bondYield: 0, // Initialize with 0, will be calculated later
         };
 
         const alphaBond: Bond = {
@@ -177,6 +178,7 @@ export const usePrimaryMarketBonds = () => {
           bondTokenAddress: alpha.bondTokenAddress,
           ogNftAddress: alpha.ogNftAddress,
           whaleNftAddress: alpha.whaleNftAddress,
+          bondYield: 0, // Initialize with 0, will be calculated later
         };
 
         const betaBond: Bond = {
@@ -217,32 +219,31 @@ export const usePrimaryMarketBonds = () => {
           bondTokenAddress: beta.bondTokenAddress,
           ogNftAddress: beta.ogNftAddress,
           whaleNftAddress: beta.whaleNftAddress,
+          bondYield: 0, // Initialize with 0, will be calculated later
         };
 
         // Calculate YTM for each bond
         const now = new Date();
-        const zetaYTM = calculateYTM(
+        zetaBond.bondYield = parseFloat(calculateYTM(
           zetaBond.couponPercentage,
           zetaBond.faceValue,
           zetaBond.currentPrice,
           (new Date(zetaBond.maturityDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365)
-        );
-        const alphaYTM = calculateYTM(
+        ).toFixed(2));
+
+        alphaBond.bondYield = parseFloat(calculateYTM(
           alphaBond.couponPercentage,
           alphaBond.faceValue,
           alphaBond.currentPrice,
           (new Date(alphaBond.maturityDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365)
-        );
-        const betaYTM = calculateYTM(
+        ).toFixed(2));
+
+        betaBond.bondYield = parseFloat(calculateYTM(
           betaBond.couponPercentage,
           betaBond.faceValue,
           betaBond.currentPrice,
           (new Date(betaBond.maturityDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365)
-        );
-
-        zetaBond.bondYield = parseFloat(zetaYTM.toFixed(2));
-        alphaBond.bondYield = parseFloat(alphaYTM.toFixed(2));
-        betaBond.bondYield = parseFloat(betaYTM.toFixed(2));
+        ).toFixed(2));
 
         setBonds([zetaBond, alphaBond, betaBond]);
       } catch (err) {
@@ -253,7 +254,7 @@ export const usePrimaryMarketBonds = () => {
     };
 
     fetchBondData();
-  }, [zeta, alpha, beta]);
+  }, [zeta.isLoading, alpha.isLoading, beta.isLoading, zeta.error, alpha.error, beta.error, zeta.contractBalance, alpha.contractBalance, beta.contractBalance, zeta.targetAmount, alpha.targetAmount, beta.targetAmount]);
 
   return { bonds, isLoading, error };
 };

@@ -1,33 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Notification03Icon } from '@hugeicons/react';
 import { ConnectWallet, useAddress } from "@thirdweb-dev/react";
 import { useNavigate } from "react-router-dom";
 import NotificationDropdown from './NotificationComponents/NotificationDropdown';
 import UnreadNotification from './NotificationComponents/UnreadNotification';
 import { useKYC } from '../components/contexts/KYCContext';
+import { useNotifications } from '../components/contexts/NotificationContext';
 
 interface HeaderProps {
   isCompact: boolean;
   setIsCompact: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  timestamp: number;
-  read: boolean;
-}
-
 const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
-  const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   const address = useAddress();
   const navigate = useNavigate();
   const { isKYCCompleted, resetKYC } = useKYC();
+  const { notifications, dismissNotification, markAsRead, unreadCount } = useNotifications();
 
   useEffect(() => {
     const handleResize = () => {
@@ -40,22 +33,25 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const toggleNotifications = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowNotifications(!showNotifications);
     if (!showNotifications) {
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadNotifications(0);
+      notifications.forEach(n => !n.read && markAsRead(n.id));
     }
-  };
-
-  const handleDismissNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id === id));
-  };
-
-  const handleViewNotification = (id: string) => {
-    console.log(`Viewing notification ${id}`);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
   const handleKYCRedirect = (e: React.MouseEvent) => {
@@ -69,11 +65,6 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
 
   const linkStyle = "font-inter font-medium text-[16px] leading-[26px] text-[#1C544E] hover:underline transition-all duration-300";
 
-  useEffect(() => {
-    const unreadCount = notifications.filter(n => !n.read).length;
-    setUnreadNotifications(unreadCount);
-  }, [notifications]);
-
   const isCompactOrMobile = isCompact || isMobile;
 
   return (
@@ -85,42 +76,43 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
           <a href="https://www.bondifinance.io" className={linkStyle}>FAQ</a>
         </nav>
         <div className="flex items-center gap-3 whitespace-nowrap">
-          <div className="relative flex items-center">
-            <div className="flex items-center bg-[#F2FBF9] rounded-lg border border-[#1C544E] overflow-visible">
-              <button
-                onClick={toggleNotifications}
-                className="w-10 h-10 flex items-center justify-center cursor-pointer group"
-              >
-                <Notification03Icon className="w-6 h-6 text-[#1C544E] group-hover:animate-shake" />
-              </button>
-              {address && !isKYCCompleted && (
+          {address && (
+            <div className="relative flex items-center" ref={notificationRef}>
+              <div className="flex items-center bg-[#F2FBF9] rounded-lg border border-[#1C544E] overflow-visible">
                 <button
-                  onClick={handleKYCRedirect}
-                  className="px-2 h-6 bg-red-500 text-white text-[14px] font-inter hover:bg-red-600 transition-colors duration-300 flex items-center rounded-[4px] mr-2 cursor-pointer animate-pulseGlow shadow-red-glow"
+                  onClick={toggleNotifications}
+                  className="w-10 h-10 flex items-center justify-center cursor-pointer group"
                 >
-                  Complete KYC
+                  <Notification03Icon className="w-6 h-6 text-[#1C544E] group-hover:animate-shake" />
                 </button>
+                {!isKYCCompleted && (
+                  <button
+                    onClick={handleKYCRedirect}
+                    className="px-2 h-6 bg-red-500 text-white text-[14px] font-inter hover:bg-red-600 transition-colors duration-300 flex items-center rounded-[4px] mr-2 cursor-pointer animate-pulseGlow shadow-red-glow"
+                  >
+                    Complete KYC
+                  </button>
+                )}
+                {isKYCCompleted && (
+                  <button
+                    onClick={handleResetKYC}
+                    className="px-2 h-6 bg-blue-500 text-white text-[14px] font-inter hover:bg-blue-600 transition-colors duration-300 flex items-center rounded-[4px] mr-2 cursor-pointer"
+                  >
+                    Reset KYC
+                  </button>
+                )}
+              </div>
+              {unreadCount > 0 && (
+                <UnreadNotification count={unreadCount} />
               )}
-              {address && isKYCCompleted && (
-                <button
-                  onClick={handleResetKYC}
-                  className="px-2 h-6 bg-blue-500 text-white text-[14px] font-inter hover:bg-blue-600 transition-colors duration-300 flex items-center rounded-[4px] mr-2 cursor-pointer"
-                >
-                  Reset KYC
-                </button>
-              )}
+              <NotificationDropdown 
+                isOpen={showNotifications}
+                onClose={() => setShowNotifications(false)}
+                notifications={notifications}
+                onDismiss={dismissNotification}
+              />
             </div>
-            {unreadNotifications > 0 && (
-              <UnreadNotification count={unreadNotifications} />
-            )}
-            <NotificationDropdown 
-              isOpen={showNotifications}
-              onClose={() => setShowNotifications(false)}
-              notifications={notifications}
-              onDismiss={handleDismissNotification}
-              onView={handleViewNotification}
-            />
-          </div>
+          )}
           <div className="rounded-lg border border-[#1C544E] overflow-hidden">
             <ConnectWallet 
               theme={isCompactOrMobile ? "light" : "light"}

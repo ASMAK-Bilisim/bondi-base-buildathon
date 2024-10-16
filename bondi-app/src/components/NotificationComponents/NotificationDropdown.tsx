@@ -1,24 +1,17 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CancelSquareIcon } from '@hugeicons/react';
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  timestamp: number;
-  read: boolean;
-}
+import { formatDistanceToNow } from 'date-fns';
+import { Notification } from '../contexts/NotificationContext';
 
 interface NotificationDropdownProps {
   isOpen: boolean;
   onClose: () => void;
   notifications: Notification[];
   onDismiss: (id: string) => void;
-  onView: (id: string) => void;
 }
 
-const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose, notifications, onDismiss, onView }) => {
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onClose, notifications, onDismiss }) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -27,40 +20,37 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="absolute top-full right-0 mt-2 w-60 bg-[#F2FBF9] rounded-lg shadow-lg overflow-hidden z-10 border border-[#1C544E]"
+          className="absolute top-full right-0 mt-2 w-72 bg-app-light rounded-lg shadow-lg overflow-hidden z-10 border border-app-primary-2"
         >
           <div className="relative p-2">
             <button 
               onClick={onClose} 
-              className="absolute top-1 right-1 text-[#1C544E] hover:text-[#F49C4A] transition-colors"
+              className="absolute top-2 right-2 text-app-primary-2 hover:text-app-accent transition-colors"
             >
-              <CancelSquareIcon size={20} />
+              <CancelSquareIcon size={16} />
             </button>
             <div className="max-h-60 overflow-y-auto">
               {notifications.length > 0 ? (
                 notifications.map((notification) => (
-                  <div key={notification.id} className="p-2 border-b border-[#1C544E] last:border-b-0">
-                    <h4 className="font-semibold text-sm text-[#1C544E]">{notification.title}</h4>
-                    <p className="text-xs text-[#1C544E] mt-1">{notification.message}</p>
+                  <div key={notification.id} className="p-3 border-b border-app-dark-mint last:border-b-0 hover:bg-app-dark-mint transition-colors">
+                    <h3 className="font-semibold text-[13px] text-app-primary-2 truncate mr-2">{notification.title}</h3>
+                    <p className="mt-1 text-[11px] text-app-primary-2 line-clamp-2">{notification.message}</p>
                     <div className="mt-2 flex justify-between items-center">
                       <button
-                        onClick={() => onView(notification.id)}
-                        className="text-xs text-[#F49C4A] hover:underline"
-                      >
-                        View
-                      </button>
-                      <button
                         onClick={() => onDismiss(notification.id)}
-                        className="text-xs text-[#1C544E] hover:underline"
+                        className="text-[9px] font-medium text-app-light bg-app-primary-2 rounded hover:bg-app-dark transition-colors px-2 py-1"
                       >
                         Dismiss
                       </button>
+                      <span className="text-[9px] text-app-primary-2">
+                        {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
+                      </span>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="flex items-center justify-center h-12">
-                  <p className="text-sm text-center text-[#1C544E]">No notifications</p>
+                  <p className="text-[11px] text-center text-app-primary-2">No notifications</p>
                 </div>
               )}
             </div>

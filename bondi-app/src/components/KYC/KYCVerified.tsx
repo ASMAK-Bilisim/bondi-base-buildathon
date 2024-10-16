@@ -4,17 +4,23 @@ import { PassportValidIcon } from "@hugeicons/react";
 import StepIndicator from '../common/StepIndicator';
 import Button from "../common/Button";
 import { useKYC } from '../contexts/KYCContext';
+import { useNotifications } from '../contexts/NotificationContext';
 
 const KYCVerified: React.FC = () => {
   const navigate = useNavigate();
   const { setKYCCompleted } = useKYC();
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     setKYCCompleted(true);
-  }, [setKYCCompleted]);
+    addNotification({
+      title: "KYC Verified",
+      message: "Your KYC verification has been successfully completed. You now have full access to all features.",
+    });
+  }, [setKYCCompleted, addNotification]);
 
-  const handleGoHome = () => {
-    navigate("/");
+  const handleGoToPrimaryMarket = () => {
+    navigate("/primary-market");
   };
 
   return (
@@ -34,11 +40,11 @@ const KYCVerified: React.FC = () => {
       </p>
       <div className="w-full max-w-md mt-14">
         <Button
-          label="Go Home"
+          label="Go to Primary Market"
           intent="primary"
           size="large"
           fullWidth
-          onClick={handleGoHome}
+          onClick={handleGoToPrimaryMarket}
         />
       </div>
     </div>

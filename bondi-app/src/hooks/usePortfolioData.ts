@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { useAddress } from "@thirdweb-dev/react";
 import axios from 'axios';
-import { subYears, subMonths, subDays, startOfYear, parseISO, isValid, addMinutes, addHours } from 'date-fns';
+import { subYears, subMonths, subDays, startOfYear, parseISO, isValid } from 'date-fns';
 
 interface GoogleFinanceData {
   symbol: string;

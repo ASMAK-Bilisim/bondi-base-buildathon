@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "../components/Layout";
-import Home from "../pages/Home";
 import PrimaryMarket from "../pages/PrimaryMarket";
 import SingleBondPage from "../pages/SingleBondPage";
 import Coupons from "../pages/Coupons";
@@ -17,10 +16,6 @@ export const router = createBrowserRouter([
 			</KYCProvider>
 		),
 		children: [
-			{
-				path: "/",
-				element: <Home />,
-			},
 			{
 				path: "primary-market",
 				element: <PrimaryMarket />,
