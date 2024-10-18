@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useContract, useContractWrite, useAddress, useContractRead, useSDK } from "@thirdweb-dev/react";
-import { ethers } from 'ethers';
-import { MOCK_USDC_ADDRESS, mockUsdcABI, CDS_MANAGER_ADDRESS, cdsManagerABI } from '../../constants/contractInfo';
-import { DollarSquareIcon, Calendar03Icon, PercentSquareIcon, DiplomaIcon, InformationSquareIcon } from '@hugeicons/react';
-import { useNotifications } from '../../components/contexts/NotificationContext';
-
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  DollarSquareIcon,
+  Calendar03Icon,
+  PercentSquareIcon,
+  DiplomaIcon,
+  InformationSquareIcon,
+} from '@hugeicons/react';
+import { client } from '../../client';
+import { baseSepolia } from 'thirdweb/chains';
+import { cdsManagerABI, CDS_MANAGER_ADDRESS, MOCK_USDC_ADDRESS, mockUsdcABI } from '../../constants/contractInfo';
+import { useReadContract, useSendTransaction } from 'thirdweb/react';
+import { getContract, prepareContractCall } from 'thirdweb';
+import { TransactionButton } from "thirdweb/react";
+import { parseEther, formatEther } from "viem";
+import { Abi } from 'viem';
 interface BondInfo {
   hash: string;
   bondTokenAddress: string;
@@ -16,511 +25,312 @@ interface BondOrderBookProps {
   bondInfo: BondInfo;
 }
 
+interface CDSInfo {
+  cdsID: number;
+  bondAddressAndExpiration: string;
+  creator: string;
+  buyer: string;
+  premium: string;
+  isActive: boolean;
+  isClaimed: boolean;
+  isAccused: boolean;
+}
+
 interface GroupedOffer {
-  price: number;
-  count: number;
-  offers: any[];
+  premium: string;
+  offers: CDSInfo[];
 }
 
 const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
-  const [cdsOffers, setCdsOffers] = useState<any[]>([]);
-  const [premium, setPremium] = useState('');
-  const [exceedsCoupon, setExceedsCoupon] = useState(false);
-  const [interestRate, setInterestRate] = useState(0);
-  const [isApproved, setIsApproved] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
-  const [isCreatingOffer, setIsCreatingOffer] = useState(false);
-  const [isBuying, setIsBuying] = useState(false);
+  const [cdsOffers, setCdsOffers] = useState<CDSInfo[]>([]);
   const [isBuyMode, setIsBuyMode] = useState(true);
-  const [isBuyApproved, setIsBuyApproved] = useState(false);
-  const [isBuyApproving, setIsBuyApproving] = useState(false);
-  const [isFetching, setIsFetching] = useState(true);
-  const address = useAddress();
-  const sdk = useSDK();
-  const { addNotification } = useNotifications();
+  const [premium, setPremium] = useState('');
+  const [isApproved, setIsApproved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  // const { showNotification } = useNotifications(); // Uncomment when implemented
 
-  const { contract: usdcContract } = useContract(MOCK_USDC_ADDRESS, mockUsdcABI);
-  const { mutateAsync: approveUSDC } = useContractWrite(usdcContract, "approve");
+  const cdsManagerContract = getContract({
+    client,
+    address: CDS_MANAGER_ADDRESS,
+    abi: cdsManagerABI,
+    chain: baseSepolia,
+  });
 
-  const { contract: cdsManagerContract } = useContract(CDS_MANAGER_ADDRESS, cdsManagerABI);
-  const { mutateAsync: createCDS } = useContractWrite(cdsManagerContract, "createCDS");
-  const { mutateAsync: buyCDS } = useContractWrite(cdsManagerContract, "buyCDS");
+  const usdcContract = getContract({
+    client,
+    address: MOCK_USDC_ADDRESS,
+    abi: mockUsdcABI,
+    chain: baseSepolia,
+  });
 
-  const { data: cdsCount } = useContractRead(cdsManagerContract, "cdsCount");
+  const { mutate: sendTx } = useSendTransaction();
 
-  const { data: allowanceData, isLoading: isAllowanceLoading, refetch: refetchAllowance } = useContractRead(
-    usdcContract,
-    "allowance",
-    [address, CDS_MANAGER_ADDRESS]
-  );
-
-  const [showOwnOffers, setShowOwnOffers] = useState(false);
-  const [ownOffers, setOwnOffers] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (allowanceData && !isAllowanceLoading) {
-      const allowance = ethers.BigNumber.from(allowanceData);
-      const collateralAmount = ethers.BigNumber.from(bondInfo.nextCouponAmount);
-      setIsApproved(allowance.gte(collateralAmount));
-    }
-  }, [allowanceData, isAllowanceLoading, bondInfo.nextCouponAmount]);
-
-  useEffect(() => {
-    const faceValue = ethers.utils.parseUnits("100", 6);
-    const fullPaymentAmount = ethers.BigNumber.from(bondInfo.nextCouponAmount);
-    const couponAmount = fullPaymentAmount.sub(faceValue);
-
-    // Calculate interest rate
-    const rate = couponAmount.mul(10000).div(faceValue).toNumber() / 100;
-    setInterestRate(rate);
-  }, [bondInfo]);
-
-  useEffect(() => {
-    if (premium) {
-      const premiumInWei = ethers.utils.parseUnits(premium, 6);
-      const couponAmount = ethers.BigNumber.from(bondInfo.nextCouponAmount).sub(ethers.utils.parseUnits("100", 6));
-      setExceedsCoupon(premiumInWei.gt(couponAmount));
-    } else {
-      setExceedsCoupon(false);
-    }
-  }, [premium, bondInfo.nextCouponAmount]);
-
-  useEffect(() => {
-    if (address && cdsOffers.length > 0) {
-      const userOffers = cdsOffers.filter(offer => offer.creator.toLowerCase() === address.toLowerCase());
-      setOwnOffers(userOffers);
-    }
-  }, [address, cdsOffers]);
-
-  const handleApprove = async () => {
-    if (!address) return;
-    setIsApproving(true);
-    try {
-      const collateralAmount = ethers.BigNumber.from(bondInfo.nextCouponAmount);
-      await approveUSDC({ args: [CDS_MANAGER_ADDRESS, collateralAmount] });
-      await refetchAllowance();
-      addNotification({
-        title: "Approval Successful",
-        message: "USDC spending approved for creating CDS offer.",
-      });
-    } catch (error) {
-      console.error("Error approving USDC:", error);
-      addNotification({
-        title: "Approval Failed",
-        message: `Error approving USDC: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      });
-    } finally {
-      setIsApproving(false);
-    }
-  };
-
-  const handleCreateOffer = async () => {
-    if (!address) {
-      addNotification({
-        title: "Action Required",
-        message: "Please connect your wallet to create an offer",
-      });
-      return;
-    }
-
-    setIsCreatingOffer(true);
-    try {
-      const offerTx = await createCDS({ 
-        args: [
-          bondInfo.hash,
-          ethers.utils.parseUnits(premium, 6).toString()
-        ]
-      });
-      console.log("Offer creation transaction:", JSON.stringify(offerTx, (_, v) => typeof v === 'bigint' ? v.toString() : v));
-
-      addNotification({
-        title: "Offer Created",
-        message: "Your CDS offer has been created successfully!",
-      });
-      setPremium('');
-    } catch (error) {
-      console.error("Error creating offer:", error);
-      addNotification({
-        title: "Offer Creation Failed",
-        message: `Error creating offer: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      });
-    } finally {
-      setIsCreatingOffer(false);
-    }
-  };
-
-  const handleSwitchMode = () => {
-    setIsBuyMode(!isBuyMode);
-  };
-
-  const handleBuyApprove = async () => {
-    if (!address) return;
-    setIsBuyApproving(true);
-    try {
-      const sortedOffers = groupOffersByPrice(cdsOffers);
-      if (sortedOffers.length === 0) {
-        throw new Error("No offers available");
-      }
-      const cheapestOffer = sortedOffers[0].offers[0];
-      const premium = cheapestOffer.premium;
-
-      const approveTx = await approveUSDC({ args: [CDS_MANAGER_ADDRESS, premium] });
-      await sdk?.getProvider().waitForTransaction(approveTx.receipt.transactionHash);
-
-      console.log("USDC approval for buy successful");
-      setIsBuyApproved(true);
-      addNotification({
-        title: "Approval Successful",
-        message: "USDC spending approved for buying CDS.",
-      });
-    } catch (error) {
-      console.error("Error approving USDC for buy:", error);
-      addNotification({
-        title: "Approval Failed",
-        message: `Error approving USDC: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      });
-    } finally {
-      setIsBuyApproving(false);
-    }
-  };
-
-  const removePurchasedOffer = (purchasedCdsID: number) => {
-    setCdsOffers(prevOffers => prevOffers.filter(offer => offer.cdsID !== purchasedCdsID));
-  };
-
-  const handleBuyCDS = async () => {
-    if (!address) {
-      addNotification({
-        title: "Action Required",
-        message: "Please connect your wallet to buy a CDS",
-      });
-      return;
-    }
-    setIsBuying(true);
-    try {
-      const sortedOffers = groupOffersByPrice(cdsOffers);
-      if (sortedOffers.length === 0) {
-        throw new Error("No offers available");
-      }
-
-      let buySuccessful = false;
-      let attemptedOffers = 0;
-
-      while (!buySuccessful && attemptedOffers < sortedOffers[0].offers.length) {
-        const offer = sortedOffers[0].offers[attemptedOffers];
-        const cdsID = offer.cdsID;
-
-        // Check if the offer is not created by the current user
-        if (offer.creator.toLowerCase() !== address.toLowerCase()) {
-          try {
-            // Now, try to buy the CDS
-            const buyTx = await buyCDS({ args: [cdsID] });
-            await sdk?.getProvider().waitForTransaction(buyTx.receipt.transactionHash);
-
-            console.log("CDS purchase transaction:", JSON.stringify(buyTx, (_, v) => typeof v === 'bigint' ? v.toString() : v));
-
-            buySuccessful = true;
-            // Remove the purchased offer from the local state
-            setCdsOffers(prevOffers => prevOffers.filter(offer => offer.cdsID !== cdsID));
-            
-            addNotification({
-              title: "Purchase Successful",
-              message: "CDS purchased successfully!",
-            });
-          } catch (error: any) {
-            if (error.message.includes("CDS already sold")) {
-              console.log(`CDS ${cdsID} already sold, trying next offer`);
-              // Remove the sold offer from the order book
-              removePurchasedOffer(cdsID);
-            } else {
-              throw error;
-            }
-          }
-        } else {
-          console.log(`Skipping own offer with CDS ID ${cdsID}`);
-        }
-        attemptedOffers++;
-      }
-
-      if (!buySuccessful) {
-        throw new Error("No available offers to buy");
-      }
-
-    } catch (error: any) {
-      console.error("Error buying CDS:", error);
-      addNotification({
-        title: "Purchase Failed",
-        message: `Error buying CDS: ${error.message}`,
-      });
-    } finally {
-      setIsBuying(false);
-      setIsBuyApproved(false);  // Reset approval state after purchase attempt
-    }
-  };
-
-  const groupOffersByPrice = (offers: any[]): GroupedOffer[] => {
-    const groupedOffers = offers.reduce((acc, offer) => {
-      // Skip offers created by the current user
-      if (offer.creator.toLowerCase() === address?.toLowerCase()) {
-        return acc;
-      }
-
-      const price = Math.floor(parseFloat(ethers.utils.formatUnits(offer.premium, 6))); // Round down to nearest integer
-      if (!acc[price]) {
-        acc[price] = { count: 0, offers: [] };
-      }
-      acc[price].count += 1;
-      acc[price].offers.push(offer);
-      return acc;
-    }, {});
-
-    return Object.entries(groupedOffers)
-      .map(([price, data]: [string, any]) => ({
-        price: parseInt(price),
-        count: data.count,
-        offers: data.offers.sort((a: any, b: any) => a.cdsID - b.cdsID) // Sort offers by CDS ID (assuming lower ID means older offer)
-      }))
-      .filter(group => group.offers.length > 0) // Remove groups with no offers
-      .sort((a, b) => a.price - b.price);
-  };
-
-  const truncateAddress = (address: string) => {
-    if (address.length <= 13) return address;
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
+  const { data: cdsCount } = useReadContract({
+    contract: cdsManagerContract,
+    method: "function getCDSCount() view returns (uint256)",
+  });
 
   useEffect(() => {
     const fetchCDSOffers = async () => {
-      if (cdsCount && cdsManagerContract) {
-        setIsFetching(true);
-        const offers = [];
-        for (let i = 1; i <= cdsCount.toNumber(); i++) {
+      if (cdsCount) {
+        const offers: CDSInfo[] = [];
+        for (let i = 0; i < Number(cdsCount); i++) {
           try {
-            const cdsData = await cdsManagerContract.call("cdsContracts", [i]);
-            if (cdsData && 
-                cdsData.bondAddressAndExpiration === bondInfo.hash && 
-                cdsData.isActive &&
-                cdsData.buyer === ethers.constants.AddressZero) { // Check if the CDS is not bought
+            const cdsInfo = await cdsManagerContract.read.getCDS([BigInt(i)]);
+            if (cdsInfo && cdsInfo[1] === bondInfo.hash) {
               offers.push({
-                cdsID: cdsData.cdsID.toNumber(),
-                bondAddressAndExpiration: cdsData.bondAddressAndExpiration,
-                creator: cdsData.creator,
-                buyer: cdsData.buyer,
-                premium: cdsData.premium.toString(),
-                isActive: cdsData.isActive,
-                isClaimed: cdsData.isClaimed,
-                isAccused: cdsData.isAccused,
+                cdsID: Number(cdsInfo[0]),
+                bondAddressAndExpiration: cdsInfo[1],
+                creator: cdsInfo[2],
+                buyer: cdsInfo[3],
+                premium: formatEther(cdsInfo[4]),
+                isActive: cdsInfo[5],
+                isClaimed: cdsInfo[6],
+                isAccused: cdsInfo[7],
               });
             }
           } catch (error) {
-            console.error(`Error fetching CDS offer ${i}:`, error);
+            console.error(`Error fetching CDS info for ID ${i}:`, error);
           }
         }
         setCdsOffers(offers);
-        
-        // Set a timeout to change isFetching to false after 10 seconds
-        setTimeout(() => {
-          setIsFetching(false);
-        }, 2000);
       }
     };
 
     fetchCDSOffers();
   }, [cdsCount, bondInfo.hash, cdsManagerContract]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, ''); // Only allow digits
-    setPremium(value);
+  const groupedOffers = useMemo(() => {
+    const grouped: { [key: string]: GroupedOffer } = {};
+    cdsOffers.forEach(offer => {
+      if (!grouped[offer.premium]) {
+        grouped[offer.premium] = { premium: offer.premium, offers: [] };
+      }
+      grouped[offer.premium].offers.push(offer);
+    });
+    return Object.values(grouped).sort((a, b) => Number(a.premium) - Number(b.premium));
+  }, [cdsOffers]);
+
+  const handleCreateCDS = async () => {
+    if (!premium) {
+      // showNotification("Please enter a premium amount", "error");
+      console.error("Please enter a premium amount");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const premiumWei = parseEther(premium);
+      const transaction = prepareContractCall({
+        contract: cdsManagerContract,
+        method: "function createCDS(bytes32 bondAddressAndExpiration, uint256 premium) external returns (uint256)",
+        params: [bondInfo.hash, premiumWei],
+      });
+      await sendTx(transaction);
+      // showNotification("CDS offer created successfully", "success");
+      console.log("CDS offer created successfully");
+    } catch (error) {
+      console.error("Error creating CDS:", error);
+      // showNotification("Failed to create CDS offer", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBuyCDS = async (cdsID: number) => {
+    setIsLoading(true);
+    try {
+      const transaction = prepareContractCall({
+        contract: cdsManagerContract,
+        method: "function buyCDS(uint256 cdsID) external returns (bool)",
+        params: [BigInt(cdsID)],
+      });
+      await sendTx(transaction);
+      // showNotification("CDS bought successfully", "success");
+      console.log("CDS bought successfully");
+    } catch (error) {
+      console.error("Error buying CDS:", error);
+      // showNotification("Failed to buy CDS", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    setIsLoading(true);
+    try {
+      const amount = parseEther(isBuyMode ? groupedOffers[0].premium : premium);
+      const transaction = prepareContractCall({
+        contract: usdcContract,
+        method: "function approve(address spender, uint256 amount) external returns (bool)",
+        params: [CDS_MANAGER_ADDRESS, amount],
+      });
+      await sendTx(transaction);
+      setIsApproved(true);
+      // showNotification("USDC approved successfully", "success");
+      console.log("USDC approved successfully");
+    } catch (error) {
+      console.error("Error approving USDC:", error);
+      // showNotification("Failed to approve USDC", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const calculateInterestRate = () => {
+    const nextCouponAmount = Number(bondInfo.nextCouponAmount) / 1e6;
+    const interest = nextCouponAmount - 100;
+    return (interest / 100 * 100).toFixed(2);
   };
 
   return (
     <div className="bg-app-light rounded-lg shadow-lg overflow-hidden w-full xs:w-[360px] sm:w-[440px] md:w-[440px] lg:w-[400px] xl:w-[380px] h-[610px] flex flex-col">
       <div className="p-4 flex-grow">
         <h2 className="text-xl font-bold text-app-primary-2 mb-4">CDS Order Book</h2>
+        
+        {/* Bond Info Grid */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="flex items-center space-x-2 bg-app-dark-mint bg-opacity-30 p-2 rounded-lg">
-            <DollarSquareIcon className="h-5 w-5 text-app-primary-2" />
-            <div>
-              <p className="text-xs font-medium text-gray-600">Collateral</p>
-              <p className="text-xs text-app-primary-2">{ethers.utils.formatUnits(bondInfo.nextCouponAmount, 6)} USDC</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 bg-app-dark-mint bg-opacity-30 p-2 rounded-lg">
-            <Calendar03Icon className="h-5 w-5 text-app-primary-2" />
-            <div>
-              <p className="text-xs font-medium text-gray-600">Next Payment</p>
-              <p className="text-xs text-app-primary-2">{new Date(bondInfo.nextCouponDate * 1000).toLocaleDateString()}</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 bg-app-dark-mint bg-opacity-30 p-2 rounded-lg">
-            <PercentSquareIcon className="h-5 w-5 text-app-primary-2" />
-            <div>
-              <p className="text-xs font-medium text-gray-600">Interest</p>
-              <p className="text-xs text-app-primary-2">{interestRate.toFixed(2)}%</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 bg-app-dark-mint bg-opacity-30 p-2 rounded-lg">
-            <DiplomaIcon className="h-5 w-5 text-app-primary-2" />
-            <div>
-              <p className="text-xs font-medium text-gray-600">Bond</p>
-              <p className="text-xs text-app-primary-2">{truncateAddress(bondInfo.bondTokenAddress)}</p>
-            </div>
-          </div>
+          <InfoCard
+            icon={<DollarSquareIcon className="h-5 w-5 text-app-primary-2" />}
+            title="Collateral"
+            value={`${(Number(bondInfo.nextCouponAmount) / 1e6).toFixed(2)} USDC`}
+          />
+          <InfoCard
+            icon={<Calendar03Icon className="h-5 w-5 text-app-primary-2" />}
+            title="Next Payment"
+            value={new Date(bondInfo.nextCouponDate * 1000).toLocaleDateString()}
+          />
+          <InfoCard
+            icon={<PercentSquareIcon className="h-5 w-5 text-app-primary-2" />}
+            title="Interest"
+            value={`${calculateInterestRate()}%`}
+          />
+          <InfoCard
+            icon={<DiplomaIcon className="h-5 w-5 text-app-primary-2" />}
+            title="Bond"
+            value={truncateAddress(bondInfo.bondTokenAddress)}
+          />
         </div>
 
+        {/* Order Book */}
         <div className="mb-4 mt-6 relative">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-sm font-semibold text-app-primary-2">Order Book</h3>
-            <div className="relative">
-              <InformationSquareIcon 
-                className="h-5 w-5 text-app-primary-2 cursor-help"
-                onMouseEnter={() => setShowOwnOffers(true)}
-                onMouseLeave={() => setShowOwnOffers(false)}
-              />
-              {showOwnOffers && (
-                <div className="absolute right-0 mt-2 p-3 bg-white border border-app-primary-2 rounded-lg shadow-lg z-10 w-80">
-                  <p className="text-xs font-semibold text-app-primary-2 mb-2">Your own offers are hidden from you in the order book.</p>
-                  {ownOffers.length > 0 ? (
-                    <ul className="text-xs text-[#071f1e] space-y-1">
-                      {ownOffers.map((offer, index) => (
-                        <li key={index} className="p-1 border border-app-primary-2 border-opacity-20 rounded flex justify-between items-center">
-                          <span>CDS ID: {offer.cdsID}</span>
-                          <span className="text-right">Premium: {ethers.utils.formatUnits(offer.premium, 6)} USDC</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-xs text-[#071f1e]">You have no active offers.</p>
-                  )}
-                </div>
-              )}
-            </div>
+            <InformationSquareIcon 
+              className="h-5 w-5 text-app-primary-2 cursor-help"
+              title="CDS Offers"
+            />
           </div>
-          <div className="border border-app-primary-2 rounded-lg overflow-hidden bg-white"> 
-            <div className="flex justify-between bg-app-primary-2 px-3 py-2 text-xs font-semibold text-white">
-              <span>Price (USDC)</span>
-              <span>Offers</span>
-            </div>
-            <div className="h-[128px] overflow-y-auto">
-              {groupOffersByPrice(cdsOffers).length > 0 ? (
-                groupOffersByPrice(cdsOffers).map((groupedOffer, index) => (
-                  <OrderBookEntry 
-                    key={index} 
-                    groupedOffer={groupedOffer} 
-                    isBestOffer={index === 0}
-                  />
-                ))
-              ) : (
-                <p className="p-3 text-center text-gray-500 text-xs">
-                  {isFetching ? "Fetching offers..." : "No active offers"}
-                </p>
-              )}
-            </div>
-          </div>
+          <OrderBookTable groupedOffers={groupedOffers} onBuy={handleBuyCDS} isBuyMode={isBuyMode} />
         </div>
 
+        {/* Mode Toggle and Premium Input */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-app-primary-2 text-sm">Mode:</span>
-            <div className="flex items-center space-x-2">
-              <span className={`text-xs ${!isBuyMode ? 'text-[#f49c4a] font-medium' : 'text-gray-500'}`}>Sell</span>
-              <button
-                onClick={handleSwitchMode}
-                className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  isBuyMode ? 'bg-[#4fc484]' : 'bg-[#f49c4a]'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    isBuyMode ? 'translate-x-5' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              <span className={`text-xs ${isBuyMode ? 'text-[#1c544e] font-medium' : 'text-gray-500'}`}>Buy</span>
-            </div>
-          </div>
-
+          <ModeToggle isBuyMode={isBuyMode} setIsBuyMode={setIsBuyMode} />
           {!isBuyMode && (
-            <div className="space-y-2">
-              <input
-                type="text"
-                placeholder="Premium (USDC)"
-                value={premium}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-app-primary-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-primary-2 bg-white text-app-primary-2 text-sm"
-              />
-              {exceedsCoupon && (
-                <p className="text-app-credit-30 text-xs">
-                  Warning: Your premium exceeds the coupon amount.
-                </p>
-              )}
-            </div>
+            <PremiumInput premium={premium} setPremium={setPremium} />
           )}
         </div>
-      </div>
 
-      <div className="p-4 bg-app-dark-mint bg-opacity-20">
-        {isBuyMode ? (
-          isBuyApproved ? (
-            <button
-              onClick={handleBuyCDS}
-              disabled={isBuying || cdsOffers.length === 0}
-              className="w-full bg-[#4fc484] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-[#3a9362] transition-colors duration-300 disabled:bg-opacity-50 disabled:cursor-not-allowed border border-[#1c544e] border-opacity-20"
+        {/* Action Button */}
+        <div className="p-4 bg-app-dark-mint bg-opacity-20">
+          {!isApproved ? (
+            <TransactionButton
+              contractAddress={MOCK_USDC_ADDRESS}
+              transaction={handleApprove}
+              className="w-full text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors duration-300 bg-app-primary-2 hover:bg-app-primary-1"
             >
-              {isBuying ? 'Buying...' : 'Buy Best Offer'}
-            </button>
+              Approve USDC
+            </TransactionButton>
           ) : (
-            <button
-              onClick={handleBuyApprove}
-              disabled={isBuyApproving || cdsOffers.length === 0}
-              className="w-full bg-[#4fc484] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-[#3a9362] transition-colors duration-300 disabled:bg-opacity-50 disabled:cursor-not-allowed border border-[#1c544e] border-opacity-20"
+            <TransactionButton
+              contractAddress={CDS_MANAGER_ADDRESS}
+              transaction={isBuyMode ? () => handleBuyCDS(groupedOffers[0].offers[0].cdsID) : handleCreateCDS}
+              className={`w-full text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors duration-300 ${
+                isBuyMode ? 'bg-[#4fc484] hover:bg-[#3a9362]' : 'bg-[#f49c4a] hover:bg-[#dc8c42]'
+              }`}
             >
-              {isBuyApproving ? 'Authorizing...' : 'Authorize Spending'}
-            </button>
-          )
-        ) : (
-          isApproved ? (
-            <button
-              onClick={handleCreateOffer}
-              disabled={isCreatingOffer || !premium || parseFloat(premium) === 0}
-              className="w-full bg-[#f49c4a] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-[#dc8c42] transition-colors duration-300 disabled:bg-opacity-50 disabled:cursor-not-allowed border border-white border-opacity-20"
-            >
-              {isCreatingOffer ? 'Placing Offer...' : 'Place Offer'}
-            </button>
-          ) : (
-            <button
-              onClick={handleApprove}
-              disabled={isApproving}
-              className="w-full bg-[#f49c4a] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-[#dc8c42] transition-colors duration-300 disabled:bg-opacity-50 disabled:cursor-not-allowed border border-white border-opacity-20"
-            >
-              {isApproving ? 'Authorizing...' : 'Authorize Collateral'}
-            </button>
-          )
-        )}
+              {isBuyMode ? 'Buy Best Offer' : 'Place Offer'}
+            </TransactionButton>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-interface OrderBookEntryProps {
-  groupedOffer: GroupedOffer;
-  isBestOffer: boolean;
-}
-
-const OrderBookEntry: React.FC<OrderBookEntryProps> = ({ groupedOffer, isBestOffer }) => {
-  return (
-    <div 
-      className={`
-        flex justify-between items-center py-2 px-3 text-xs
-        ${isBestOffer ? 'bg-[#d8feaa] bg-opacity-20' : ''}
-      `}
-    >
-      <span className={`font-medium ${isBestOffer ? 'text-app-primary-2' : 'text-gray-700'}`}>
-        {groupedOffer.price}
-      </span>
-      <span className="text-gray-600">{groupedOffer.count}</span>
+const InfoCard: React.FC<{ icon: React.ReactNode; title: string; value: string }> = ({ icon, title, value }) => (
+  <div className="flex items-center space-x-2 bg-app-dark-mint bg-opacity-30 p-2 rounded-lg">
+    {icon}
+    <div>
+      <p className="text-xs font-medium text-gray-600">{title}</p>
+      <p className="text-xs text-app-primary-2">{value}</p>
     </div>
-  );
+  </div>
+);
+
+const OrderBookTable: React.FC<{ groupedOffers: GroupedOffer[], onBuy: (cdsID: number) => void, isBuyMode: boolean }> = ({ groupedOffers, onBuy, isBuyMode }) => (
+  <div className="border border-app-primary-2 rounded-lg overflow-hidden bg-white">
+    <div className="flex justify-between bg-app-primary-2 px-3 py-2 text-xs font-semibold text-white">
+      <span>Premium (USDC)</span>
+      <span>Quantity</span>
+    </div>
+    <div className="h-[128px] overflow-y-auto">
+      {groupedOffers.length > 0 ? (
+        groupedOffers.map((group) => (
+          <div key={group.premium} className="flex justify-between px-3 py-2 text-xs border-b border-gray-200">
+            <span>{group.premium}</span>
+            <span>{group.offers.length}</span>
+            {isBuyMode && (
+              <button onClick={() => onBuy(group.offers[0].cdsID)} className="text-app-primary-2 hover:underline">
+                Buy
+              </button>
+            )}
+          </div>
+        ))
+      ) : (
+        <p className="p-3 text-center text-gray-500 text-xs">No active offers</p>
+      )}
+    </div>
+  </div>
+);
+
+const ModeToggle: React.FC<{ isBuyMode: boolean; setIsBuyMode: (mode: boolean) => void }> = ({ isBuyMode, setIsBuyMode }) => (
+  <div className="flex items-center justify-between">
+    <span className="font-semibold text-app-primary-2 text-sm">Mode:</span>
+    <div className="flex items-center space-x-2">
+      <span className={`text-xs ${!isBuyMode ? 'text-[#f49c4a] font-medium' : 'text-gray-500'}`}>Sell</span>
+      <button
+        onClick={() => setIsBuyMode(!isBuyMode)}
+        className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          isBuyMode ? 'bg-[#4fc484]' : 'bg-[#f49c4a]'
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            isBuyMode ? 'translate-x-5' : 'translate-x-1'
+          }`}
+        />
+      </button>
+      <span className={`text-xs ${isBuyMode ? 'text-[#1c544e] font-medium' : 'text-gray-500'}`}>Buy</span>
+    </div>
+  </div>
+);
+
+const PremiumInput: React.FC<{ premium: string; setPremium: (value: string) => void }> = ({ premium, setPremium }) => (
+  <div className="space-y-2">
+    <input
+      type="text"
+      placeholder="Premium (USDC)"
+      value={premium}
+      onChange={(e) => setPremium(e.target.value.replace(/[^0-9.]/g, ''))}
+      className="w-full p-2 border border-app-primary-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-primary-2 bg-white text-app-primary-2 text-sm"
+    />
+  </div>
+);
+
+const truncateAddress = (address: string) => {
+  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 };
 
 export default BondOrderBook;

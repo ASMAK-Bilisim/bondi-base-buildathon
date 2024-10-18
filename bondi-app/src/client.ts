@@ -1,5 +1,5 @@
-import { ThirdwebSDK } from "@thirdweb-dev/sdk";
+import { createThirdwebClient } from "thirdweb";
 
-export const client = new ThirdwebSDK(84532, {
+export const client = createThirdwebClient({
   clientId: import.meta.env.VITE_THIRDWEB_CLIENT_ID,
 });

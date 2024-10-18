@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useAddress } from "@thirdweb-dev/react";
+import { useActiveAccount } from "thirdweb/react";
 
 interface KYCContextType {
   isKYCCompleted: boolean;
@@ -11,34 +11,28 @@ const KYCContext = createContext<KYCContextType | undefined>(undefined);
 
 export const KYCProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isKYCCompleted, setIsKYCCompleted] = useState(false);
-  const address = useAddress();
+  const account = useActiveAccount();
 
   useEffect(() => {
-    if (address) {
-      const whitelistedAddresses = JSON.parse(localStorage.getItem('kycWhitelist') || '[]');
-      setIsKYCCompleted(whitelistedAddresses.includes(address));
+    if (account) {
+      const kycStatus = localStorage.getItem(`kycStatus_${account}`);
+      setIsKYCCompleted(kycStatus === 'completed');
     } else {
       setIsKYCCompleted(false);
     }
-  }, [address]);
+  }, [account]);
 
   const setKYCCompleted = (completed: boolean) => {
     setIsKYCCompleted(completed);
-    if (completed && address) {
-      const whitelistedAddresses = JSON.parse(localStorage.getItem('kycWhitelist') || '[]');
-      if (!whitelistedAddresses.includes(address)) {
-        whitelistedAddresses.push(address);
-        localStorage.setItem('kycWhitelist', JSON.stringify(whitelistedAddresses));
-      }
+    if (account) {
+      localStorage.setItem(`kycStatus_${account}`, completed ? 'completed' : 'incomplete');
     }
   };
 
   const resetKYC = () => {
     setIsKYCCompleted(false);
-    if (address) {
-      const whitelistedAddresses = JSON.parse(localStorage.getItem('kycWhitelist') || '[]');
-      const updatedAddresses = whitelistedAddresses.filter((addr: string) => addr !== address);
-      localStorage.setItem('kycWhitelist', JSON.stringify(updatedAddresses));
+    if (account) {
+      localStorage.removeItem(`kycStatus_${account}`);
     }
   };
 

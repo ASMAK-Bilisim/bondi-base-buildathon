@@ -1,48 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import BondCouponTimeline from '../components/Coupons/BondCouponTimeline';
 import { usePrimaryMarketBonds } from '../hooks/usePrimaryMarketBonds';
-import { useAddress, useContract, useContractRead } from "@thirdweb-dev/react";
-import { ethers } from 'ethers';
+import { useActiveAccount } from 'thirdweb/react';
+import { getContract } from 'thirdweb';
 import { contractABI } from '../constants/contractInfo';
 
 const Coupons: React.FC = () => {
   const { bonds, isLoading: isBondsLoading, error: bondsError } = usePrimaryMarketBonds();
-  const address = useAddress();
+  const account = useActiveAccount();
   const [investedBonds, setInvestedBonds] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Use a single contract instance for all bonds
-  const { contract } = useContract(bonds[0]?.contractAddress, contractABI);
-
-  // Use a single useContractRead for all bonds
-  const { data: investedAmountsData, isLoading: isInvestedAmountsLoading } = useContractRead(
-    contract,
-    "investedAmountPerInvestor",
-    [address]
-  );
-
   useEffect(() => {
     const fetchInvestedBonds = async () => {
-      if (!address || isBondsLoading || bondsError || bonds.length === 0 || isInvestedAmountsLoading || !investedAmountsData) return;
+      if (!account || isBondsLoading || bondsError || bonds.length === 0) return;
 
       setIsLoading(true);
-      
-      const investedBondsData = bonds.filter((bond, index) => {
-        const investedAmount = investedAmountsData[index]?.investedAmount;
-        return investedAmount && ethers.BigNumber.from(investedAmount).gt(0);
-      }).map((bond, index) => {
-        const investedAmount = ethers.utils.formatUnits(investedAmountsData[index].investedAmount, 6);
-        return { ...bond, investedAmount };
-      });
 
-      setInvestedBonds(investedBondsData);
-      setIsLoading(false);
+      try {
+        const investedBondsData = await Promise.all(
+          bonds.map(async (bond) => {
+            const fundingContract = getContract({
+              address: bond.contractAddress,
+              abi: contractABI,
+            });
+
+            const investedAmountData = await fundingContract.call("investedAmountPerInvestor", account);
+
+            if (investedAmountData && BigInt(investedAmountData.toString()) > BigInt(0)) {
+              const investedAmount = Number(investedAmountData.toString()) / 1e6; // Assuming 6 decimals
+              return { ...bond, investedAmount };
+            } else {
+              return null;
+            }
+          })
+        );
+
+        const filteredInvestedBonds = investedBondsData.filter((bond) => bond !== null);
+
+        setInvestedBonds(filteredInvestedBonds);
+      } catch (error) {
+        console.error('Error fetching invested bonds:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchInvestedBonds();
-  }, [address, bonds, isBondsLoading, bondsError, investedAmountsData, isInvestedAmountsLoading]);
+  }, [account, bonds, isBondsLoading, bondsError]);
 
-  if (isLoading || isBondsLoading || isInvestedAmountsLoading) {
+  if (isLoading || isBondsLoading) {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-app-primary-2"></div>

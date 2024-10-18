@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useContract, useContractRead } from "@thirdweb-dev/react";
+import { useReadContract } from "thirdweb/react";
+import { getContract } from "thirdweb";
 import BondOrderBook from '../components/CDSMarket/BondOrderBook';
 import { CDS_MANAGER_ADDRESS, cdsManagerABI } from '../constants/contractInfo';
+import { client } from '../client';
+import { baseSepolia } from 'thirdweb/chains';
 
 interface BondInfo {
   hash: string;
@@ -12,17 +15,37 @@ interface BondInfo {
 
 const CDSMarket: React.FC = () => {
   const [bondsInfo, setBondsInfo] = useState<BondInfo[]>([]);
-  const { contract } = useContract(CDS_MANAGER_ADDRESS, cdsManagerABI);
+
+  const cdsManagerContract = getContract({
+    client,
+    address: CDS_MANAGER_ADDRESS,
+    abi: cdsManagerABI,
+    chain: baseSepolia,
+  });
 
   const bondHashes = [
-    "0x32097aa1da9e7bce4971f6119942240b9c2d959d2d660fdc17155f6c8103e833",
-    "0x3cb36bcaa1008e2d3f5906ae1d92c50df4a06f107d51a027dd811785fabf8e01",
-    "0x3e64795fbb48ec889da2c03bd058900a4d666a64e57fe472c08b1d346081edf8"
+    "0x220f8f20bc27aa6e88706a7417c63c245c276cc06d8da33bce6d066b1bd072a8",
+    "0x9802eb516f71fec07457cf51f95188082740c564b110b271b7ffa220bea8eca5",
+    "0x2f0a4b27da03d5d5744fa5a2853d4299e16e2ca03e039deea00f21cbb1dc27cb"
   ];
 
-  const { data: bond1Data } = useContractRead(contract, "getBond", [bondHashes[0]]);
-  const { data: bond2Data } = useContractRead(contract, "getBond", [bondHashes[1]]);
-  const { data: bond3Data } = useContractRead(contract, "getBond", [bondHashes[2]]);
+  const { data: bond1Data } = useReadContract({
+    contract: cdsManagerContract,
+    method: "function getBond(bytes32 bondAddressAndExpiration) view returns (address, uint256, uint256)",
+    params: [bondHashes[0] as `0x${string}`],
+  });
+
+  const { data: bond2Data } = useReadContract({
+    contract: cdsManagerContract,
+    method: "function getBond(bytes32 bondAddressAndExpiration) view returns (address, uint256, uint256)",
+    params: [bondHashes[1] as `0x${string}`],
+  });
+
+  const { data: bond3Data } = useReadContract({
+    contract: cdsManagerContract,
+    method: "function getBond(bytes32 bondAddressAndExpiration) view returns (address, uint256, uint256)",
+    params: [bondHashes[2] as `0x${string}`],
+  });
 
   useEffect(() => {
     if (bond1Data && bond2Data && bond3Data) {
@@ -30,7 +53,7 @@ const CDSMarket: React.FC = () => {
         hash: bondHashes[index],
         bondTokenAddress: data[0],
         nextCouponAmount: data[1].toString(),
-        nextCouponDate: data[2].toNumber(),
+        nextCouponDate: Number(data[2]),
       }));
       setBondsInfo(newBondsInfo);
     }
@@ -44,7 +67,7 @@ const CDSMarket: React.FC = () => {
 
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {bondsInfo.map((bondInfo) => (
             <div key={bondInfo.hash} className="flex justify-center">

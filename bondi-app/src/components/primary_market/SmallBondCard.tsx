@@ -6,21 +6,14 @@ import { InformationSquareIcon } from '@hugeicons/react';
 import useAnimatedProgress from '../../hooks/useAnimatedProgress';
 import CreditScoreDetails from './CreditScoreDetails';
 import InvestmentPopup from './InvestmentPopup';
-import { useAddress, useContract, useContractRead } from "@thirdweb-dev/react";
-import { ethers } from 'ethers';
+import { useActiveAccount, useReadContract } from "thirdweb/react";
+import { getContract } from "thirdweb";
 import { Bond } from '../../hooks/usePrimaryMarketBonds';
 import { MOCK_USDC_ADDRESS, contractABI } from '../../constants/contractInfo';
 import { useNavigate } from 'react-router-dom';
-import { useKYC } from '../contexts/KYCContext'; // Import the useKYC hook
-
-// Utility function to format numbers correctly
-const formatNumber = (value: string | number): string => {
-  if (typeof value === 'string') {
-    // Remove any non-numeric characters except for the decimal point
-    return value.replace(/[^\d.]/g, '');
-  }
-  return value.toString();
-};
+import { useKYC } from '../contexts/KYCContext';
+import { client } from '../../client';
+import { baseSepolia } from 'thirdweb/chains';
 
 interface SmallBondCardProps {
   data: Bond;
@@ -54,46 +47,49 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInvestmentPopupOpen, setIsInvestmentPopupOpen] = useState(false);
 
-  const address = useAddress();
-  const { contract: mockUsdcContract } = useContract(MOCK_USDC_ADDRESS);
-  const { contract: fundingContract } = useContract(contractAddress, contractABI);
+  const account = useActiveAccount();
+  const { isKYCCompleted } = useKYC();
+  const navigate = useNavigate();
 
-  const { data: fundingContractBalance, isLoading: isBalanceLoading } = useContractRead(
-    mockUsdcContract,
-    "balanceOf",
-    [contractAddress]
-  );
+  const mockUsdcContract = getContract({
+    client,
+    address: MOCK_USDC_ADDRESS,
+    chain: baseSepolia,
+  });
 
-  const { data: targetAmountData, isLoading: isTargetAmountLoading } = useContractRead(
-    fundingContract,
-    "targetAmount"
-  );
+  const fundingContract = getContract({
+    client,
+    address: contractAddress,
+    abi: contractABI,
+    chain: baseSepolia,
+  });
 
-  const { data: investedAmountData } = useContractRead(
-    fundingContract,
-    "investedAmountPerInvestor",
-    [address]
-  );
+  const { data: fundingContractBalance, isLoading: isBalanceLoading } = useReadContract({
+    contract: mockUsdcContract,
+    method: "balanceOf",
+    params: [contractAddress],
+  });
 
-  const { isKYCCompleted } = useKYC(); // Use the KYC context
+  const { data: targetAmountData, isLoading: isTargetAmountLoading } = useReadContract({
+    contract: fundingContract,
+    method: "targetAmount",
+  });
 
   useEffect(() => {
     if (fundingContractBalance && !isBalanceLoading) {
-      const balance = ethers.utils.formatUnits(fundingContractBalance.toString().replace(/,/g, ''), 6);
-      setReachedInvestment(parseFloat(balance));
+      const balance = Number(fundingContractBalance.toString()) / 1e6;
+      setReachedInvestment(balance);
     }
   }, [fundingContractBalance, isBalanceLoading]);
 
   useEffect(() => {
     if (targetAmountData && !isTargetAmountLoading) {
-      const target = ethers.utils.formatUnits(targetAmountData.toString().replace(/,/g, ''), 6);
-      setTargetAmount(parseFloat(target));
+      const target = Number(targetAmountData.toString()) / 1e6;
+      setTargetAmount(target);
     }
   }, [targetAmountData, isTargetAmountLoading]);
 
-  const investedAmount = investedAmountData 
-    ? ethers.utils.formatUnits(investedAmountData.toString().replace(/,/g, ''), 6) 
-    : "0";
+  const investmentProgress = targetAmount > 0 ? (reachedInvestment / targetAmount) * 100 : 0;
 
   const getColorsForCreditScore = (score: number): [string, string, string] => {
     if (score <= 30) return ['#ff7a86', '#e12836', '#a81d27'];
@@ -104,8 +100,6 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   };
 
   const [startColor, midColor, endColor] = getColorsForCreditScore(animatedCreditScore);
-
-  const investmentProgress = targetAmount > 0 ? (reachedInvestment / targetAmount) * 100 : 0;
 
   const getProgressBarColor = (progress: number) => {
     return progress < 10 ? '#e55f0b' : '#4fc484';
@@ -130,8 +124,6 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     return value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
   };
 
-  const navigate = useNavigate();
-
   const handleCheckDetails = () => {
     navigate(`/primary-market/${data.isin}`);
   };
@@ -140,7 +132,6 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     if (isKYCCompleted) {
       setIsInvestmentPopupOpen(true);
     } else {
-      // Navigate to KYC page or open KYC modal
       navigate('/kyc');
     }
   };

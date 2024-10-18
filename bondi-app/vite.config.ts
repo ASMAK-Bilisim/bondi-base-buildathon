@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_THIRDWEB_CLIENT_ID': JSON.stringify(env.VITE_THIRDWEB_CLIENT_ID),
     },
     optimizeDeps: {
-      include: ['@thirdweb-dev/react', '@thirdweb-dev/sdk', 'ethers'],
+      include: ['thirdweb/react', 'thirdweb'],
       esbuildOptions: {
         target: 'es2020',
       },

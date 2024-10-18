@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { CancelSquareIcon, Exchange01Icon, SquareLock01Icon, SquareUnlock01Icon } from "@hugeicons/react";
-import { useAddress, useContract, useContractRead, useContractWrite, useSDK } from "@thirdweb-dev/react";
-import { ethers } from 'ethers';
+import { CancelSquareIcon, SquareUnlock01Icon, SquareLock01Icon, Exchange01Icon } from "@hugeicons/react";
+import { useActiveAccount, useReadContract, useSendTransaction, useWaitForReceipt } from "thirdweb/react";
+import { getContract } from "thirdweb";
 import { MOCK_USDC_ADDRESS, contractABI } from '../../constants/contractInfo';
 import { useContractInfo } from '../../hooks/useContractInfo';
 import { useNavigate } from 'react-router-dom';
 import 'react-circular-progressbar/dist/styles.css';
+import { baseSepolia } from "thirdweb/chains";
+import { client } from '../../client';
 
 interface InvestmentPopupProps {
   onClose: () => void;
@@ -27,7 +29,6 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   const [amount, setAmount] = useState<string>('0.0000');
   const [isUSDC, setIsUSDC] = useState<boolean>(true);
   const [isFocused, setIsFocused] = useState<boolean>(false);
-  const [userBalance, setUserBalance] = useState<string>('0.00');
   const [investedAmount, setInvestedAmount] = useState<string>('0.00');
   const [isApproved, setIsApproved] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
@@ -36,64 +37,60 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   const [isOGNFTUnlocked, setIsOGNFTUnlocked] = useState(false);
   const [isWhaleNFTUnlocked, setIsWhaleNFTUnlocked] = useState(false);
   const [isAmountValid, setIsAmountValid] = useState(false);
-  const [approvedAmount, setApprovedAmount] = useState<ethers.BigNumber>(ethers.constants.Zero);
+  const [approvedAmount, setApprovedAmount] = useState<bigint>(BigInt(0));
 
-  const address = useAddress();
-  const sdk = useSDK();
-  const { contract: mockUsdcContract } = useContract(MOCK_USDC_ADDRESS);
-  const { contract: fundingContract } = useContract(bondData.contractAddress, contractABI);
-  const { minInvestmentAmount, targetAmount, isLoading: isContractInfoLoading } = useContractInfo(bondData.contractAddress);
-
-  const { data: balanceData, isLoading: isBalanceLoading } = useContractRead(
-    mockUsdcContract,
-    "balanceOf",
-    [address]
-  );
-
-  const { data: allowanceData, isLoading: isAllowanceLoading, refetch: refetchAllowance } = useContractRead(
-    mockUsdcContract,
-    "allowance",
-    [address, bondData.contractAddress]
-  );
-
-  const { data: investedAmountData, isLoading: isInvestedAmountLoading, refetch: refetchInvestedAmount } = useContractRead(
-    fundingContract,
-    "investedAmountPerInvestor",
-    [address]
-  );
-
-  const { mutateAsync: approveMockUSDC, isLoading: isApproveLoading } = useContractWrite(mockUsdcContract, "approve");
-  const { mutateAsync: invest, isLoading: isInvestLoading } = useContractWrite(fundingContract, "invest");
-
+  const account = useActiveAccount();
   const navigate = useNavigate();
 
-  const WHALE_THRESHOLD = ethers.utils.parseUnits("5000", 6); // 5000 USDC
+  const mockUsdcContract = getContract({
+    client,
+    address: MOCK_USDC_ADDRESS,
+    chain: baseSepolia,
+  });
 
-  // Effect to refetch invested amount on component mount and address change
-  useEffect(() => {
-    if (address) {
-      refetchInvestedAmount();
-    }
-  }, [address, refetchInvestedAmount]);
+  const fundingContract = getContract({
+    client,
+    address: bondData.contractAddress,
+    abi: contractABI,
+    chain: baseSepolia,
+  });
+
+  const { minInvestmentAmount, targetAmount, isLoading: isContractInfoLoading } = useContractInfo(bondData.contractAddress);
+
+  const { data: balanceData, isLoading: isBalanceLoading } = useReadContract({
+    contract: mockUsdcContract,
+    method: "balanceOf",
+    params: account ? [account] : undefined,
+  });
+
+  const { data: allowanceData, isLoading: isAllowanceLoading } = useReadContract({
+    contract: mockUsdcContract,
+    method: "allowance",
+    params: account ? [account, bondData.contractAddress] : undefined,
+  });
+
+  const { data: investedAmountData, isLoading: isInvestedAmountLoading } = useReadContract({
+    contract: fundingContract,
+    method: "investedAmountPerInvestor",
+    params: account ? [account] : undefined,
+  });
+
+  const { mutateAsync: sendTransaction } = useSendTransaction();
+  const waitForReceipt = useWaitForReceipt();
+
+  const WHALE_THRESHOLD = BigInt(5000 * 1e6); // 5000 USDC in wei
 
   useEffect(() => {
-    if (allowanceData && !isAllowanceLoading) {
-      const allowance = ethers.BigNumber.from(allowanceData);
+    if (allowanceData) {
+      const allowance = BigInt(allowanceData.toString());
       setApprovedAmount(allowance);
-      setIsApproved(allowance.gt(ethers.constants.Zero));
+      setIsApproved(allowance > BigInt(0));
     }
-  }, [allowanceData, isAllowanceLoading]);
-
-  useEffect(() => {
-    if (balanceData) {
-      const formattedBalance = ethers.utils.formatUnits(balanceData.toString(), 6);
-      setUserBalance(formattedBalance);
-    }
-  }, [balanceData]);
+  }, [allowanceData]);
 
   useEffect(() => {
     if (investedAmountData) {
-      const formattedInvestedAmount = ethers.utils.formatUnits(investedAmountData.investedAmount.toString(), 6);
+      const formattedInvestedAmount = (Number(investedAmountData) / 1e6).toFixed(2);
       setInvestedAmount(formattedInvestedAmount);
     }
   }, [investedAmountData]);
@@ -103,11 +100,11 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
       setIsOGNFTUnlocked(true);
       
       // Calculate total invested amount (previous investment + current investment)
-      const previousInvestment = ethers.utils.parseUnits(investedAmount, 6);
-      const currentInvestment = ethers.utils.parseUnits(amount, 6);
-      const totalInvestment = previousInvestment.add(currentInvestment);
+      const previousInvestment = BigInt(Math.floor(parseFloat(investedAmount) * 1e6));
+      const currentInvestment = BigInt(Math.floor(parseFloat(amount) * 1e6));
+      const totalInvestment = previousInvestment + currentInvestment;
       
-      setIsWhaleNFTUnlocked(totalInvestment.gte(WHALE_THRESHOLD));
+      setIsWhaleNFTUnlocked(totalInvestment >= WHALE_THRESHOLD);
     }
   }, [isInvestmentComplete, amount, investedAmount]);
 
@@ -161,10 +158,10 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   };
 
   const handleMaxClick = () => {
-    if (isUSDC) {
-      setAmount(parseFloat(userBalance).toFixed(4));
-    } else {
-      setAmount((parseFloat(userBalance) / bondData.currentPrice).toFixed(4));
+    if (isUSDC && balanceData) {
+      setAmount((Number(balanceData) / 1e6).toFixed(4));
+    } else if (balanceData) {
+      setAmount(((Number(balanceData) / 1e6) / bondData.currentPrice).toFixed(4));
     }
   };
 
@@ -199,19 +196,20 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   });
 
   const handleApprove = async () => {
-    if (!address) return;
+    if (!account) return;
     setIsApproving(true);
     try {
-      const amountToApprove = ethers.utils.parseUnits(amount || "0", 6);
-      const maxUint256 = ethers.constants.MaxUint256;
-      
-      const approvalAmount = amountToApprove.gt(maxUint256) ? maxUint256 : amountToApprove;
+      const amountToApprove = BigInt(Math.floor(parseFloat(amount) * 1e6));
 
-      const approvalTx = await approveMockUSDC({ args: [bondData.contractAddress, approvalAmount] });
-      await sdk?.getProvider().waitForTransaction(approvalTx.receipt.transactionHash);
+      const transaction = await sendTransaction({
+        contract: mockUsdcContract,
+        method: "approve",
+        params: [bondData.contractAddress, amountToApprove],
+      });
 
-      await refetchAllowance();
-      setApprovedAmount(approvalAmount);
+      await waitForReceipt(transaction);
+
+      setApprovedAmount(amountToApprove);
       setIsApproved(true);
     } catch (error) {
       console.error("Error approving Mock USDC:", error);
@@ -221,37 +219,38 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   };
 
   const handleInvest = async () => {
-    if (!address || !sdk || !amount || amount === '0.0000') {
-      console.error("Invalid investment amount or address not connected");
+    if (!account || !amount || amount === '0.0000') {
+      console.error("Invalid investment amount or account not connected");
       return;
     }
 
-    const amountToInvest = ethers.utils.parseUnits(amount, 6);
+    const amountToInvest = BigInt(Math.floor(parseFloat(amount) * 1e6));
     
-    if (amountToInvest.gt(approvedAmount)) {
-      // If the investment amount is greater than the approved amount, we need to approve again
+    if (amountToInvest > approvedAmount) {
       await handleApprove();
       return;
     }
 
     setIsInvesting(true);
     try {
-      if (amountToInvest.lt(ethers.utils.parseUnits(minInvestmentAmount, 6))) {
+      if (amountToInvest < BigInt(Math.floor(parseFloat(minInvestmentAmount) * 1e6))) {
         throw new Error(`Minimum investment amount is ${minInvestmentAmount} USDC`);
       }
 
-      const investTx = await invest({ args: [amountToInvest] });
-      await sdk.getProvider().waitForTransaction(investTx.receipt.transactionHash);
+      const transaction = await sendTransaction({
+        contract: fundingContract,
+        method: "invest",
+        params: [amountToInvest],
+      });
 
-      await refetchInvestedAmount();
+      await waitForReceipt(transaction);
 
       setIsInvestmentComplete(true);
       setIsOGNFTUnlocked(true);
       
-      // Check if total investment (including this one) is at least 5000 USDC
-      const previousInvestment = ethers.utils.parseUnits(investedAmount, 6);
-      const totalInvestment = previousInvestment.add(amountToInvest);
-      setIsWhaleNFTUnlocked(totalInvestment.gte(WHALE_THRESHOLD));
+      const previousInvestment = BigInt(Math.floor(parseFloat(investedAmount) * 1e6));
+      const totalInvestment = previousInvestment + amountToInvest;
+      setIsWhaleNFTUnlocked(totalInvestment >= WHALE_THRESHOLD);
 
     } catch (error: any) {
       console.error("Error investing:", error);
@@ -259,11 +258,6 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
     } finally {
       setIsInvesting(false);
     }
-  };
-
-  const handleGoHome = () => {
-    onClose();
-    navigate('/'); // Assuming '/' is your home route
   };
 
   return (
@@ -451,7 +445,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                     <div className="flex justify-between items-center">
                       <span>Your Balance:</span>
                       <p className="font-bold">
-                        {isBalanceLoading ? 'Loading...' : `${formatCurrency(parseFloat(userBalance))} USDC`}
+                        {isBalanceLoading ? 'Loading...' : `${formatCurrency(Number(balanceData) / 1e6)} USDC`}
                       </p>
                     </div>
                     <div className="flex justify-between items-center">
@@ -468,7 +462,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                     Please note that the price and Yield to Maturity (YTM) indicated during the Funding Phase are provisional and do not represent the final figures. Once the bonds are purchased in real life, you will be notified, and the realized price and YTM will be displayed when you mint your bond tokens.
                   </p>
 
-                  {isApproved && amount && amount !== '0.0000' && ethers.utils.parseUnits(amount, 6).lte(approvedAmount) ? (
+                  {isApproved && amount && amount !== '0.0000' && BigInt(Math.floor(parseFloat(amount) * 1e6)) <= approvedAmount ? (
                     <button 
                       onClick={handleInvest}
                       disabled={isInvesting || !isAmountValid}

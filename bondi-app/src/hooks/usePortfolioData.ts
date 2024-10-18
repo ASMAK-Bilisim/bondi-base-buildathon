@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from 'react-query';
-import { useAddress } from "@thirdweb-dev/react";
+import { useQuery } from '@tanstack/react-query';
+import { useActiveAccount } from "thirdweb/react";
 import axios from 'axios';
 import { subYears, subMonths, subDays, startOfYear, parseISO, isValid } from 'date-fns';
 
@@ -64,60 +64,51 @@ const fetch30MinData = async (symbol: string, from: string, to: string): Promise
   const response = await axios.get(`https://financialmodelingprep.com/api/v3/historical-chart/30min/${symbol}?from=${from}&to=${to}&apikey=${API_KEY}`);
   return response.data;
 };
-
 export const usePortfolioData = () => {
   let address;
   try {
-    address = useAddress();
+    address = useActiveAccount();
   } catch (error) {
-    console.error("useAddress() hook error:", error);
+    console.error("useActiveAccount() hook error:", error);
     // Handle the error or set a default value for address
     address = null;
   }
 
   const [timeRange, setTimeRange] = useState('YTD');
 
-  const { data: currentPriceData, isLoading: isLoadingCurrentPrice, error: currentPriceError } = useQuery<GoogleFinanceData, Error>(
-    ['btcusdPrice'],
-    fetchBTCUSDPrice,
-    {
-      refetchInterval: 60000, // Refetch every minute
-    }
-  );
+  const { data: currentPriceData, isLoading: isLoadingCurrentPrice, error: currentPriceError } = useQuery({
+    queryKey: ['btcusdPrice'],
+    queryFn: fetchBTCUSDPrice,
+    refetchInterval: 60000, // Refetch every minute
+  });
 
-  const { data: historicalData, isLoading: isLoadingHistorical, error: historicalError } = useQuery<HistoricalData[], Error>(
-    ['btcusdHistorical'],
-    fetchHistoricalData,
-    {
-      refetchInterval: 24 * 60 * 60 * 1000, // Refetch once a day
-    }
-  );
+  const { data: historicalData, isLoading: isLoadingHistorical, error: historicalError } = useQuery({
+    queryKey: ['btcusdHistorical'],
+    queryFn: fetchHistoricalData,
+    refetchInterval: 24 * 60 * 60 * 1000, // Refetch once a day
+  });
 
-  const { data: fiveMinData, isLoading: isLoading5Min, error: error5Min } = useQuery<HistoricalData[], Error>(
-    ['btcusd5Min', timeRange],
-    async () => {
+  const { data: fiveMinData, isLoading: isLoading5Min, error: error5Min } = useQuery({
+    queryKey: ['btcusd5Min', timeRange],
+    queryFn: async () => {
       const now = new Date();
       const from = subDays(now, 1);
       return fetch5MinData('BTCUSD', from.toISOString().split('T')[0], now.toISOString().split('T')[0]);
     },
-    {
-      enabled: timeRange === '1 Day',
-      refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
-    }
-  );
+    enabled: timeRange === '1 Day',
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+  });
 
-  const { data: thirtyMinData, isLoading: isLoading30Min, error: error30Min } = useQuery<HistoricalData[], Error>(
-    ['btcusd30Min', timeRange],
-    async () => {
+  const { data: thirtyMinData, isLoading: isLoading30Min, error: error30Min } = useQuery({
+    queryKey: ['btcusd30Min', timeRange],
+    queryFn: async () => {
       const now = new Date();
       const from = subDays(now, 7);
       return fetch30MinData('BTCUSD', from.toISOString().split('T')[0], now.toISOString().split('T')[0]);
     },
-    {
-      enabled: timeRange === '1 Week',
-      refetchInterval: 30 * 60 * 1000, // Refetch every 30 minutes
-    }
-  );
+    enabled: timeRange === '1 Week',
+    refetchInterval: 30 * 60 * 1000, // Refetch every 30 minutes
+  });
 
   const currentPrice = currentPriceData?.price || 0;
 

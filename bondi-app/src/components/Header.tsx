@@ -1,11 +1,16 @@
+"use client"
 import React, { useState, useEffect, useRef } from "react";
 import { Notification03Icon } from '@hugeicons/react';
-import { ConnectWallet, useAddress } from "@thirdweb-dev/react";
+import { ConnectButton, lightTheme, useActiveAccount, SendTransactionPayModalConfig } from "thirdweb/react";
+import { client } from "../client";
+import { baseSepolia } from "thirdweb/chains";
+import { createWallet } from "thirdweb/wallets";
 import { useNavigate } from "react-router-dom";
 import NotificationDropdown from './NotificationComponents/NotificationDropdown';
 import UnreadNotification from './NotificationComponents/UnreadNotification';
 import { useKYC } from '../components/contexts/KYCContext';
 import { useNotifications } from '../components/contexts/NotificationContext';
+import { MOCK_USDC_ADDRESS } from "../constants/contractInfo";
 
 interface HeaderProps {
   isCompact: boolean;
@@ -13,14 +18,36 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  const [isMobile, setIsMobile] = useState(false);
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
-  const address = useAddress();
+  const account = useActiveAccount();
   const navigate = useNavigate();
   const { isKYCCompleted, resetKYC } = useKYC();
   const { notifications, dismissNotification, markAsRead, unreadCount } = useNotifications();
+
+  const wallets = [
+    createWallet("com.coinbase.wallet", {
+      walletConfig: {
+        options: "smartWalletOnly",
+      },
+    }),
+  ];
+
+  const tokenAddress = MOCK_USDC_ADDRESS;
+
+  const customTheme = lightTheme({
+    colors: {
+      primaryButtonBg: "#F2FBF9",
+      primaryButtonText: "#1C544E",
+      primaryButtonHoverBg: "#D9E8E6",
+      modalBg: "#F2FBF9",
+    },
+    fonts: {
+      body: "Inter, sans-serif",
+    },
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -65,7 +92,50 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
 
   const linkStyle = "font-inter font-medium text-[16px] leading-[26px] text-[#1C544E] hover:underline transition-all duration-300";
 
-  const isCompactOrMobile = isCompact || isMobile;
+  const customTokens = [
+    {
+      address: "0x161410d974A28dD839fb9175032538F62B258c4b",
+      name: "USD Coin",
+      symbol: "USDC",
+      decimals: 6,
+      icon: "https://example.com/usdc-icon.png", // Replace with actual USDC icon URL
+    },
+    {
+      address: "0x2eA4523B6D9b9920F0A544b6c10A58c583F01B65",
+      name: "Alpha Bond Token",
+      symbol: "ALPHA",
+      decimals: 18,
+      icon: "https://example.com/alpha-icon.png", // Replace with actual Alpha icon URL
+    },
+    {
+      address: "0xc41cB648A9bd0e4C4FCc9011218967fE8CB33107",
+      name: "Beta Bond Token",
+      symbol: "BETA",
+      decimals: 18,
+      icon: "https://example.com/beta-icon.png", // Replace with actual Beta icon URL
+    },
+    {
+      address: "0x63976d1fB668B646BA47e1Fd856E50D0853a1b2b",
+      name: "Zeta Bond Token",
+      symbol: "ZETA",
+      decimals: 18,
+      icon: "https://example.com/zeta-icon.png", // Replace with actual Zeta icon URL
+    },
+  ];
+
+  const payModalConfig: SendTransactionPayModalConfig = {
+    theme: "light",
+    supportedTokens: {
+      [baseSepolia.id]: [
+        {
+          address: "0x161410d974A28dD839fb9175032538F62B258c4b",
+          name: "USD Coin",
+          symbol: "USDC",
+          decimals: 6,
+        },
+      ],
+    },
+  };
 
   return (
     <header className="w-full font-semibold py-4 px-6 relative bg-[#F2FBF9]">
@@ -76,7 +146,7 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
           <a href="https://www.bondifinance.io" className={linkStyle}>FAQ</a>
         </nav>
         <div className="flex items-center gap-3 whitespace-nowrap">
-          {address && (
+          {account && (
             <div className="relative flex items-center" ref={notificationRef}>
               <div className="flex items-center bg-[#F2FBF9] rounded-lg border border-[#1C544E] overflow-visible">
                 <button
@@ -114,16 +184,31 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
             </div>
           )}
           <div className="rounded-lg border border-[#1C544E] overflow-hidden">
-            <ConnectWallet 
-              theme={isCompactOrMobile ? "light" : "light"}
-              btnTitle={isCompactOrMobile ? "Connect" : "Connect Wallet"}
-              modalSize="wide"
-              className={`!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#E5F5F2] !transition-colors !font-inter !font-bold !text-[16px] !leading-[14px] !rounded-none !border-none ${
-                isCompactOrMobile 
-                  ? '!px-2 !h-10' 
-                  : '!px-3 !h-10'
-              }`}
-            />
+            <ConnectButton
+              client={client}
+              theme={customTheme}
+              wallets={wallets}
+              supportedChains={[baseSepolia]}
+              supportedTokens={customTokens}
+              connectButton={{
+                className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6]",
+              }}
+              detailsButton={{
+                className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6]",
+                displayBalanceToken: {
+                  [baseSepolia.id]: tokenAddress,
+                },
+              }}
+              detailsModal={{
+                networkSelector: {
+                  popularChainIds: [1, 137, 10], // Ethereum, Polygon, Optimism
+                  sections: [
+                    { label: "Testnets", chains: [baseSepolia] },
+                  ],
+                },
+              }}
+              payModal={payModalConfig}
+            /> 
           </div>
         </div>
       </div>
