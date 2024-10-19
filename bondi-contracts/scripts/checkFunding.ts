@@ -1,15 +1,12 @@
 import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
+import path from "path";
 
-dotenv.config();
+// Load the correct .env file
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-async function main() {
-  const fundingAddress = process.env.FUNDING_ADDRESS;
-  if (!fundingAddress) {
-    throw new Error("FUNDING_ADDRESS not set in .env file");
-  }
-
-  console.log("Checking Funding contract at address:", fundingAddress);
+async function checkFundingContract(name: string, fundingAddress: string) {
+  console.log(`\nChecking ${name} Funding contract at address: ${fundingAddress}`);
 
   try {
     const funding = await ethers.getContractAt("Funding", fundingAddress);
@@ -53,10 +50,21 @@ async function main() {
     console.log("Bond Price Set:", bondPriceSet);
     console.log("Bond Distribution:", bondDistribution);
 
+    // Check if Funding contract has MINTER_ROLE on NFT contracts
+    const whaleNFTContract = await ethers.getContractAt("InvestorNFT", whaleNFT);
+    const ogNFTContract = await ethers.getContractAt("InvestorNFT", ogNFT);
+    const MINTER_ROLE = await whaleNFTContract.MINTER_ROLE();
+    
+    const hasMinterRoleOnWhaleNFT = await whaleNFTContract.hasRole(MINTER_ROLE, fundingAddress);
+    const hasMinterRoleOnOGNFT = await ogNFTContract.hasRole(MINTER_ROLE, fundingAddress);
+    
+    console.log("Funding contract has MINTER_ROLE on Whale NFT:", hasMinterRoleOnWhaleNFT);
+    console.log("Funding contract has MINTER_ROLE on OG NFT:", hasMinterRoleOnOGNFT);
+
     // Try to get investor details
     console.log("\nAttempting to get investor details...");
     const signers = await ethers.getSigners();
-    const investors = signers.slice(1, 11); // Get investors at indices 1 to 10
+    const investors = signers.slice(1, 6); // Get investors at indices 1 to 5
 
     for (let i = 0; i < investors.length; i++) {
       const investor = investors[i];
@@ -75,6 +83,20 @@ async function main() {
       console.error("Error data:", error.data);
     }
   }
+}
+
+async function main() {
+  const fundingAddressAlpha = process.env.FUNDING_ADDRESS;
+  const fundingAddressBeta = process.env.FUNDING_BETA_ADDRESS;
+  const fundingAddressZeta = process.env.FUNDING_ZETA_ADDRESS;
+
+  if (!fundingAddressAlpha || !fundingAddressBeta || !fundingAddressZeta) {
+    throw new Error("One or more FUNDING_ADDRESS not set in scripts/.env file");
+  }
+
+  await checkFundingContract("Alpha", fundingAddressAlpha);
+  await checkFundingContract("Beta", fundingAddressBeta);
+  await checkFundingContract("Zeta", fundingAddressZeta);
 }
 
 main().catch((error) => {

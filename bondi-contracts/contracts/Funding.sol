@@ -50,6 +50,7 @@ contract Funding is AccessControl, Pausable, ReentrancyGuard {
     struct Investor {
         uint256 investedAmount;
         uint256 investorIndex;
+        bool isWhaleInvestor;
     }
 
     // Events
@@ -178,18 +179,10 @@ contract Funding is AccessControl, Pausable, ReentrancyGuard {
 
     /// @notice Invest into the Funding Contract by indicating the amount to invest.
     /// Investing requires previous approval by calling approve(spender, amount) on the USDC contract beforehand.
-    function invest(uint256 amountToInvest_) public checkInvestmentRequirements(amountToInvest_) nonReentrant whenNotPaused {
-        // If sender is a new investor, add to investors array
-        Investor storage currentInvestor = investedAmountPerInvestor[msg.sender];
-        if (currentInvestor.investedAmount == 0) {
-            _investors.push(msg.sender);
-            currentInvestor.investorIndex = _investors.length - 1;
-            _mintOGToNewInvestor(msg.sender);
-        }
-        currentInvestor.investedAmount += amountToInvest_;
-        if (currentInvestor.investedAmount >= WHALE_INVESTOR_THRESHOLD) _mintWhaleToInvestor(msg.sender);
-        require(usdcToken.transferFrom(msg.sender, address(this), amountToInvest_), "Investment failed");
-        emit InvestmentMade(msg.sender, amountToInvest_, block.timestamp);
+    function invest(uint256 investmentAmount_) public checkInvestmentRequirements(investmentAmount_) nonReentrant whenNotPaused {
+        _updateInvestorWithInvestment(msg.sender, investmentAmount_);
+        require(usdcToken.transferFrom(msg.sender, address(this), investmentAmount_), "Investment failed");
+        emit InvestmentMade(msg.sender, investmentAmount_, block.timestamp);
     }
 
     /// @notice Withdraw total investment if the targetAmount hasn't been reached at fundingPeriodLimit
@@ -252,14 +245,17 @@ contract Funding is AccessControl, Pausable, ReentrancyGuard {
         _investors.pop();
     }
 
-    function _mintOGToNewInvestor(address newInvestor_) internal {
-        if (ogNFT.balanceOf(newInvestor_) == 0) {
-            ogNFT.safeMint(newInvestor_);
+    function _updateInvestorWithInvestment(address investor_, uint256 investmentAmount_) internal {
+        Investor storage currentInvestor = investedAmountPerInvestor[investor_];
+        // If new investor, add to investors array
+        if (currentInvestor.investedAmount == 0) {
+            _investors.push(investor_);
+            currentInvestor.investorIndex = _investors.length - 1;
+            ogNFT.safeMint(investor_);
         }
-    }
-
-    function _mintWhaleToInvestor(address investor_) internal {
-        if (whaleNFT.balanceOf(investor_) == 0) {
+        currentInvestor.investedAmount += investmentAmount_;
+        if (currentInvestor.investedAmount >= WHALE_INVESTOR_THRESHOLD && !currentInvestor.isWhaleInvestor) {
+            currentInvestor.isWhaleInvestor = true;
             whaleNFT.safeMint(investor_);
         }
     }

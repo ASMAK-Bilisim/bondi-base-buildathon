@@ -7,27 +7,27 @@ config();
 export default buildModule("FundingWithMintables", (m) => {
   const minimumInvestmentAmount = m.getParameter(
     "minimumInvestmentAmount",
-    BigInt(process.env.MINIMUM_INVESTMENT_AMOUNT || "1000000")
+    BigInt(process.env.MINIMUM_INVESTMENT_AMOUNT!)
   );
   const targetAmount = m.getParameter(
     "targetAmount",
-    BigInt(process.env.TARGET_AMOUNT || "200000000000")
+    BigInt(process.env.TARGET_AMOUNT!)
   );
   const fundingPeriodLimitInDays = m.getParameter(
     "fundingPeriodLimitInDays",
-    process.env.FUNDING_PERIOD_LIMIT_DAYS || "60"
+    parseInt(process.env.FUNDING_PERIOD_LIMIT_DAYS!, 10)
   );
   const usdcTokenAddress = m.getParameter(
     "usdcTokenAddress",
-    process.env.USDC_TOKEN_ADDRESS || ""
+    process.env.USDC_TOKEN_ADDRESS!
   );
   const ogNftBaseUri = m.getParameter(
     "ogNftBaseUri",
-    process.env.OG_NFT_BASE_URI || ""
+    process.env.OG_NFT_BASE_URI!
   );
   const whaleNftBaseUri = m.getParameter(
     "whaleNftBaseUri",
-    process.env.WHALE_NFT_BASE_URI || ""
+    process.env.WHALE_NFT_BASE_URI!
   );
 
   console.log("Parsed values:");
@@ -60,8 +60,8 @@ export default buildModule("FundingWithMintables", (m) => {
   m.call(whaleNft, "setBaseURI", [whaleNftBaseUri], { id: "SetWhaleNFTBaseURI" });
 
   const bondToken = m.contract("BondToken", [
-    process.env.BOND_TOKEN_NAME || "Bond Token",
-    process.env.BOND_TOKEN_SYMBOL || "BT"
+    process.env.BOND_TOKEN_NAME!,
+    process.env.BOND_TOKEN_SYMBOL!
   ], { id: "BondTokenContract" });
 
   const bondDistribution = m.contract("BondDistribution", [bondToken, funding, usdcTokenAddress], { id: "BondDistributionContract" });

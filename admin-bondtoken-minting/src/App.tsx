@@ -9,7 +9,7 @@ const BASE_SEPOLIA_CHAIN_ID = Number(import.meta.env.VITE_BASE_SEPOLIA_CHAIN_ID)
 const FUNDING_CONTRACTS = [
   { address: import.meta.env.VITE_ALPHA_FUNDING_CONTRACT, name: 'Alpha Funding Contract' },
   { address: import.meta.env.VITE_BETA_FUNDING_CONTRACT, name: 'Beta Funding Contract' },
-  { address: import.meta.env.VITE_OMEGA_FUNDING_CONTRACT, name: 'Omega Funding Contract' },
+  { address: import.meta.env.VITE_ZETA_FUNDING_CONTRACT, name: 'Zeta Funding Contract' },
 ];
 
 const formatNumberWithCommas = (value: string) => {

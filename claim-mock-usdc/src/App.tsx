@@ -1,246 +1,200 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
-import { ConnectWallet, useAddress, useNetwork, useNetworkMismatch } from "@thirdweb-dev/react";
 import MockUSDCABI from './MockUSDCABI.json';
 
-// Replace these lines at the top of your file
 const FAUCET_PRIVATE_KEY = import.meta.env.VITE_FAUCET_PRIVATE_KEY;
 const mockUSDCAddress = import.meta.env.VITE_MOCK_USDC_ADDRESS;
 const baseSepolia = parseInt(import.meta.env.VITE_BASE_SEPOLIA_CHAIN_ID);
 
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 function App() {
-  const [mockUSDC, setMockUSDC] = useState<ethers.Contract | null>(null);
+  const [userAddress, setUserAddress] = useState<string>('');
   const [balance, setBalance] = useState<string>('0');
+  const [ethBalance, setEthBalance] = useState<string>('0');
   const [claimStatus, setClaimStatus] = useState<string>('');
   const [isTokenAdded, setIsTokenAdded] = useState(false);
-  const [network, switchNetwork] = useNetwork();
-  const isMismatched = useNetworkMismatch();
-  const [isBaseSepolia, setIsBaseSepolia] = useState(false);
-  const claimStatusRef = useRef<string>('');
-  const [, forceUpdate] = useState({});
 
-  const address = useAddress();
-  
-  useEffect(() => {
-    if (address) {
-      checkNetwork();
-    }
-  }, [address, network]); // Add network to the dependency array
+  const provider = new ethers.providers.JsonRpcProvider(`https://sepolia.base.org`);
+  const faucetWallet = new ethers.Wallet(FAUCET_PRIVATE_KEY, provider);
+  const mockUSDC = new ethers.Contract(mockUSDCAddress, MockUSDCABI.abi, faucetWallet);
 
-  const checkNetwork = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const network = await provider.getNetwork();
-        const isCorrectNetwork = network.chainId === baseSepolia;
-        setIsBaseSepolia(isCorrectNetwork);
-        if (isCorrectNetwork) {
-          connectToContract();
-        } else {
-          setMockUSDC(null);
-          setBalance('0');
-          updateClaimStatus(''); // Clear claim status when not on Base Sepolia
-        }
-      } catch (error) {
-        console.error('Failed to check network:', error);
-        setIsBaseSepolia(false);
-        updateClaimStatus('Failed to check network');
-      }
-    }
-  };
-
-  const connectToContract = async () => {
-    if (typeof window.ethereum !== 'undefined' && address) {
-      try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const mockUSDCContract = new ethers.Contract(mockUSDCAddress, MockUSDCABI.abi, signer);
-        console.log('MockUSDC contract instance created');
-        setMockUSDC(mockUSDCContract);
-        await updateBalance(mockUSDCContract, address);
-      } catch (error) {
-        console.error('Failed to connect to contract:', error);
-        setClaimStatus('Failed to connect to contract');
-      }
-    }
-  };
-
-  const updateBalance = useCallback(async (contract: ethers.Contract, walletAddress: string) => {
+  const updateBalances = useCallback(async (address: string) => {
     try {
-      const balance = await contract.balanceOf(walletAddress);
-      const formattedBalance = ethers.utils.formatUnits(balance, 6);
-      setBalance(Number(formattedBalance).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+      const usdcBalance = await mockUSDC.balanceOf(address);
+      const formattedUsdcBalance = ethers.utils.formatUnits(usdcBalance, 6);
+      setBalance(Number(formattedUsdcBalance).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+
+      const ethBalanceWei = await provider.getBalance(address);
+      const formattedEthBalance = ethers.utils.formatEther(ethBalanceWei);
+      setEthBalance(formattedEthBalance);
     } catch (error) {
-      console.error('Failed to fetch balance:', error);
+      console.error('Failed to fetch balances:', error);
       setBalance('Error');
+      setEthBalance('Error');
     }
-  }, []);
+  }, [mockUSDC, provider]);
 
-  const updateClaimStatus = (status: string) => {
-    claimStatusRef.current = status;
-    forceUpdate({});
-  };
+  useEffect(() => {
+    if (ethers.utils.isAddress(userAddress)) {
+      updateBalances(userAddress);
+    }
+  }, [userAddress, updateBalances]);
 
-  const claimETH = async () => {
-    if (mockUSDC && address) {
-      try {
-        updateClaimStatus('Claiming ETH...');
-        console.log('Attempting to claim ETH for address:', address);
+  const claimTokens = async () => {
+    if (!ethers.utils.isAddress(userAddress)) {
+      setClaimStatus('Please enter a valid EVM compatible wallet address.');
+      return;
+    }
 
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const faucetWallet = new ethers.Wallet(FAUCET_PRIVATE_KEY, provider);
-        const faucetMockUSDC = new ethers.Contract(mockUSDCAddress, MockUSDCABI.abi, faucetWallet);
+    try {
+      setClaimStatus('Checking balances...');
+      const ethBalanceWei = await provider.getBalance(userAddress);
+      const ethBalanceEther = ethers.utils.formatEther(ethBalanceWei);
 
-        const tx = await faucetMockUSDC.claimETH(address);
-        updateClaimStatus('ETH claim transaction sent. Waiting for confirmation...');
-        await tx.wait();
-        
-        updateClaimStatus('ETH claimed successfully!');
-        await updateBalance(mockUSDC, address);
-      } catch (error) {
-        console.error('Failed to claim ETH:', error);
-        handleClaimError(error, 'ETH');
+      if (parseFloat(ethBalanceEther) <= 0.0005) {
+        setClaimStatus('Claiming ETH...');
+        const ethTx = await mockUSDC.claimETH(userAddress);
+        await ethTx.wait();
+        setClaimStatus('ETH claimed successfully!');
       }
-    } else {
-      updateClaimStatus('Unable to claim ETH. Please make sure you are connected to the correct network.');
-    }
-  };
 
-  const claimUSDCAndAddToken = async () => {
-    if (mockUSDC && address) {
-      try {
-        updateClaimStatus('Claiming USDC...');
-        console.log('Attempting to claim USDC');
-        
-        const tx = await mockUSDC.claimUSDC({ gasLimit: 200000 });
-        updateClaimStatus('USDC claim transaction sent. Waiting for confirmation...');
-        await tx.wait();
-        
-        updateClaimStatus('USDC claimed successfully!');
-        await updateBalance(mockUSDC, address);
-        await addTokenToWallet();
-      } catch (error) {
-        console.error('Failed to claim USDC or add token:', error);
-        handleClaimError(error, 'USDC');
+      setClaimStatus('Claiming USDC...');
+      const usdcTx = await mockUSDC.claimUSDC(userAddress);
+      await usdcTx.wait();
+
+      setClaimStatus('Tokens claimed successfully!');
+      await updateBalances(userAddress);
+    } catch (error: any) {
+      console.error('Failed to claim tokens:', error);
+      if (error.error && error.error.reason) {
+        if (error.error.reason.includes("USDC claim cooldown period not over")) {
+          setClaimStatus('USDC claim cooldown period not over. Please try again later.');
+        } else if (error.error.reason.includes("ETH claim cooldown period not over")) {
+          setClaimStatus('ETH claim cooldown period not over. Please try again later.');
+        } else if (error.error.reason.includes("Insufficient USDC balance")) {
+          setClaimStatus('Insufficient USDC balance in the faucet. Please try again later or contact the admin.');
+        } else if (error.error.reason.includes("Insufficient ETH balance")) {
+          setClaimStatus('Insufficient ETH balance in the faucet. Please try again later or contact the admin.');
+        } else {
+          setClaimStatus(`Failed to claim tokens: ${error.error.reason}`);
+        }
+      } else {
+        setClaimStatus('Failed to claim tokens. Please try again later.');
       }
-    } else {
-      updateClaimStatus('Unable to claim USDC. Please make sure you are connected to the correct network.');
-    }
-  };
-
-  const handleClaimError = (error: any, tokenType: string) => {
-    if (error.code === 'ACTION_REJECTED') {
-      updateClaimStatus(`${tokenType} claim cancelled. You rejected the transaction.`);
-    } else if (error.message.includes('Cooldown period not over')) {
-      updateClaimStatus(`Please wait before claiming ${tokenType} again.`);
-    } else if (error.message.includes('Insufficient ETH balance in contract')) {
-      updateClaimStatus(`${tokenType} faucet is currently empty. Please try again later or contact the admin.`);
-    } else if (error.message.includes('ETH transfer failed')) {
-      updateClaimStatus(`Failed to transfer ${tokenType}. There is a cooldown period of 10 minutes. Please try again later.`);
-    } else {
-      updateClaimStatus(`Failed to claim ${tokenType}. There is a cooldown period of 10 minutes. Please try again later.`);
     }
   };
 
   const addTokenToWallet = async () => {
-    try {
-      await window.ethereum.request({
-        method: 'wallet_watchAsset',
-        params: {
-          type: 'ERC20',
-          options: {
-            address: mockUSDCAddress,
-            symbol: 'USDC',
-            decimals: 6,
-            image: 'https://path-to-token-image.png',
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_watchAsset',
+          params: {
+            type: 'ERC20',
+            options: {
+              address: mockUSDCAddress,
+              symbol: 'USDC',
+              decimals: 6,
+              image: 'https://path-to-token-image.png',
+            },
           },
-        },
-      });
-      setIsTokenAdded(true);
-    } catch (error) {
-      console.error('Failed to add token to wallet:', error);
+        });
+        setIsTokenAdded(true);
+      } catch (error) {
+        console.error('Failed to add token to wallet:', error);
+      }
+    } else {
+      console.error('Web3 wallet is not installed');
+      setClaimStatus('A Web3 wallet is not detected. Please install a Web3 wallet to add the token to your wallet.');
     }
   };
 
-  const switchToBaseSepolia = async () => {
-    if (switchNetwork) {
+  const addOrSwitchToBaseSepolia = async () => {
+    if (typeof window.ethereum !== 'undefined') {
       try {
-        await switchNetwork(baseSepolia);
-        // After switching, check the network again
-        await checkNetwork();
-      } catch (error) {
-        console.error('Failed to switch network:', error);
-        setClaimStatus('Failed to switch network. Please try manually.');
+        // First, try to switch to the network
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${baseSepolia.toString(16)}` }],
+        });
+      } catch (switchError: any) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: `0x${baseSepolia.toString(16)}`,
+                chainName: 'Base Sepolia',
+                nativeCurrency: {
+                  name: 'Ethereum',
+                  symbol: 'ETH',
+                  decimals: 18
+                },
+                rpcUrls: ['https://sepolia.base.org'],
+                blockExplorerUrls: ['https://sepolia.basescan.org']
+              }]
+            });
+          } catch (addError) {
+            console.error('Failed to add Base Sepolia network:', addError);
+            setClaimStatus('Failed to add Base Sepolia network. Please try again.');
+          }
+        } else {
+          console.error('Failed to switch to Base Sepolia network:', switchError);
+          setClaimStatus('Failed to switch to Base Sepolia network. Please try again.');
+        }
       }
     } else {
-      setClaimStatus('Network switching not supported. Please switch manually to Base Sepolia.');
+      console.error('Web3 wallet is not installed');
+      setClaimStatus('A Web3 wallet is not detected. Please install a Web3 wallet to add or switch to the Base Sepolia network.');
     }
   };
 
   return (
     <div className="min-h-screen bg-app-light flex flex-col relative">
-      <header className="w-full font-semibold py-4 px-6 bg-[#F2FBF9]">
-        <div className="max-w-7xl mx-auto flex justify-end items-center">
-          <div className="flex items-center">
-            <div className="rounded-lg border border-[#1C544E] overflow-hidden">
-              <ConnectWallet 
-                theme="light"
-                btnTitle="Connect Wallet"
-                modalSize="wide"
-                className="!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#E5F5F2] !transition-colors !font-inter !font-bold !text-[16px] !leading-[14px] !rounded-none !border-none !px-3 !h-10"
-              />
-            </div>
-          </div>
-        </div>
-      </header>
-      
       <main className="flex-grow flex flex-col items-center justify-center p-8">
         <img src="/bondi-logo.svg" alt="Bondi Logo" className="mb-8 w-96" />
         <h1 className="text-app-headline-1 text-app-primary-2 mb-8 font-mello">Claim ETH and Mock USDC on Base Sepolia</h1>
-        {address ? (
-          <>
-            {isBaseSepolia ? (
-              <>
-                <button
-                  onClick={addTokenToWallet}
-                  className="bg-app-accent text-app-light px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md text-app-body-1 font-semibold mb-4"
-                >
-                  Add Mock USDC to Wallet
-                </button>
-                <p className="text-app-body-1 text-app-dark mb-4">Connected wallet: {address}</p>
-                <p className="text-app-body-1 text-app-dark mb-4">Balance: {balance} USDC</p>
-                <button
-                  onClick={claimETH}
-                  className="bg-app-primary-1 text-app-dark px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md mb-4 text-app-body-1 font-semibold"
-                >
-                  Claim ETH
-                </button>
-                <button
-                  onClick={claimUSDCAndAddToken}
-                  className="bg-app-primary-2 text-app-light px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md mb-4 text-app-body-1 font-semibold"
-                >
-                  Claim 100,000 USDC and Add to Wallet
-                </button>
-              </>
-            ) : (
-              <div className="mb-6 text-center">
-                <button
-                  onClick={switchToBaseSepolia}
-                  className="bg-app-accent text-app-light px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md text-app-body-1 font-semibold mb-2"
-                >
-                  Switch to Base Sepolia
-                </button>
-                <p className="text-red-600 font-bold text-lg animate-bounce mt-2">
-                  Please switch to Base Sepolia network to continue
-                </p>
-              </div>
-            )}
-            {isBaseSepolia && claimStatusRef.current && (
-              <p className="mt-4 text-app-body-2 text-app-dark">{claimStatusRef.current}</p>
-            )}
-          </>
-        ) : (
-          <p className="text-app-body-1 text-app-dark">Please connect your wallet to continue.</p>
+        
+        <input
+          type="text"
+          value={userAddress}
+          onChange={(e) => setUserAddress(e.target.value)}
+          placeholder="Enter your Wallet Address"
+          className="w-96 px-4 py-2 rounded-lg border border-app-primary-1 mb-4"
+        />
+        
+        <p className="text-app-body-1 text-app-dark mb-4">USDC Balance: {balance} USDC</p>
+        <p className="text-app-body-1 text-app-dark mb-4">ETH Balance: {ethBalance} ETH</p>
+        
+        <button
+          onClick={claimTokens}
+          className="bg-app-primary-1 text-app-dark px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md mb-4 text-app-body-1 font-semibold"
+        >
+          Claim Tokens
+        </button>
+        
+        <button
+          onClick={addTokenToWallet}
+          className="bg-app-accent text-app-light px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md text-app-body-1 font-semibold mb-4"
+        >
+          Add Mock USDC to Wallet
+        </button>
+        
+        <button
+          onClick={addOrSwitchToBaseSepolia}
+          className="bg-app-primary-2 text-app-light px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md text-app-body-1 font-semibold mb-4"
+        >
+          Switch to / Add Base Sepolia Network
+        </button>
+        
+        {claimStatus && (
+          <p className="mt-4 text-app-body-2 text-app-dark">{claimStatus}</p>
         )}
       </main>
       

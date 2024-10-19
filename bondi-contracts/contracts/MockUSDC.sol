@@ -7,11 +7,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract MockUSDC is ERC20, Ownable {
     mapping(address => uint256) public lastUSDCClaimTime;
     mapping(address => uint256) public lastETHClaimTime;
-    uint256 public constant USDC_CLAIM_AMOUNT = 100_000 * 10**6; // 100,000 USDC
-    uint256 public constant USDC_CLAIM_COOLDOWN = 10 minutes;
+    uint256 public constant USDC_CLAIM_AMOUNT = 10_000 * 10**6; // 10,000 USDC
+    uint256 public constant USDC_CLAIM_COOLDOWN = 60 minutes;
     uint256 public constant INITIAL_SUPPLY = 100_000_000_000 * 10**6; // 100 billion USDC
     uint256 public constant ETH_CLAIM_AMOUNT = 0.0005 ether;
-    uint256 public constant ETH_CLAIM_COOLDOWN = 10 minutes;
+    uint256 public constant ETH_CLAIM_COOLDOWN = 60 minutes;
 
     constructor() ERC20("USD Coin", "USDC") Ownable(msg.sender) {
         _mint(msg.sender, INITIAL_SUPPLY);
@@ -21,10 +21,11 @@ contract MockUSDC is ERC20, Ownable {
         return 6;
     }
 
-    function claimUSDC() external {
-        require(block.timestamp >= lastUSDCClaimTime[msg.sender] + USDC_CLAIM_COOLDOWN, "USDC claim cooldown period not over");
-        lastUSDCClaimTime[msg.sender] = block.timestamp;
-        _mint(msg.sender, USDC_CLAIM_AMOUNT);
+    function claimUSDC(address recipient) external {
+        require(block.timestamp >= lastUSDCClaimTime[recipient] + USDC_CLAIM_COOLDOWN, "USDC claim cooldown period not over");
+        
+        lastUSDCClaimTime[recipient] = block.timestamp;
+        _mint(recipient, USDC_CLAIM_AMOUNT);
     }
 
     function claimETH(address recipient) external {

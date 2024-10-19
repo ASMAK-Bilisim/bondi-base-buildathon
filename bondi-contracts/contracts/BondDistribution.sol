@@ -62,7 +62,7 @@ contract BondDistribution is AccessControl {
         
         for (uint256 i = 0; i < investorCount; i++) {
             address investor = fundingContract.investors(i);
-            (uint256 investedAmount,) = fundingContract.investedAmountPerInvestor(investor);
+            (uint256 investedAmount, , ) = fundingContract.investedAmountPerInvestor(investor);
             uint256 investorTokens = (investedAmount * totalBondTokens) / totalInvested;
             claimableTokens[investor] = investorTokens;
         }

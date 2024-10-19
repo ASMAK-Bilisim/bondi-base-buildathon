@@ -4,27 +4,27 @@ import { increaseItemId } from "./utils/utils";
 export default buildModule("Funding", (m) => {
   const minimumInvestmentAmount = m.getParameter(
     "minimumInvestmentAmount",
-    BigInt(process.env.MINIMUM_INVESTMENT_AMOUNT || "1000000")
+    BigInt(process.env.MINIMUM_INVESTMENT_AMOUNT!)
   );
   const targetAmount = m.getParameter(
     "targetAmount",
-    BigInt(process.env.TARGET_AMOUNT || "200000000000")
+    BigInt(process.env.TARGET_AMOUNT!)
   );
   const fundingPeriodLimitInDays = m.getParameter(
     "fundingPeriodLimitInDays",
-    process.env.FUNDING_PERIOD_LIMIT_DAYS || "60"
+    parseInt(process.env.FUNDING_PERIOD_LIMIT_DAYS!, 10)
   );
   const usdcTokenAddress = m.getParameter(
     "usdcTokenAddress",
-    process.env.USDC_TOKEN_ADDRESS || ""
+    process.env.USDC_TOKEN_ADDRESS!
   );
   const ogNftAddress = m.getParameter(
     "ogNftAddress",
-    process.env.OG_NFT_ADDRESS || ""
+    process.env.OG_NFT_ADDRESS!
   );
   const whaleNftAddress = m.getParameter(
     "whaleNftAddress",
-    process.env.WHALE_NFT_ADDRESS || ""
+    process.env.WHALE_NFT_ADDRESS!
   );
 
   console.log("Parsed values:");
@@ -49,7 +49,10 @@ export default buildModule("Funding", (m) => {
   m.call(funding, "setOgNFTAddress", [ogNftAddress], { id: "SetOGNFTAddress" });
   m.call(funding, "setWhaleNFTAddress", [whaleNftAddress], { id: "SetWhaleNFTAddress" });
 
-  const bondToken = m.contract("BondToken", ["Bond Token", "BT"], { id: `BondTokenContract_${increaseItemId("BondToken")}` });
+  const bondToken = m.contract("BondToken", [
+    process.env.BOND_TOKEN_NAME!,
+    process.env.BOND_TOKEN_SYMBOL!
+  ], { id: `BondTokenContract_${increaseItemId("BondToken")}` });
 
   const bondDistribution = m.contract("BondDistribution", [bondToken, funding, usdcTokenAddress], { id: `BondDistributionContract_${increaseItemId("BondDistribution")}` });
 

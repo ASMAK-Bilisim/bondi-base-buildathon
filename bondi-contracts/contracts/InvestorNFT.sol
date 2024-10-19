@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 contract InvestorNFT is ERC721, ERC721Burnable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    uint256 private _nextTokenId;
+    uint256 public nextTokenId;
     string private _baseUri;
 
     constructor(string memory tokenName, string memory tokenSymbol, address minter)
@@ -27,7 +27,7 @@ contract InvestorNFT is ERC721, ERC721Burnable, AccessControl {
     }
 
     function safeMint(address to) public onlyRole(MINTER_ROLE) {
-        uint256 tokenId = _nextTokenId++;
+        uint256 tokenId = nextTokenId++;
         _safeMint(to, tokenId);
     }
 

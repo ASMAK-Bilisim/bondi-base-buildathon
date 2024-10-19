@@ -10,3 +10,5 @@ import "./scripts/tasks/Funding/incrementFundingPeriodLimit";
 import "./scripts/tasks/Funding/getInvestedAmountPerInvestor";
 import "./scripts/tasks/InvestorNFT/getTokenURI";
 import "./scripts/tasks/InvestorNFT/setBaseUri";
+import "./scripts/tasks/InvestorNFT/setMinterRole";
+import "./scripts/tasks/MintERC20/claimUsdc";

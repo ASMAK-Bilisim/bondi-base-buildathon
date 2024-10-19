@@ -1,20 +1,22 @@
 import { ethers } from "hardhat";
+import * as dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 async function main() {
-  const fundingAddress = process.env.FUNDING_ADDRESS;
-  if (!fundingAddress) {
-    throw new Error("FUNDING_ADDRESS not set in .env file");
-  }
-  const funding = await ethers.getContractAt("Funding", fundingAddress);
+  const ogNFTAddress = process.env.OG_NFT_ADDRESS;
+  const whaleNFTAddress = process.env.WHALE_NFT_ADDRESS;
 
-  const ogNFTAddress = await funding.ogNFT();
-  const whaleNFTAddress = await funding.whaleNFT();
+  if (!ogNFTAddress || !whaleNFTAddress) {
+    throw new Error("NFT addresses not set in scripts/.env file");
+  }
 
   const ogNFT = await ethers.getContractAt("InvestorNFT", ogNFTAddress);
   const whaleNFT = await ethers.getContractAt("InvestorNFT", whaleNFTAddress);
 
   const signers = await ethers.getSigners();
-  const investors = signers.slice(1, 11); // Get investors at indices 1 to 10
+  const investors = signers.slice(1, 6); // Get investors at indices 1 to 5
 
   console.log("Checking NFT balances for investors...");
 
@@ -25,21 +27,26 @@ async function main() {
     const investor = investors[i];
     const ogBalance = await ogNFT.balanceOf(investor.address);
     const whaleBalance = await whaleNFT.balanceOf(investor.address);
-    const investedAmount = await funding.investedAmountPerInvestor(investor.address);
 
-    console.log(`Investor ${i + 1} (Index ${i + 1}) (${investor.address}):`);
-    console.log(`  Invested Amount: ${ethers.formatUnits(investedAmount.investedAmount, 6)} USDC`);
+    console.log(`\nInvestor ${i + 1} (Index ${i + 1}) (${investor.address}):`);
     console.log(`  OG NFT Balance: ${ogBalance.toString()}`);
     console.log(`  Whale NFT Balance: ${whaleBalance.toString()}`);
-    console.log();
 
     totalOGNFTs += Number(ogBalance);
     totalWhaleNFTs += Number(whaleBalance);
   }
 
-  console.log("NFT minting summary:");
+  console.log("\nNFT minting summary:");
   console.log(`  Total OG NFTs minted: ${totalOGNFTs}`);
   console.log(`  Total Whale NFTs minted: ${totalWhaleNFTs}`);
+
+  // Check nextTokenId for each NFT
+  const ogNextTokenId = await ogNFT.nextTokenId();
+  const whaleNextTokenId = await whaleNFT.nextTokenId();
+
+  console.log("\nNext Token IDs:");
+  console.log(`  OG NFT Next Token ID: ${ogNextTokenId.toString()}`);
+  console.log(`  Whale NFT Next Token ID: ${whaleNextTokenId.toString()}`);
 }
 
 main().catch((error) => {

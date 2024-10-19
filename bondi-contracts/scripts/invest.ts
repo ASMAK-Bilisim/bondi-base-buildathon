@@ -1,33 +1,18 @@
 import { ethers } from "hardhat";
+import * as dotenv from "dotenv";
+import path from "path";
 
-async function main() {
-  const fundingAddress = process.env.FUNDING_ADDRESS;
-  const mockUSDCAddress = process.env.USDC_TOKEN_ADDRESS;
-  const bondDistributionAddress = process.env.BOND_DISTRIBUTION_ADDRESS;
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-  if (!fundingAddress || !mockUSDCAddress || !bondDistributionAddress) {
-    throw new Error("Please set all required addresses in the .env file");
-  }
-
+async function investInFunding(name: string, fundingAddress: string, mockUSDCAddress: string, bondDistributionAddress: string) {
+  console.log(`\nInvesting in ${name} Funding contract:`);
   const funding = await ethers.getContractAt("Funding", fundingAddress);
   const mockUSDC = await ethers.getContractAt("MockUSDC", mockUSDCAddress);
   const bondDistribution = await ethers.getContractAt("BondDistribution", bondDistributionAddress);
 
   const signers = await ethers.getSigners();
   const owner = signers[0];
-  const investors = signers.slice(1, 6); // Get investors at indices 1, 2, 3, 4, 5
-
-  /*
-  console.log("Sending 0.001 ETH to each investor...");
-  for (const investor of investors) {
-    const tx = await owner.sendTransaction({
-      to: investor.address,
-      value: ethers.parseEther("0.001")
-    });
-    await tx.wait();
-    console.log(`Sent 0.001 ETH to ${investor.address}`);
-  }
-  */
+  const investors = signers.slice(1, 6); // Get investors at indices 1 to 5
 
   const targetAmount = await funding.targetAmount();
   console.log("Target Amount:", ethers.formatUnits(targetAmount, 6), "USDC");
@@ -38,20 +23,15 @@ async function main() {
   const remainingAmount = targetAmount - currentTotalInvested;
   console.log("Remaining Amount to Invest:", ethers.formatUnits(remainingAmount, 6), "USDC");
 
-  const ownerUSDCBalance = await mockUSDC.balanceOf(owner.address);
-  console.log("Owner USDC Balance:", ethers.formatUnits(ownerUSDCBalance, 6), "USDC");
-
   const investments = [
-    { investor: investors[0], amount: ethers.parseUnits("4000", 6) },
-    { investor: investors[1], amount: ethers.parseUnits("4500", 6) },
-    { investor: investors[2], amount: ethers.parseUnits("60000", 6) },
-    { investor: investors[3], amount: ethers.parseUnits("65000", 6) },
-    { investor: investors[4], amount: ethers.parseUnits("66500", 6) },
+    { investor: investors[0], amount: ethers.parseUnits("1000", 6) },
+    { investor: investors[1], amount: ethers.parseUnits("1000", 6) },
+    { investor: investors[2], amount: ethers.parseUnits("1000", 6) },
+    { investor: investors[3], amount: ethers.parseUnits("5000", 6) },
+    { investor: investors[4], amount: ethers.parseUnits("1500", 6) },
   ];
 
   console.log("\nMaking investments...");
-
-  let totalNewInvestments = 0n;
 
   for (const { investor, amount } of investments) {
     try {
@@ -60,36 +40,20 @@ async function main() {
       console.log("Transferring USDC to investor...");
       await mockUSDC.connect(owner).transfer(investor.address, amount);
       
-      const investorBalance = await mockUSDC.balanceOf(investor.address);
-      console.log(`Investor USDC balance: ${ethers.formatUnits(investorBalance, 6)} USDC`);
-
       console.log("Approving USDC for Funding contract...");
       await mockUSDC.connect(investor).approve(fundingAddress, amount);
       
-      const allowance = await mockUSDC.allowance(investor.address, fundingAddress);
-      console.log(`Allowance for Funding contract: ${ethers.formatUnits(allowance, 6)} USDC`);
-
       console.log("Investing in Funding contract...");
       const investTx = await funding.connect(investor).invest(amount);
       await investTx.wait();
 
       console.log(`Investment successful: ${ethers.formatUnits(amount, 6)} USDC`);
-      totalNewInvestments += amount;
-
-      console.log(`Total new investments: ${ethers.formatUnits(totalNewInvestments, 6)} USDC`);
 
       const distributionReady = await bondDistribution.distributionReady();
       console.log("Distribution ready:", distributionReady);
 
-      if (totalNewInvestments >= remainingAmount) {
-        console.log("Target amount reached. Stopping investments.");
-        break;
-      }
     } catch (error: any) {
       console.error(`Error during investment for ${investor.address}:`, error.message);
-      if (error.data) {
-        console.error("Error data:", error.data);
-      }
     }
   }
 
@@ -105,21 +69,25 @@ async function main() {
 
   const investorCount = await funding.getInvestorAmount();
   console.log(`Total number of investors: ${investorCount.toString()}`);
+}
 
-  // Check NFT balances
-  console.log("\nChecking NFT balances:");
-  const ogNFTAddress = await funding.ogNFT();
-  const whaleNFTAddress = await funding.whaleNFT();
-  const ogNFT = await ethers.getContractAt("InvestorNFT", ogNFTAddress);
-  const whaleNFT = await ethers.getContractAt("InvestorNFT", whaleNFTAddress);
+async function main() {
+  const mockUSDCAddress = process.env.USDC_TOKEN_ADDRESS;
+  const fundingAddressAlpha = process.env.FUNDING_ADDRESS;
+  const fundingAddressBeta = process.env.FUNDING_BETA_ADDRESS;
+  const fundingAddressZeta = process.env.FUNDING_ZETA_ADDRESS;
+  const bondDistributionAddressAlpha = process.env.BOND_DISTRIBUTION_ADDRESS;
+  const bondDistributionAddressBeta = process.env.BOND_DISTRIBUTION_BETA_ADDRESS;
+  const bondDistributionAddressZeta = process.env.BOND_DISTRIBUTION_ZETA_ADDRESS;
 
-  for (const { investor } of investments) {
-    const ogBalance = await ogNFT.balanceOf(investor.address);
-    const whaleBalance = await whaleNFT.balanceOf(investor.address);
-    console.log(`Investor ${investor.address}:`);
-    console.log(`  OG NFT Balance: ${ogBalance.toString()}`);
-    console.log(`  Whale NFT Balance: ${whaleBalance.toString()}`);
+  if (!mockUSDCAddress || !fundingAddressAlpha || !fundingAddressBeta || !fundingAddressZeta ||
+      !bondDistributionAddressAlpha || !bondDistributionAddressBeta || !bondDistributionAddressZeta) {
+    throw new Error("One or more required addresses not set in scripts/.env file");
   }
+
+  await investInFunding("Alpha", fundingAddressAlpha, mockUSDCAddress, bondDistributionAddressAlpha);
+  await investInFunding("Beta", fundingAddressBeta, mockUSDCAddress, bondDistributionAddressBeta);
+  await investInFunding("Zeta", fundingAddressZeta, mockUSDCAddress, bondDistributionAddressZeta);
 }
 
 main().catch((error) => {

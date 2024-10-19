@@ -1,16 +1,11 @@
 import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
+import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-async function main() {
-  const fundingAddress = process.env.FUNDING_ADDRESS;
-  const bondDistributionAddress = process.env.BOND_DISTRIBUTION_ADDRESS;
-
-  if (!fundingAddress || !bondDistributionAddress) {
-    throw new Error("FUNDING_ADDRESS or BOND_DISTRIBUTION_ADDRESS not set in .env file");
-  }
-
+async function setBondPriceAndMint(name: string, fundingAddress: string, bondDistributionAddress: string, bondPrice: bigint) {
+  console.log(`\nSetting bond price and minting for ${name}:`);
   console.log("Funding address:", fundingAddress);
   console.log("BondDistribution address:", bondDistributionAddress);
 
@@ -25,7 +20,6 @@ async function main() {
 
     // Attempt to set bond price and initiate minting
     console.log("Attempting to set bond price and initiate minting...");
-    const bondPrice = ethers.parseUnits("70", 6); // real purchase price
     
     try {
       const tx = await funding.connect(deployer).setBondPriceAndInitiateMinting(bondPrice);
@@ -45,8 +39,8 @@ async function main() {
     console.log("Distribution ready:", distributionReady);
 
     // Check claimable tokens for each investor
-    const [, investor1, investor2, investor3, investor4, investor5] = await ethers.getSigners();
-    const investors = [investor1, investor2, investor3, investor4, investor5];
+    const signers = await ethers.getSigners();
+    const investors = signers.slice(1, 6); // Get investors at indices 1 to 5
 
     for (let i = 0; i < investors.length; i++) {
       const investor = investors[i];
@@ -59,6 +53,27 @@ async function main() {
       console.error("Error data:", error.data);
     }
   }
+}
+
+async function main() {
+  const fundingAddressAlpha = process.env.FUNDING_ADDRESS;
+  const bondDistributionAddressAlpha = process.env.BOND_DISTRIBUTION_ADDRESS;
+  const fundingAddressBeta = process.env.FUNDING_BETA_ADDRESS;
+  const bondDistributionAddressBeta = process.env.BOND_DISTRIBUTION_BETA_ADDRESS;
+  const fundingAddressZeta = process.env.FUNDING_ZETA_ADDRESS;
+  const bondDistributionAddressZeta = process.env.BOND_DISTRIBUTION_ZETA_ADDRESS;
+
+  if (!fundingAddressAlpha || !bondDistributionAddressAlpha || !fundingAddressBeta || !bondDistributionAddressBeta || !fundingAddressZeta || !bondDistributionAddressZeta) {
+    throw new Error("One or more required addresses not set in scripts/.env file");
+  }
+
+  const bondPriceAlpha = ethers.parseUnits("75", 6);
+  const bondPriceBeta = ethers.parseUnits("85", 6);
+  const bondPriceZeta = ethers.parseUnits("90", 6);
+
+  await setBondPriceAndMint("Alpha", fundingAddressAlpha, bondDistributionAddressAlpha, bondPriceAlpha);
+  await setBondPriceAndMint("Beta", fundingAddressBeta, bondDistributionAddressBeta, bondPriceBeta);
+  await setBondPriceAndMint("Zeta", fundingAddressZeta, bondDistributionAddressZeta, bondPriceZeta);
 }
 
 main().catch((error) => {
