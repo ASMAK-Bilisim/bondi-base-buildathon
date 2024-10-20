@@ -4,12 +4,14 @@
 
 Bondi Finance is revolutionizing the bond market by leveraging blockchain technology to tokenize corporate bonds and create an accessible bond insurance (Credit Default Swap, or CDS) market. Our platform empowers investors to seamlessly participate in bond offerings and trade bond-related insurance in a decentralized and transparent manner.
 
+We've simplified how users interact with blockchain technology by integrating **Coinbase Smart Wallet**, making it easier for both experienced and novice users to engage with our platform. We advocate for a transparent and compliant market by naming bonds on-chain using **ENS basenames**, ensuring retail investor safety and promoting trust in the ecosystem. 
+
 In this Base Buildathon project, we have:
 
-- Implemented smart wallet integration.
+- Implemented **smart wallet integration** for seamless user experience.
 - Developed a CDS market from scratch.
-- Assigned base names to each bond using ENS basenames.
-- Introduced a loyalty program with NFTs.
+- Assigned **ENS basenames** to each bond for improved readability and recognition.
+- Introduced a loyalty program with NFTs to reward and incentivize user participation.
 
 ### Bonds and Bond Insurance (CDS)
 
@@ -308,7 +310,60 @@ echidna ./ --contract [aFuzzContract] --test-mode assertion
 
 ## Subdirectory: cds-contracts
 
-Please refer to the existing README in the `cds-contracts` subdirectory for detailed instructions.
+### Basic Commands
+
+Install the required dependencies:
+
+```bash
+forge install
+```
+
+Install specific dependencies without committing changes:
+
+```bash
+forge install OpenZeppelin/openzeppelin-contracts --no-commit
+forge install foundry-rs/forge-std --no-commit
+forge install smartcontractkit/chainlink --no-commit
+```
+
+### Deployment Setup
+
+For local deployment:
+
+1. Start a local Anvil instance:
+
+```bash
+anvil -f wss://base-sepolia-rpc.publicnode.com -b 1
+```
+
+2. Run the deployment script locally:
+
+```bash
+forge script script/CDSManager.s.sol --rpc-url 127.0.0.1:8545 --broadcast
+```
+
+For deployment to Base Sepolia network:
+
+```bash
+forge script script/CDSManager.s.sol --rpc-url wss://base-sepolia-rpc.publicnode.com --broadcast
+```
+
+### Testing
+
+Run the test suite:
+
+```bash
+forge test
+```
+
+### Deployed Addresses
+
+- CDSManagerAddress: `0xA68bF7fAB3468504FacAC136Cbb1304fB9ad4e1a`
+
+Bond Hashes:
+- Bond Hash 0: `0xed8c7521b9b19ff985353c6d2b80f11d59ed59bdac6c1565aa3b91330c595dbc`
+- Bond Hash 1: `0x26ace0890fbb7e1d380f89fef2e127f1032cd1f3f8fbe86e7af9ded46181ef75`
+- Bond Hash 2: `0x2105d649c13c4863e02dd806a0a8525f3b715d0cf352b7b3a365919491b3aadf`
 
 ## Subdirectory: bondi-app
 
@@ -472,13 +527,33 @@ Please refer to the existing README in the `base-namer` subdirectory for detaile
 
 
 # BASE NAMER
-For the base namer 
+### Basic Commands
 
+Install the dependencies:
+
+```bash
 npm install
-complete ENV file with your data
-change the address depending on the bond that you want to name
-inside of baseNamerfolder
-node src/index.js 
+```
+
+### Deployment Setup
+You need a `.env` file to deploy locally. Create a `.env` file in the `base-namer` directory with the following variables:
+
+```plaintext
+BASE_NAME=
+PRIVATE_KEY=
+```
+
+Fill these variables with:
+- The desired base name for your bonds.
+- The private key of the wallet that will perform the naming transactions.
+
+
+To run the base namer script:
+
+```bash
+node src/index.js
+```
+
 ### Addresses with Corresponding Transactions and Basenames:
 
 1. Address:  
@@ -502,84 +577,4 @@ node src/index.js
    Basename:  
    zetabondzz.basetest.eth
 
-# CDS CONTRACTS
-```markdown
-# Project Setup and Deployment Guide
 
-This guide outlines how to install dependencies, deploy contracts, and run tests for the project.
-
-## Installation
-
-To install the required dependencies, run the following commands:
-
-```bash
-forge install
-```
-
-### Install Specific Dependencies
-
-1. **OpenZeppelin Contracts** (without committing changes):
-
-    ```bash
-    forge install OpenZeppelin/openzeppelin-contracts --no-commit
-    ```
-
-2. **Foundry Standard Library** (without committing changes):
-
-    ```bash
-    forge install foundry-rs/forge-std --no-commit
-    ```
-
-3. **Chainlink Contracts** (without committing changes):
-
-    ```bash
-    forge install smartcontractkit/chainlink --no-commit
-    ```
-
-## Local Deployment
-
-To deploy contracts locally, follow these steps:
-
-1. Start a local Anvil instance with the Base Sepolia RPC and a block interval of 1:
-
-    ```bash
-    anvil -f wss://base-sepolia-rpc.publicnode.com -b 1
-    ```
-
-2. Run the deployment script locally:
-
-    ```bash
-    forge script script/CDSManager.s.sol--rpc-url 127.0.0.1:8545 --broadcast
-    ```
-
-## Real Deployment
-
-For deploying contracts to the Base Sepolia network:
-
-```bash
-forge script script/CDSManager.s.sol --rpc-url wss://base-sepolia-rpc.publicnode.com --broadcast
-```
-
-## Testing
-
-To run the test suite for the project:
-
-```bash
-forge test
-```
-## Addresses
-                             == Logs ==  
-                         CDSManagerAddress
-              0xA68bF7fAB3468504FacAC136Cbb1304fB9ad4e1a
-  ******************************************************** 
-                             bondHash 0 
-   0xed8c7521b9b19ff985353c6d2b80f11d59ed59bdac6c1565aa3b91330c595dbc  
-  ********************************************************
-                             bondHash 1  
-   0x26ace0890fbb7e1d380f89fef2e127f1032cd1f3f8fbe86e7af9ded46181ef75
-  ********************************************************  
-                             bondHash 2 
-   0x2105d649c13c4863e02dd806a0a8525f3b715d0cf352b7b3a365919491b3aadf
-
-
-   
