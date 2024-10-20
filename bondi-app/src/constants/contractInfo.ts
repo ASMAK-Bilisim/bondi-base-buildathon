@@ -1,6 +1,6 @@
 import { Abi } from "viem";
 
-export const CDS_MANAGER_ADDRESS = '0x1A9414E795b79B73955D6dB5F8f44Bb5D3Ecf255';
+export const CDS_MANAGER_ADDRESS = '0xA68bF7fAB3468504FacAC136Cbb1304fB9ad4e1a';
 export const MOCK_USDC_ADDRESS = '0x161410d974A28dD839fb9175032538F62B258c4b';
 // USDC address for Base Sepolia testnet
 export const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
@@ -902,8 +902,7 @@ export const mockUsdcABI: Abi = [
   }
 ];
 
-export const cdsManagerABI = 
-[
+export const cdsManagerABI = [
   {
       "type": "constructor",
       "inputs": [

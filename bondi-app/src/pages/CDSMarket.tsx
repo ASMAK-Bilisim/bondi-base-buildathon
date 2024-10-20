@@ -5,6 +5,7 @@ import BondOrderBook from '../components/CDSMarket/BondOrderBook';
 import { CDS_MANAGER_ADDRESS, cdsManagerABI } from '../constants/contractInfo';
 import { client } from '../client';
 import { baseSepolia } from 'thirdweb/chains';
+import { NotificationProvider } from '../components/contexts/NotificationContext';
 
 interface BondInfo {
   hash: string;
@@ -24,9 +25,9 @@ const CDSMarket: React.FC = () => {
   });
 
   const bondHashes = [
-    "0x220f8f20bc27aa6e88706a7417c63c245c276cc06d8da33bce6d066b1bd072a8",
-    "0x9802eb516f71fec07457cf51f95188082740c564b110b271b7ffa220bea8eca5",
-    "0x2f0a4b27da03d5d5744fa5a2853d4299e16e2ca03e039deea00f21cbb1dc27cb"
+    "0xed8c7521b9b19ff985353c6d2b80f11d59ed59bdac6c1565aa3b91330c595dbc",
+    "0x26ace0890fbb7e1d380f89fef2e127f1032cd1f3f8fbe86e7af9ded46181ef75",
+    "0x2105d649c13c4863e02dd806a0a8525f3b715d0cf352b7b3a365919491b3aadf"
   ];
 
   const { data: bond1Data } = useReadContract({
@@ -48,14 +49,23 @@ const CDSMarket: React.FC = () => {
   });
 
   useEffect(() => {
+    console.log('Bond 1 Data:', bond1Data);
+    console.log('Bond 2 Data:', bond2Data);
+    console.log('Bond 3 Data:', bond3Data);
+
     if (bond1Data && bond2Data && bond3Data) {
-      const newBondsInfo = [bond1Data, bond2Data, bond3Data].map((data, index) => ({
-        hash: bondHashes[index],
-        bondTokenAddress: data[0],
-        nextCouponAmount: data[1].toString(),
-        nextCouponDate: Number(data[2]),
-      }));
+      const newBondsInfo = [bond1Data, bond2Data, bond3Data].map((data, index) => {
+        const bondInfo = {
+          hash: bondHashes[index],
+          bondTokenAddress: data[0],
+          nextCouponAmount: data[1].toString(),
+          nextCouponDate: Number(data[2]),
+        };
+        console.log(`Processed Bond ${index + 1} Info:`, bondInfo);
+        return bondInfo;
+      });
       setBondsInfo(newBondsInfo);
+      console.log('Updated Bonds Info:', newBondsInfo);
     }
   }, [bond1Data, bond2Data, bond3Data]);
 
@@ -66,17 +76,19 @@ const CDSMarket: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {bondsInfo.map((bondInfo) => (
-            <div key={bondInfo.hash} className="flex justify-center">
-              <BondOrderBook bondInfo={bondInfo} />
-            </div>
-          ))}
+    <NotificationProvider>
+      <div className="min-h-screen p-4 sm:p-6 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {bondsInfo.map((bondInfo) => (
+              <div key={bondInfo.hash} className="flex justify-center">
+                <BondOrderBook bondInfo={bondInfo} bondHash={bondInfo.hash} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </NotificationProvider>
   );
 };
 
