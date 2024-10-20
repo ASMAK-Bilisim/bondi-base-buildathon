@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { contractABI, MOCK_USDC_ADDRESS, mockUsdcABI, CDS_MANAGER_ADDRESS, cdsManagerABI } from '../constants/contractInfo';
 import { useReadContract } from 'thirdweb/react';
 import { getContract } from 'thirdweb';
@@ -31,56 +31,8 @@ export const useContractInfo = (contractAddress: string) => {
     client,
     address: CDS_MANAGER_ADDRESS,
     chain: baseSepolia,
-    abi: cdsManagerABI as const, 
+    abi: cdsManagerABI, 
   });
-
-  const fetchCDSOffers = useCallback(
-    async (bondHash: string) => {
-      if (!cdsManagerContract) return [];
-
-      try {
-        const cdsCountResult = await cdsManagerContract.readContract({
-          functionName: 'cdsCount',
-        });
-        const totalCDS = Number(cdsCountResult);
-        const offers = [];
-
-        for (let i = 0; i < totalCDS; i++) {
-          try {
-            const cdsData: any = await cdsManagerContract.readContract({
-              functionName: 'cds',
-              args: [BigInt(i)],
-            });
-            // cdsData: [cdsID, creator, buyer, bondAddressAndExpiration, premium, isActive]
-
-            if (
-              cdsData &&
-              cdsData[3] === bondHash &&
-              cdsData[5] && // isActive
-              cdsData[2] === '0x0000000000000000000000000000000000000000' // buyer is zero address
-            ) {
-              offers.push({
-                cdsID: cdsData[0],
-                creator: cdsData[1],
-                buyer: cdsData[2],
-                bondAddressAndExpiration: cdsData[3],
-                premium: cdsData[4],
-                isActive: cdsData[5],
-              });
-            }
-          } catch (error) {
-            console.error(`Error fetching CDS data for ID ${i}:`, error);
-          }
-        }
-
-        return offers;
-      } catch (error) {
-        console.error('Error fetching CDS offers:', error);
-        return [];
-      }
-    },
-    [cdsManagerContract],
-  );
 
   const { data: contractBalanceData, isLoading: isBalanceLoading, error: balanceError } = useReadContract({
     contract: usdcContract,
@@ -91,31 +43,31 @@ export const useContractInfo = (contractAddress: string) => {
   const { data: targetAmountData, isLoading: isTargetLoading, error: targetError } = useReadContract({
     contract: fundingContract,
     method: "targetAmount",
-    params: [contractAddress],
+    params: [],
   });
 
   const { data: minInvestmentData, isLoading: isMinInvestmentLoading, error: minInvestmentError } = useReadContract({
     contract: fundingContract,
     method: "getMinimumInvestmentAmount",
-    params: [contractAddress],
+    params: [],
   });
 
   const { data: bondTokenAddressData } = useReadContract({
     contract: fundingContract,
     method: "bondDistribution",
-    params: [contractAddress],
+    params: [],
   });
 
   const { data: ogNFTAddressData } = useReadContract({
     contract: fundingContract,
     method: "ogNFT",
-    params: [contractAddress],
+    params: [],
   });
 
   const { data: whaleNFTAddressData } = useReadContract({
     contract: fundingContract,
     method: "whaleNFT",
-    params: [contractAddress],
+    params: [],
   });
 
   useEffect(() => {
@@ -164,6 +116,5 @@ export const useContractInfo = (contractAddress: string) => {
     usdcContract,
     fundingContract,
     cdsManagerContract,
-    fetchCDSOffers,
   };
 };

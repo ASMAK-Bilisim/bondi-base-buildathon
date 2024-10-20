@@ -11,7 +11,7 @@ import { baseSepolia } from 'thirdweb/chains';
 import { cdsManagerABI, CDS_MANAGER_ADDRESS, MOCK_USDC_ADDRESS, mockUsdcABI } from '../../constants/contractInfo';
 import { useReadContract, useSendTransaction, useActiveAccount } from 'thirdweb/react';
 import { getContract, prepareContractCall, readContract } from 'thirdweb';
-import { parseEther } from "viem";
+import { parseEther, parseUnits } from "viem";
 import { useNotifications } from '../../components/contexts/NotificationContext';
 
 interface BondInfo {
@@ -150,10 +150,13 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
 
     setIsCreatingOffer(true);
     try {
+      // Convert premium from USDC (6 decimals) to wei (18 decimals)
+      const premiumInWei = parseUnits(premium, 6);
+
       const tx = await prepareContractCall({
         contract: cdsManagerContract,
         method: "function createCDS(bytes32 bondAddressAndExpiration, uint256 premium) external returns (uint256)",
-        params: [bondInfo.hash, parseEther(premium)],
+        params: [bondInfo.hash, premiumInWei],
       });
 
       const result = await sendTx(tx as any);
@@ -299,7 +302,7 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
               bondAddressAndExpiration: cdsData[1],
               creator: cdsData[2],
               buyer: cdsData[3],
-              premium: cdsData[4].toString(),
+              premium: (Number(cdsData[4]) / 1e6).toString(), // Convert from wei to USDC
               isActive: cdsData[5],
               isClaimed: cdsData[6],
               isAccused: cdsData[7],

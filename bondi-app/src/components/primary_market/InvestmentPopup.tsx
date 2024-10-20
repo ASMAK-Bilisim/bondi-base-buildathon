@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { CancelSquareIcon, SquareUnlock01Icon, SquareLock01Icon, Exchange01Icon } from "@hugeicons/react";
-import { useActiveAccount, useReadContract, useSendTransaction, useWaitForReceipt } from "thirdweb/react";
-import { getContract } from "thirdweb";
-import { MOCK_USDC_ADDRESS, contractABI } from '../../constants/contractInfo';
+import { useActiveAccount, useReadContract, useSendTransaction } from "thirdweb/react";
+import { getContract, prepareContractCall, waitForReceipt } from "thirdweb";
+import { MOCK_USDC_ADDRESS, mockUsdcABI } from '../../constants/contractInfo';
 import { useContractInfo } from '../../hooks/useContractInfo';
 import { useNavigate } from 'react-router-dom';
 import 'react-circular-progressbar/dist/styles.css';
 import { baseSepolia } from "thirdweb/chains";
 import { client } from '../../client';
+import { parseUnits } from "viem";
+import { useNotifications } from '../../components/contexts/NotificationContext';
 
 interface InvestmentPopupProps {
   onClose: () => void;
@@ -38,60 +40,77 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   const [isWhaleNFTUnlocked, setIsWhaleNFTUnlocked] = useState(false);
   const [isAmountValid, setIsAmountValid] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<bigint>(BigInt(0));
+  const [isTransactionInProgress, setIsTransactionInProgress] = useState(false);
 
   const account = useActiveAccount();
   const navigate = useNavigate();
+  const { addNotification } = useNotifications();
 
-  const mockUsdcContract = getContract({
+  const { minInvestmentAmount, isLoading: isContractInfoLoading, 
+    contractAddress, mockUsdcAddress, ogNftAddress, whaleNftAddress, fundingContract } = useContractInfo(bondData.contractAddress);
+
+  const usdcContract = getContract({
     client,
     address: MOCK_USDC_ADDRESS,
+    abi: mockUsdcABI,
     chain: baseSepolia,
   });
 
-  const fundingContract = getContract({
-    client,
-    address: bondData.contractAddress,
-    abi: contractABI,
-    chain: baseSepolia,
-  });
-
-  const { minInvestmentAmount, targetAmount, isLoading: isContractInfoLoading } = useContractInfo(bondData.contractAddress);
-
-  const { data: balanceData, isLoading: isBalanceLoading } = useReadContract({
-    contract: mockUsdcContract,
+  const { data: balanceData, isLoading: isBalanceLoading, refetch: refetchBalanceData } = useReadContract({
+    contract: usdcContract,
     method: "balanceOf",
-    params: account ? [account] : undefined,
+    params: [account?.address || '0x'],
   });
 
-  const { data: allowanceData, isLoading: isAllowanceLoading } = useReadContract({
-    contract: mockUsdcContract,
+
+  const { data: allowanceData, isLoading: isAllowanceLoading, refetch: refetchAllowance } = useReadContract({
+    contract: usdcContract,
     method: "allowance",
-    params: account ? [account, bondData.contractAddress] : undefined,
+    params: [account?.address || '0x', contractAddress],
   });
 
   const { data: investedAmountData, isLoading: isInvestedAmountLoading } = useReadContract({
     contract: fundingContract,
     method: "investedAmountPerInvestor",
-    params: account ? [account] : undefined,
+    params: [account?.address || '0x'],
   });
 
-  const { mutateAsync: sendTransaction } = useSendTransaction();
-  const waitForReceipt = useWaitForReceipt();
+  const { mutateAsync: sendTx } = useSendTransaction();
+
 
   const WHALE_THRESHOLD = BigInt(5000 * 1e6); // 5000 USDC in wei
 
   useEffect(() => {
     if (allowanceData) {
-      const allowance = BigInt(allowanceData.toString());
-      setApprovedAmount(allowance);
-      setIsApproved(allowance > BigInt(0));
+      // Check if allowanceData is a valid number before converting to BigInt
+      const allowanceValue = typeof allowanceData === 'number' || typeof allowanceData === 'string' 
+        ? allowanceData 
+        : allowanceData?.toString();
+
+      if (allowanceValue && !isNaN(Number(allowanceValue))) {
+        const allowance = BigInt(allowanceValue);
+        setApprovedAmount(allowance);
+        setIsApproved(allowance > BigInt(0));
+      } else {
+        console.error('Invalid allowance data:', allowanceData);
+        setApprovedAmount(BigInt(0));
+        setIsApproved(false);
+      }
     }
   }, [allowanceData]);
 
   useEffect(() => {
     if (investedAmountData) {
-      const formattedInvestedAmount = (Number(investedAmountData) / 1e6).toFixed(2);
-      setInvestedAmount(formattedInvestedAmount);
+      // investedAmountData is now an array with two elements
+      const [investedAmount, investorIndex] = investedAmountData as [bigint, bigint];
+
+      if (typeof investedAmount === 'bigint') {
+        const formattedInvestedAmount = (Number(investedAmount) / 1e6).toFixed(2);
+        setInvestedAmount(formattedInvestedAmount);
+      } else {
+        console.error('Invalid invested amount data:', investedAmount);
+        setInvestedAmount('0.00');
+      }
     }
   }, [investedAmountData]);
 
@@ -114,6 +133,12 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
       setIsAmountValid(amountInUSDC >= parseFloat(minInvestmentAmount));
     }
   }, [amount, isUSDC, minInvestmentAmount, isContractInfoLoading, bondData.currentPrice]);
+
+  useEffect(() => {
+    if (isInvestmentComplete) {
+      refetchBalanceData();
+    }
+  }, [isInvestmentComplete, refetchBalanceData]);
 
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-US', { 
@@ -196,23 +221,35 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   });
 
   const handleApprove = async () => {
-    if (!account) return;
+    if (!account) {
+      addNotification({
+        title: "Action Required",
+        message: "Please connect your wallet to approve USDC",
+      });
+      return;
+    }
     setIsApproving(true);
     try {
-      const amountToApprove = BigInt(Math.floor(parseFloat(amount) * 1e6));
+      const amountToApprove = parseUnits(amount, 6); // USDC has 6 decimal places
 
-      const transaction = await sendTransaction({
-        contract: mockUsdcContract,
-        method: "approve",
-        params: [bondData.contractAddress, amountToApprove],
+      const transaction = await prepareContractCall({
+        contract: usdcContract,
+        method: "function approve(address spender, uint256 amount) external returns (bool)",
+        params: [fundingContract.address, amountToApprove],
       });
-
-      await waitForReceipt(transaction);
-
-      setApprovedAmount(amountToApprove);
-      setIsApproved(true);
+      
+      await sendTx(transaction);
+      await refetchAllowance();
+      addNotification({
+        title: "Approval Successful",
+        message: `USDC spending of ${amount} approved for investment.`,
+      });
     } catch (error) {
       console.error("Error approving Mock USDC:", error);
+      addNotification({
+        title: "Approval Failed",
+        message: `Error approving USDC: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
     } finally {
       setIsApproving(false);
     }
@@ -220,30 +257,42 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
 
   const handleInvest = async () => {
     if (!account || !amount || amount === '0.0000') {
-      console.error("Invalid investment amount or account not connected");
+      addNotification({
+        title: "Action Required",
+        message: "Please connect your wallet and enter a valid investment amount",
+      });
       return;
     }
 
-    const amountToInvest = BigInt(Math.floor(parseFloat(amount) * 1e6));
+    const amountToInvest = parseUnits(amount, 6); // USDC has 6 decimal places
     
     if (amountToInvest > approvedAmount) {
-      await handleApprove();
+      addNotification({
+        title: "Action Required",
+        message: "Please approve the required amount before investing",
+      });
       return;
     }
 
     setIsInvesting(true);
     try {
-      if (amountToInvest < BigInt(Math.floor(parseFloat(minInvestmentAmount) * 1e6))) {
+      if (amountToInvest < parseUnits(minInvestmentAmount, 6)) {
         throw new Error(`Minimum investment amount is ${minInvestmentAmount} USDC`);
       }
 
-      const transaction = await sendTransaction({
+      const transaction = await prepareContractCall({
         contract: fundingContract,
-        method: "invest",
+        method: "function invest(uint256 amount) external returns (bool)",
         params: [amountToInvest],
       });
+      const tx = await sendTx(transaction);
 
-      await waitForReceipt(transaction);
+      // Wait for the transaction receipt
+      await waitForReceipt({
+        client,
+        chain: baseSepolia,
+        transactionHash: tx.transactionHash,
+      });
 
       setIsInvestmentComplete(true);
       setIsOGNFTUnlocked(true);
@@ -252,12 +301,24 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
       const totalInvestment = previousInvestment + amountToInvest;
       setIsWhaleNFTUnlocked(totalInvestment >= WHALE_THRESHOLD);
 
+      addNotification({
+        title: "Investment Successful",
+        message: `Successfully invested ${amount} USDC in ${bondData.companyName} bond.`,
+      });
     } catch (error: any) {
       console.error("Error investing:", error);
-      // Show error message to the user
+      addNotification({
+        title: "Investment Failed",
+        message: `Error investing: ${error.message || 'Unknown error'}`,
+      });
     } finally {
       setIsInvesting(false);
     }
+  };
+  
+
+  const handleGoHome = () => {
+    navigate('/');
   };
 
   return (
