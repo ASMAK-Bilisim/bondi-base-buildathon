@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { contractABI, MOCK_USDC_ADDRESS, mockUsdcABI, CDS_MANAGER_ADDRESS, cdsManagerABI } from '../constants/contractInfo';
+import { contractABI, MOCK_USDC_ADDRESS, mockUsdcABI, CDS_MANAGER_ADDRESS, cdsManagerABI, OG_NFT_ADDRESS, INVESTOR_NFT_ABI, WHALE_NFT_ADDRESS } from '../constants/contractInfo';
 import { useReadContract } from 'thirdweb/react';
 import { getContract } from 'thirdweb';
 import { client } from '../client';
@@ -11,6 +11,7 @@ export const useContractInfo = (contractAddress: string) => {
   const [minInvestmentAmount, setMinInvestmentAmount] = useState("0");
   const [contractCreationDate, setContractCreationDate] = useState<Date | null>(null);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
+  const [ogNftAddress, setOgNftAddress] = useState<string>('');
   const [whaleNftAddress, setWhaleNftAddress] = useState<string>('');
   
   const usdcContract = getContract({
@@ -32,6 +33,20 @@ export const useContractInfo = (contractAddress: string) => {
     address: CDS_MANAGER_ADDRESS,
     chain: baseSepolia,
     abi: cdsManagerABI, 
+  });
+
+  const ogNftContract = getContract({
+    client,
+    address: OG_NFT_ADDRESS,
+    chain: baseSepolia,
+    abi: INVESTOR_NFT_ABI,
+  });
+
+  const whaleNftContract = getContract({
+    client,
+    address: WHALE_NFT_ADDRESS,
+    chain: baseSepolia,
+    abi: INVESTOR_NFT_ABI,
   });
 
   const { data: contractBalanceData, isLoading: isBalanceLoading, error: balanceError } = useReadContract({
@@ -58,22 +73,21 @@ export const useContractInfo = (contractAddress: string) => {
     params: [],
   });
 
-  const { data: ogNFTAddressData } = useReadContract({
-    contract: fundingContract,
-    method: "ogNFT",
+  const { data: ogNftAddressData } = useReadContract({
+    contract: ogNftContract,
+    method: "tokenURI",
     params: [],
   });
 
-  const { data: whaleNFTAddressData } = useReadContract({
-    contract: fundingContract,
-    method: "whaleNFT",
+  const { data: whaleNftAddressData } = useReadContract({
+    contract: whaleNftContract,
+    method: "tokenURI",
     params: [],
   });
 
   useEffect(() => {
     const fetchContractCreationDate = async () => {
       try {
-        // This is a placeholder. Replace with actual contract creation date fetching logic
         const creationDate = new Date();
         setContractCreationDate(creationDate);
         
@@ -94,8 +108,9 @@ export const useContractInfo = (contractAddress: string) => {
     if (contractBalanceData) setContractUSDCBalance((Number(contractBalanceData) / 1e6).toFixed(2));
     if (targetAmountData) setTargetAmount((Number(targetAmountData) / 1e6).toFixed(2));
     if (minInvestmentData) setMinInvestmentAmount((Number(minInvestmentData) / 1e6).toFixed(2));
-    if (whaleNFTAddressData) setWhaleNftAddress(whaleNFTAddressData as string);
-  }, [contractBalanceData, targetAmountData, minInvestmentData, whaleNFTAddressData]);
+    if (ogNftAddressData) setOgNftAddress(ogNftAddressData as string);
+    if (whaleNftAddressData) setWhaleNftAddress(whaleNftAddressData as string);
+  }, [contractBalanceData, targetAmountData, minInvestmentData]);
 
   const isLoading = isBalanceLoading || isTargetLoading || isMinInvestmentLoading;
   const errorCombined = balanceError || targetError || minInvestmentError;
@@ -111,8 +126,8 @@ export const useContractInfo = (contractAddress: string) => {
     contractAddress,
     mockUsdcAddress: MOCK_USDC_ADDRESS,
     bondTokenAddress: bondTokenAddressData,
-    ogNftAddress: ogNFTAddressData,
-    whaleNftAddress,
+    ogNftAddress: ogNftAddressData,
+    whaleNftAddress: whaleNftAddressData,
     usdcContract,
     fundingContract,
     cdsManagerContract,

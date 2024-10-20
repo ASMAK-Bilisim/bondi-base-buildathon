@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from 'react-query';
 import { useActiveAccount } from "thirdweb/react";
 import axios from 'axios';
 import { subYears, subMonths, subDays, startOfYear, parseISO, isValid } from 'date-fns';
@@ -65,13 +65,13 @@ const fetch30MinData = async (symbol: string, from: string, to: string): Promise
   return response.data;
 };
 export const usePortfolioData = () => {
-  let address;
+  let account;
   try {
-    address = useActiveAccount();
+    account = useActiveAccount();
   } catch (error) {
     console.error("useActiveAccount() hook error:", error);
     // Handle the error or set a default value for address
-    address = null;
+    account = null;
   }
 
   const [timeRange, setTimeRange] = useState('YTD');
