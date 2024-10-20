@@ -2,26 +2,36 @@
 
 ## Introduction
 
-Bondi Finance is revolutionizing the bond market by leveraging blockchain technology to tokenize corporate bonds and create an accessible bond insurance (Credit Default Swap, or CDS) market. Our platform empowers investors to seamlessly participate in bond offerings and trade bond-related insurance in a decentralized and transparent manner.
+Bondi Finance is revolutionizing the bond market by leveraging blockchain technology to tokenize corporate bonds, making traditionally inaccessible markets more open and transparent. We empower investors to seamlessly participate in bond offerings and engage with a decentralized bond token ecosystem.
 
-We've simplified how users interact with blockchain technology by integrating **Coinbase Smart Wallet**, making it easier for both experienced and novice users to engage with our platform. We advocate for a transparent and compliant market by naming bonds on-chain using **ENS basenames**, ensuring retail investor safety and promoting trust in the ecosystem. 
+Also, our loyalty program rewards participants with unique NFTs that entitle holders to upcoming Bondi protocol token allocation.
 
-In this Base Buildathon project, we have:
+In this Base Buildathon project, we focused on creating an accessible bond insurance market, developing a **Credit Default Swap (CDS)** solution for decentralized trading, and integrating advanced features such as:
 
-- Implemented **smart wallet integration** for seamless user experience.
-- Developed a CDS market from scratch.
-- Assigned **ENS basenames** to each bond for improved readability and recognition.
-- Introduced a loyalty program with NFTs to reward and incentivize user participation.
+- **Coinbase Smart Wallet** integration to simplify user interaction with blockchain technology, making it accessible for both experienced and novice users.
+- A CDS market built from scratch.
+- Base names assigned to each bond using **ENS basenames**, promoting transparency and trust by ensuring retail investor safety in a compliant market.
 
-### Bonds and Bond Insurance (CDS)
+## Bonds and Bond Insurance (CDS)
 
-A **bond** is a fixed-income instrument representing a loan made by an investor to a borrower. Bonds are used by companies and governments to finance projects and operations. **Bond insurance**, or **Credit Default Swap (CDS)**, is a financial derivative allowing an investor to offset their credit risk with that of another investor. Essentially, the buyer of a CDS receives credit protection, while the seller guarantees the creditworthiness of the debt security.
+A **bond** is a fixed-income instrument representing a loan made by an investor to a borrower. Bonds are used by companies and governments to finance projects and operations. **Bond insurance**, or **Credit Default Swap (CDS)**, is a financial derivative that allows an investor to offset their credit risk with that of another investor. Essentially, the buyer of a CDS receives credit protection, while the seller guarantees the creditworthiness of the debt security.
 
-Our loyalty program rewards participants with unique NFTs, providing benefits tied to their involvement in the Bondi ecosystem.
+## Directory Structure
+
+Our main repository for the buildathon is named `bondi-base-buildathon`, and it contains the following subdirectories:
+
+- `admin-bondtoken-minting`
+- `base-namer`
+- `bondi-app`
+- `bondi-contracts`
+- `cds-contracts`
+- `claim-mock-usdc`
+
+Each subdirectory focuses on different functionalities of the project.
 
 ## Access and Functionality
 
-We have deployed three websites on Vercel and assigned our secondary domain to interact with the functionalities mentioned above. Our smart contracts are deployed on the Base Sepolia network.
+We have deployed three websites on Vercel, with subdomains of our secondary domain pointing to each site to enable the functionalities outlined in this project. Our smart contracts are live on the Base Sepolia network.
 
 ### Deployed Websites
 
@@ -53,6 +63,7 @@ We have deployed three websites on Vercel and assigned our secondary domain to i
 
 #### 1. Primary Market
 
+- Displays the funding phase for each bond token offerings.
 - View bond token offerings, check specifics, and choose bonds to invest in.
 - Bond offerings start in the **Payment Pending** phase until the target amount is reached.
 - Once the target is met, the offering moves to **Awaiting Real-Life Purchase** phase.
@@ -89,9 +100,9 @@ We have deployed three websites on Vercel and assigned our secondary domain to i
   - The investment amount (set by the user).
   - The real-life purchase price information (set by Bondi Authority).
 
-## Local Running Information
+# Local Running Information for Each Subdirectory
 
-### Subdirectory: bondi-contracts
+## bondi-contracts
 
 All deployed contracts are located in `bondi-contracts/contracts`:
 
@@ -101,7 +112,7 @@ All deployed contracts are located in `bondi-contracts/contracts`:
 - `InvestorNFT.sol`
 - `MockUSDC.sol`
 
-#### Basic Commands
+### Basic Commands
 
 To start the local development node, run:
 
@@ -109,7 +120,7 @@ To start the local development node, run:
 npx hardhat node
 ``` 
 
-## Cache and Deployment Cleanup
+### Cache and Deployment Cleanup
 
 To clean the cache and deployment artifacts:
 
@@ -122,7 +133,7 @@ This is necessary to deploy multiple funding contracts with the same ignition sc
 
 ### Deployment
 
-To deploy for real, you need to set the `.env` file. The current deployment is configured for **Base Sepolia**, so if you want to deploy elsewhere, configure the `hardhat.config.ts` file accordingly.
+To deploy in a live environment, you need to set the `.env` file. The current deployment is configured for **Base Sepolia**, so if you want to deploy elsewhere, configure the `hardhat.config.ts` file accordingly.
 
 The complete global `.env` file should have the following environment variables:
 
@@ -178,7 +189,7 @@ BOND_TOKEN_NAME=
 BOND_TOKEN_SYMBOL=
 ```
 
-#### Deployment Sequence
+### Deployment Sequence
 
 1. **Deploy Mock USDC**
 
@@ -308,7 +319,7 @@ To run **Echidna** fuzz testing, use:
 echidna ./ --contract [aFuzzContract] --test-mode assertion
 ```
 
-## Subdirectory: cds-contracts
+## cds-contracts
 
 ### Basic Commands
 
@@ -365,7 +376,7 @@ Bond Hashes:
 - Bond Hash 1: `0x26ace0890fbb7e1d380f89fef2e127f1032cd1f3f8fbe86e7af9ded46181ef75`
 - Bond Hash 2: `0x2105d649c13c4863e02dd806a0a8525f3b715d0cf352b7b3a365919491b3aadf`
 
-## Subdirectory: bondi-app
+## bondi-app
 
 ### Basic Commands
 
@@ -392,8 +403,6 @@ You will also need to create a `.npmrc` file to use the icon set we utilize. You
 
 Replace `[YOUR_AUTH_TOKEN]` with your actual NPM authentication token.
 
-**Note**: This file must be created before installing dependencies on Vercel.
-
 ### Deployment
 
 Run:
@@ -402,7 +411,7 @@ Run:
 npm run dev
 ```
 
-## Subdirectory: claim-mock-usdc
+## claim-mock-usdc
 
 ### Basic Commands
 
@@ -432,7 +441,7 @@ Run:
 npm run dev
 ```
 
-## Subdirectory: admin-bondtoken-minting
+## admin-bondtoken-minting
 
 ### Basic Commands
 
@@ -469,13 +478,13 @@ Run:
 npm run dev
 ```
 
-## Subdirectory: base-namer
+## base-namer
 
 Please refer to the existing README in the `base-namer` subdirectory for detailed instructions.
 
-## Future Integration and Improvements
+# Future Integration and Improvements
 
-### General Improvements
+## General Improvements
 
 - **Real-Life Oracle Integration**: Fetch real-world bond prices.
 - **Yield-Bearing Stablecoin Derivatives**: Integrate as collateral for the CDS market.
@@ -484,7 +493,7 @@ Please refer to the existing README in the `base-namer` subdirectory for detaile
 - **Coupon and Principal Repayment Vaults**: Create dedicated vaults.
 - **Full KYC Integration**: Including on-chain verification.
 
-### Base-Specific Improvements
+## Base-Specific Improvements
 
 - **On-Chain Reputation**: Use Base's reputation system to decrease collateral needed to issue CDS.
 - **Basename Usage**: For vault, contract, and coupon naming.
@@ -493,9 +502,9 @@ Please refer to the existing README in the `base-namer` subdirectory for detaile
   - Convert them to USDC or yield-bearing stablecoin derivatives like aUSDT (Aave USDT).
   - Accept Coinbase balance directly.
 
-## Authority Specifications
+# Authority Specifications
 
-### List Authority
+## List Authority
 
 - **Responsibilities**:
   - Approves bonds to be offered in the funding phase.
@@ -503,7 +512,7 @@ Please refer to the existing README in the `base-namer` subdirectory for detaile
   - Can modify parameters in the funding phase smart contracts.
 - **Vision**: Transfer this role to **Bondi DAO** to perform tasks via on-chain voting.
 
-### Withdraw Authority
+## Withdraw Authority
 
 - **Responsibilities**:
   - Approves withdrawing of funds to an offramp provider or the custodian/broker.
@@ -515,66 +524,10 @@ Please refer to the existing README in the `base-namer` subdirectory for detaile
   - Key Members of the Crypto Community
   - Bondi DAO
 
-### Mint Authority
+## Mint Authority
 
 - **Responsibilities**:
   - Approves the minting information of the bonds after the realized purchase information is provided by the custodian/broker.
   - Approves the minting of BTs to the Minting Smart Contract from where users will manually claim their share of BT.
 - **Control**: Initially under **Bondi Finance Inc.**
-
-
-
-
-
-# BASE NAMER
-### Basic Commands
-
-Install the dependencies:
-
-```bash
-npm install
-```
-
-### Deployment Setup
-You need a `.env` file to deploy locally. Create a `.env` file in the `base-namer` directory with the following variables:
-
-```plaintext
-BASE_NAME=
-PRIVATE_KEY=
-```
-
-Fill these variables with:
-- The desired base name for your bonds.
-- The private key of the wallet that will perform the naming transactions.
-
-
-To run the base namer script:
-
-```bash
-node src/index.js
-```
-
-### Addresses with Corresponding Transactions and Basenames:
-
-1. Address:  
-   0x01Cf7c1C65A66f65A38893e831a3107EE842Ce81  
-   Transaction:  
-   0x30ec9c4ead7d5e600f65c1202cf0224bdc62392702e9af41b8fd66401417de75  
-   Basename:  
-   alphabondzz.basetest.eth
-
-2. Address:  
-   0x093A98F9fAeA01c73a51F978714a638708FFa90f  
-   Transaction:  
-   0x5acee8116c7c49f835e91479d0803a2c24c7295856a0f2d33448c6196a3ec2b6  
-   Basename:  
-   betabondzz.basetest.eth
-
-3. Address:  
-   0xe48B71132F2E8df6De19C13Ed1D68b52D82f094A  
-   Transaction:  
-   0x8a83244a5742dcae0ad21ec583a5ae1b1dd034784cfc1ca653e67951456a7d23  
-   Basename:  
-   zetabondzz.basetest.eth
-
 
