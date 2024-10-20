@@ -48,3 +48,4 @@ cds-contracts/out/
 **/*.njsproj
 **/*.sln
 **/*.sw?
+**/.DS_Store
