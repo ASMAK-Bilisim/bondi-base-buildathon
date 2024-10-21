@@ -7,13 +7,16 @@ import "../src/CDSManager.sol";
 contract DeployCDSManager is Script {
     function run() external {
         // Start broadcasting transactions
-        vm.startBroadcast(private_key);
+        uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        address admin = vm.envAddress("ADMIN_ADDRESS");
+
+        // Start broadcasting transactions
+        vm.startBroadcast(deployerPrivateKey);
 
         // Set up USDC token address and admin address for the CDSManager contract
         address usdcToken = 0x1702087C0038e3b656DE6426566582F66265dE0e;
         
         // Use the address derived from the private key as the admin
-        address admin = public_key;  
         // Deploy the CDSManager contract
         CDSManager cdsManager = new CDSManager(usdcToken, admin);
         
