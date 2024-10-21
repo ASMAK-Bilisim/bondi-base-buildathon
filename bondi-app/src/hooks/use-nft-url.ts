@@ -68,10 +68,10 @@ export function useNFTUrl() {
   const walletClient = useWalletClient();
   const walletAddress = walletClient.data?.account?.address;
 
-  // Select the latest NFT transfer and contract address for the wallet address
-  const { latestContractAddress, latestTokenId } = (() => {
+  // Select the latest NFT transfers for both OG and Whale NFTs
+  const { ogNft, whaleNft } = (() => {
     if (!walletAddress) {
-      return { latestContractAddress: undefined, latestTokenId: undefined };
+      return { ogNft: undefined, whaleNft: undefined };
     }
 
     const ogTransfer = ogNftTransfers
@@ -81,42 +81,52 @@ export function useNFTUrl() {
       .filter((transfer) => transfer.args.to === walletAddress)
       .slice(-1)[0];
 
-    if (!ogTransfer && !whaleTransfer) {
-      return { latestContractAddress: undefined, latestTokenId: undefined };
-    }
-
-    if (
-      !ogTransfer ||
-      (whaleTransfer && whaleTransfer.blockNumber > ogTransfer.blockNumber)
-    ) {
-      return {
-        latestContractAddress: WHALE_NFT_ADDRESS,
-        latestTokenId: BigInt(whaleTransfer.args.tokenId),
-      };
-    }
-
     return {
-      latestContractAddress: OG_NFT_ADDRESS,
-      latestTokenId: BigInt(ogTransfer.args.tokenId),
+      ogNft: ogTransfer
+        ? {
+            contractAddress: OG_NFT_ADDRESS,
+            tokenId: BigInt(ogTransfer.args.tokenId),
+            nftType: 'og' as const,
+          }
+        : undefined,
+      whaleNft: whaleTransfer
+        ? {
+            contractAddress: WHALE_NFT_ADDRESS,
+            tokenId: BigInt(whaleTransfer.args.tokenId),
+            nftType: 'whale' as const,
+          }
+        : undefined,
     };
   })();
 
   const query = useQuery({
     queryKey: [
-      "nftUrl",
-      latestContractAddress,
-      latestTokenId?.toString(), // Convert BigInt to string
+      "nftUrls",
+      ogNft?.contractAddress,
+      ogNft?.tokenId?.toString(),
+      whaleNft?.contractAddress,
+      whaleNft?.tokenId?.toString(),
       walletAddress,
     ],
-    queryFn: () =>
-      latestContractAddress && latestTokenId
-        ? fetchNFTMetadata(latestContractAddress, latestTokenId)
-        : undefined,
-    enabled: !!latestContractAddress && !!latestTokenId && !!walletAddress,
-  });
+    queryFn: async () => {
+      const results: Record<'og' | 'whale', { imageUrl: string | undefined; nftType: 'og' | 'whale' }> = {
+        og: { imageUrl: undefined, nftType: 'og' },
+        whale: { imageUrl: undefined, nftType: 'whale' }
+      };
 
-  fetchNFTMetadata(OG_NFT_ADDRESS, 5n).then((res) => {
-    console.log(res);
+      if (ogNft) {
+        const imageUrl = await fetchNFTMetadata(ogNft.contractAddress, ogNft.tokenId);
+        results.og = { imageUrl, nftType: ogNft.nftType };
+      }
+
+      if (whaleNft) {
+        const imageUrl = await fetchNFTMetadata(whaleNft.contractAddress, whaleNft.tokenId);
+        results.whale = { imageUrl, nftType: whaleNft.nftType };
+      }
+
+      return results;
+    },
+    enabled: !!walletAddress && (!!ogNft || !!whaleNft),
   });
 
   return query;

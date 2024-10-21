@@ -19,6 +19,7 @@ import { baseSepolia } from "thirdweb/chains";
 import { client } from "../../client";
 import { parseUnits } from "viem";
 import { useNotifications } from "../../components/contexts/NotificationContext";
+import { useNFTUrl } from "../../hooks/use-nft-url";
 
 interface InvestmentPopupProps {
   onClose: () => void;
@@ -54,6 +55,12 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
   const [approvedAmount, setApprovedAmount] = useState<bigint>(BigInt(0));
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false);
   const [isApprovalPending, setIsApprovalPending] = useState(false);
+
+  const {
+    data: nftUrl,
+  } = useNFTUrl()
+
+
 
   const account = useActiveAccount();
   const navigate = useNavigate();
@@ -286,9 +293,8 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
       console.error("Error approving Mock USDC:", error);
       addNotification({
         title: "Approval Failed",
-        message: `Error approving USDC: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
+        message: `Error approving USDC: ${error instanceof Error ? error.message : "Unknown error"
+          }`,
       });
       setIsApprovalPending(false);
     } finally {
@@ -368,7 +374,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
   };
 
   const handleGoHome = () => {
-    navigate("/");
+    onClose("");
   };
 
   return (
@@ -391,6 +397,15 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
           <div className="w-1/2 overflow-y-auto relative">
             {isInvestmentComplete ? (
               <div className="h-full bg-[#071f1e] flex flex-col items-center justify-center relative">
+                {/* NFT Images at the top, now twice as large */}
+                <div className="flex justify-center space-x-8 p-4 bg-[#071f1e] mb-8">
+                  {nftUrl?.og?.imageUrl && (
+                    <img src={nftUrl.og.imageUrl} alt="OG NFT" className="w-32 h-32 rounded-full" />
+                  )}
+                  {nftUrl?.whale?.imageUrl && (
+                    <img src={nftUrl.whale.imageUrl} alt="Whale NFT" className="w-32 h-32 rounded-full" />
+                  )}
+                </div>
                 <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#d8feaa] to-transparent opacity-30 rounded-t-md"></div>
                 <div className="flex flex-col items-center space-y-12 p-8 relative z-10">
                   <div className="flex items-center">
@@ -615,8 +630,8 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                         {isContractInfoLoading
                           ? "Loading..."
                           : `${formatCurrency(
-                              parseFloat(minInvestmentAmount)
-                            )} USDC`}
+                            parseFloat(minInvestmentAmount)
+                          )} USDC`}
                       </p>
                     </div>
                     <div className="flex justify-between items-center">
@@ -633,8 +648,8 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                         {isInvestedAmountLoading
                           ? "Loading..."
                           : `${formatCurrency(
-                              parseFloat(investedAmount)
-                            )} USDC`}
+                            parseFloat(investedAmount)
+                          )} USDC`}
                       </p>
                     </div>
                   </div>
@@ -651,9 +666,9 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                   </p>
 
                   {isApproved &&
-                  amount &&
-                  amount !== "0.0000" &&
-                  BigInt(Math.floor(parseFloat(amount) * 1e6)) <=
+                    amount &&
+                    amount !== "0.0000" &&
+                    BigInt(Math.floor(parseFloat(amount) * 1e6)) <=
                     approvedAmount ? (
                     <button
                       onClick={handleInvest}
@@ -677,8 +692,8 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                       {isApproving
                         ? "Approving..."
                         : isApprovalPending
-                        ? "Approval Pending..."
-                        : "Approve USDC"}
+                          ? "Approval Pending..."
+                          : "Approve USDC"}
                     </button>
                   )}
                 </div>

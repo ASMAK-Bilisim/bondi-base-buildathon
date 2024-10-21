@@ -19,7 +19,6 @@ interface BondInfo {
   bondTokenAddress: string;
   nextCouponAmount: string;
   nextCouponDate: number;
-  baseName: string;
 }
 
 interface BondOrderBookProps {
@@ -366,9 +365,7 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
           <InfoCard
             icon={<DiplomaIcon className="h-5 w-5 text-app-primary-2" />}
             title="Bond"
-            value={bondInfo.baseName}
-            tooltip={truncateAddress(bondInfo.bondTokenAddress)}
-            fullAddress={bondInfo.bondTokenAddress}  // Pass the full address here
+            value={truncateAddress(bondInfo.bondTokenAddress)}
           />
         </div>
 
@@ -427,41 +424,15 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
 
 // Helper components
 
-const InfoCard: React.FC<{ 
-  icon: React.ReactNode; 
-  title: string; 
-  value: string;
-  tooltip?: string;
-  fullAddress?: string;  // Add this new prop
-}> = ({ icon, title, value, tooltip, fullAddress }) => {
-  const handleIconClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (fullAddress) {  // Use fullAddress instead of tooltip
-      window.open(`https://sepolia.basescan.org/address/${fullAddress}`, '_blank');
-    }
-  };
-
-  return (
-    <div className="flex items-center space-x-2 bg-app-dark-mint bg-opacity-30 p-2 rounded-lg relative">
-      {icon}
-      <div>
-        <p className="text-xs font-medium text-gray-600">{title}</p>
-        <p className="text-[10px] text-app-primary-2">{value}</p>
-      </div>
-      {tooltip && (
-        <div className="absolute top-1 right-1 group">
-          <InformationSquareIcon 
-            className="h-4 w-4 text-app-primary-2 cursor-pointer hover:text-app-primary-1" 
-            onClick={handleIconClick}
-          />
-          <span className="absolute hidden group-hover:block right-0 bg-white border border-app-primary-2 text-app-primary-2 text-xs rounded p-1 mt-1 whitespace-nowrap">
-            {tooltip}
-          </span>
-        </div>
-      )}
+const InfoCard: React.FC<{ icon: React.ReactNode; title: string; value: string }> = ({ icon, title, value }) => (
+  <div className="flex items-center space-x-2 bg-app-dark-mint bg-opacity-30 p-2 rounded-lg">
+    {icon}
+    <div>
+      <p className="text-xs font-medium text-gray-600">{title}</p>
+      <p className="text-xs text-app-primary-2">{value}</p>
     </div>
-  );
-};
+  </div>
+);
 
 const OwnOffersTooltip: React.FC<{ ownOffers: CDSInfo[] }> = ({ ownOffers }) => (
   <div className="absolute right-0 mt-2 p-3 bg-white border border-app-primary-2 rounded-lg shadow-lg z-10 w-80">
