@@ -208,7 +208,8 @@ BOND_TOKEN_SYMBOL=
    npx hardhat ignition deploy ./ignition/modules/FundingWithMintables.ts --network baseSepolia
    ```
 
-   This script will deploy one funding contract, bond token, bond distribution contract, and two NFT contracts. It will also assign the `MINTER_ROLE` in the NFT contracts to the deployed funding contract. These NFT contracts will be used for all other funding contracts. Add the deployed `InvestorNFT` contract addresses to the `.env` file:
+   This script will deploy one funding contract, bond token, bond distribution contract, and two NFT contracts. 
+   It will also assign the `MINTER_ROLE` in the NFT contracts to the deployed funding contract. These NFT contracts will be used for all other funding contracts. Add the deployed `InvestorNFT` contract addresses to the `.env` file:
 
    ```plaintext
    OG_NFT_ADDRESS=
@@ -232,11 +233,19 @@ BOND_TOKEN_SYMBOL=
 
    You might need to clean the cache and deployment artifacts before each deployment. An `id.json` file is provided at `bondi-contracts/ignition/modules/utils` for better tracking at each deployment.
 
+  After deployment, you need to assing MINTER_ROLE to the funding contract:
+
+   ```bash
+   npx hardhat setMinterRole --minter [theAddressOfTheNewFundingContract] --contract [theAddressOfEachOfTheNFTContracts]
+   ```
+
    Additionally, note that contracts can be deployed with mock parameters by adding at the end of the deployment script:
 
    ```bash
    --parameters ignition/parameters.json
    ```
+
+When deploying the contracts using `Funding.ts` and `FundingWithMintables.ts`, both scripts will first deploy the funding contract and the NFT contracts. Next, the bond token contract will be deployed with the specified bond token name and symbol. Afterward, the scripts will deploy the bond distribution contract and assign the `FUNDING_CONTRACT_ROLE` to the funding contract during this deployment. Following this, the `addMinter` function will be called on the bond token contract to assign the `MINTER_ROLE` to the bond distribution contract. Finally, the newly deployed bond distribution contract will be set to the state variable `bondDistribution` in the funding contract.
 
 ### Contract Interactions
 
@@ -555,6 +564,8 @@ node src/index.js
 
 # Authority Specifications
 
+Currently, the deployer (identified by the wallet using the private key on [minter.democratize.bond](https://minter.democratize.bond)) holds multiple roles, including `PAUSER_ROLE` and `FREEZER_ROLE` on the bond token contract. However, the long-term vision is to separate these functions and roles across different authorities, each governed by multi-signature (multisig) structures that serve distinct purposes.
+
 ## List Authority
 
 - **Responsibilities**:
@@ -566,7 +577,7 @@ node src/index.js
 ## Withdraw Authority
 
 - **Responsibilities**:
-  - Approves withdrawing of funds to an offramp provider or the custodian/broker.
+  - Approves the withdrawal of funds to an offramp provider or the custodian/broker.
   - Can approve this transaction only if the target amount is reached within the funding period.
 - **Vision**: Transfer this role to a **multisig wallet** involving:
   - Custodian/Broker
@@ -579,6 +590,13 @@ node src/index.js
 
 - **Responsibilities**:
   - Approves the minting information of the bonds after the realized purchase information is provided by the custodian/broker.
-  - Approves the minting of BTs to the Minting Smart Contract from where users will manually claim their share of BT.
+  - Approves the minting of BTs to the Minting Smart Contract, from which users will manually claim their share of BT.
 - **Control**: Initially under **Bondi Finance Inc.**
+
+## CDS Decision Authority
+
+- **Responsibilities**:
+  - Makes the final decision on whether the bond issuer has defaulted, impacting the CDS market.
+- **Vision**: A decentralized court system, such as **Kleros**, will be integrated in the future to have the final say on whether the bond issuer has defaulted. This will enable the CDS market to become fully decentralized.
+
 
