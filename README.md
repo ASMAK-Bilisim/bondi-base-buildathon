@@ -2,11 +2,11 @@
 
 ## Introduction
 
-Bondi Finance is revolutionizing the bond market by leveraging blockchain technology to tokenize corporate bonds, making traditionally inaccessible markets more open and transparent. We empower investors to seamlessly participate in bond offerings and engage with a decentralized bond token ecosystem.
+Bondi Finance is revolutionizing the bond market by leveraging blockchain technology to tokenize corporate bonds, making traditionally inaccessible markets more open and transparent. We empower investors to seamlessly participate in our bond token ecosystem.
 
 Also, our loyalty program rewards participants with unique NFTs that entitle holders to upcoming Bondi protocol token allocation.
 
-In this Base Buildathon project, we focused on creating an accessible bond insurance market, developing a **Credit Default Swap (CDS)** solution for decentralized trading, and integrating advanced features such as:
+In this Base Buildathon project, we focused on creating an accessible bond insurance market, developing a **Credit Default Swap (CDS)** mechanism that can be made fully synthetic, eliminating the need for real-life bond purchases. Additionally, a decentralized court system can be integrated for dispute resolution, as outlined in the **Authority Specifications** below. Other advanced features include:
 
 - **Coinbase Smart Wallet** integration to simplify user interaction with blockchain technology, making it accessible for both experienced and novice users.
 - A CDS market built from scratch.
@@ -573,6 +573,7 @@ Currently, the deployer (identified by the wallet using the private key on [mint
   - Approves bonds to be offered in the funding phase.
   - Approves crucial information about the bonds.
   - Can modify parameters in the funding phase smart contracts.
+
 - **Vision**: Transfer this role to **Bondi DAO** to perform tasks via on-chain voting.
 
 ## Withdraw Authority
@@ -580,6 +581,7 @@ Currently, the deployer (identified by the wallet using the private key on [mint
 - **Responsibilities**:
   - Approves the withdrawal of funds to an offramp provider or the custodian/broker.
   - Can approve this transaction only if the target amount is reached within the funding period.
+
 - **Vision**: Transfer this role to a **multisig wallet** involving:
   - Custodian/Broker
   - Auditing Firm
@@ -592,12 +594,14 @@ Currently, the deployer (identified by the wallet using the private key on [mint
 - **Responsibilities**:
   - Approves the minting information of the bonds after the realized purchase information is provided by the custodian/broker.
   - Approves the minting of BTs to the Minting Smart Contract, from which users will manually claim their share of BT.
+
 - **Control**: Initially under **Bondi Finance Inc.**
 
 ## CDS Decision Authority
 
 - **Responsibilities**:
   - Makes the final decision on whether the bond issuer has defaulted, impacting the CDS market.
+
 - **Vision**: A decentralized court system, such as **Kleros**, will be integrated in the future to have the final say on whether the bond issuer has defaulted. This will enable the CDS market to become fully decentralized.
 
 
