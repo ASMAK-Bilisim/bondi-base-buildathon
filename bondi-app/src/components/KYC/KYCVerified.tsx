@@ -20,7 +20,7 @@ const KYCVerified: React.FC = () => {
   }, [setKYCCompleted, addNotification]);
 
   const handleGoToPrimaryMarket = () => {
-    navigate("/primary-market");
+    navigate("/");
   };
 
   return (

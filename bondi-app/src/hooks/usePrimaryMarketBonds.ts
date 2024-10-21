@@ -142,7 +142,7 @@ export const usePrimaryMarketBonds = () => {
 
         const alphaBond: Bond = {
           companyName: "Alpha Technologies",
-          companyLogo: "/assets/alpha-logo.png",
+          companyLogo: "/assets/CompanyLogos/alphacorp.png",
           couponPercentage: 7, // 7% coupon
           maturityDate: "2027-03-15",
           investmentProgress: (parseFloat(alpha.contractBalance) / parseFloat(alpha.targetAmount)) * 100,
@@ -183,7 +183,7 @@ export const usePrimaryMarketBonds = () => {
 
         const betaBond: Bond = {
           companyName: "Beta Pharmaceuticals",
-          companyLogo: "/assets/beta-logo.png",
+          companyLogo: "/assets/CompanyLogos/betacorp.png",
           couponPercentage: 9, // 9% coupon
           maturityDate: "2028-09-30",
           investmentProgress: (parseFloat(beta.contractBalance) / parseFloat(beta.targetAmount)) * 100,
