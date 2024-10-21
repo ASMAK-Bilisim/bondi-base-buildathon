@@ -21,12 +21,11 @@ A **bond** is a fixed-income instrument representing a loan made by an investor 
 Our main repository for the buildathon is named `bondi-base-buildathon`, and it contains the following subdirectories:
 
 - `admin-bondtoken-minting`
-- `base-namer`
 - `bondi-app`
 - `bondi-contracts`
 - `cds-contracts`
 - `claim-mock-usdc`
-
+- `base-namer`
 Each subdirectory focuses on different functionalities of the project.
 
 ## Access and Functionality
@@ -339,6 +338,13 @@ forge install smartcontractkit/chainlink --no-commit
 
 ### Deployment Setup
 
+You need a `.env` file to run the deployment script.
+```plaintext
+DEPLOYER_PRIVATE_KEY=
+ADMIN_ADDRESS=
+```
+
+
 For local deployment:
 
 1. Start a local Anvil instance:
@@ -369,12 +375,12 @@ forge test
 
 ### Deployed Addresses
 
-- CDSManagerAddress: `0xA68bF7fAB3468504FacAC136Cbb1304fB9ad4e1a`
+- CDSManagerAddress: `0x7fd9Ba361D948421d51a70bDbD623c7bf83C890a`
 
 Bond Hashes:
-- Bond Hash 0: `0xed8c7521b9b19ff985353c6d2b80f11d59ed59bdac6c1565aa3b91330c595dbc`
-- Bond Hash 1: `0x26ace0890fbb7e1d380f89fef2e127f1032cd1f3f8fbe86e7af9ded46181ef75`
-- Bond Hash 2: `0x2105d649c13c4863e02dd806a0a8525f3b715d0cf352b7b3a365919491b3aadf`
+- Bond Hash 0: `0xd19404a02b5a3e05480a9734d494acf073cfa0a4a5550a7228de061682d16693`
+- Bond Hash 1: `0x546cb24e143ee7fec855636653db21bd616c14453eb10afc6566cec2135262f1`
+- Bond Hash 2: `0x6014ace5ef7353878d8facdd394d85f632a3dc6e14e672af28ead0afdb0ef6cc`
 
 ## bondi-app
 
@@ -477,11 +483,56 @@ Run:
 ```bash
 npm run dev
 ```
-
 ## base-namer
+### Basic Commands
 
-Please refer to the existing README in the `base-namer` subdirectory for detailed instructions.
+Install the dependencies:
 
+```Bash
+npm install
+```
+### Deployment Setup
+You need a .env file to deploy locally. Create a .env file in the base-namer directory with the following variables:
+```
+BASE_NAME=
+PRIVATE_KEY=
+```
+Fill these variables with:
+- The desired base name for your bonds.
+- The private key of the wallet that will perform the naming transactions.
+
+
+To run the base namer script:
+
+```Bash
+
+node src/index.js
+```
+### Addresses with Corresponding Transactions and Basenames:
+```
+1. Address:  
+   0x01Cf7c1C65A66f65A38893e831a3107EE842Ce81  
+   Transaction:  
+   0x30ec9c4ead7d5e600f65c1202cf0224bdc62392702e9af41b8fd66401417de75  
+   Basename:  
+   alphabondzz.basetest.eth
+```
+```
+2. Address:  
+   0x093A98F9fAeA01c73a51F978714a638708FFa90f  
+   Transaction:  
+   0x5acee8116c7c49f835e91479d0803a2c24c7295856a0f2d33448c6196a3ec2b6  
+   Basename:  
+   betabondzz.basetest.eth
+```
+```
+3. Address:  
+   0xe48B71132F2E8df6De19C13Ed1D68b52D82f094A  
+   Transaction:  
+   0x8a83244a5742dcae0ad21ec583a5ae1b1dd034784cfc1ca653e67951456a7d23  
+   Basename:  
+   zetabondzz.basetest.eth
+```
 # Future Integration and Improvements
 
 ## General Improvements
