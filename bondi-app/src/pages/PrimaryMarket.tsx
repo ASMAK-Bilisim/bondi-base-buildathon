@@ -1,6 +1,6 @@
-import React from 'react';
-import { SmallBondCard } from '../components/primary_market/SmallBondCard';
-import { usePrimaryMarketBonds } from '../hooks/usePrimaryMarketBonds';
+import React from "react";
+import { SmallBondCard } from "../components/primary_market/SmallBondCard";
+import { usePrimaryMarketBonds } from "../hooks/usePrimaryMarketBonds";
 
 const PrimaryMarket: React.FC = () => {
   const { bonds, isLoading, error } = usePrimaryMarketBonds();
