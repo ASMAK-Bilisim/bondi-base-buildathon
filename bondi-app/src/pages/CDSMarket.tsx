@@ -26,9 +26,9 @@ const CDSMarket: React.FC = () => {
   });
 
   const bondHashes = [
-    "0xd19404a02b5a3e05480a9734d494acf073cfa0a4a5550a7228de061682d16693",
-    "0x546cb24e143ee7fec855636653db21bd616c14453eb10afc6566cec2135262f1",
-    "0x6014ace5ef7353878d8facdd394d85f632a3dc6e14e672af28ead0afdb0ef6cc"
+    "0x0265c651436ffc2bf316776ba3e9574d01d3d1c651c59059dab7dc22a4e891c3",
+    "0xa29ce4538e275a93c7c2421b6222f2f034d9b7e487808551519112e060f8ef0a",
+    "0xcecde1728274de089ac3991a0d71061962be8bd1a0f6100b9578873f31f967da"
   ];
 
   const { data: bond1Data } = useReadContract({
