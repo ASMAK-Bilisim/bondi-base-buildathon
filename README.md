@@ -552,6 +552,7 @@ node src/index.js
 - **Capital Efficiency**: Route funds collected in funding contracts to a lending market like Aave.
 - **Coupon and Principal Repayment Vaults**: Create dedicated vaults.
 - **Full KYC Integration**: Including on-chain verification.
+- **Capital Efficiency Improvmeent**: Letting the creator deposit just the next coupon + principal – premium.
 
 ## Base-Specific Improvements
 
