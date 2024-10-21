@@ -60,8 +60,6 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
     data: nftUrl,
   } = useNFTUrl()
 
-
-
   const account = useActiveAccount();
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
@@ -70,8 +68,6 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
     minInvestmentAmount,
     isLoading: isContractInfoLoading,
     contractAddress,
-    ogNftAddress,
-    whaleNftAddress,
     fundingContract,
   } = useContractInfo(bondData.contractAddress);
 

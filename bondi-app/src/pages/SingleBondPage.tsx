@@ -40,7 +40,7 @@ const SingleBondPage: React.FC = () => {
     percentage: bond.couponPercentage / 2, // Assuming semi-annual coupons
   }));
 
-  const chartName = `${bond.companyName} ${bond.couponPercentage}% ${bond.isin} ${bond.maturityDate}`;
+  const chartTitle = `${bond.companyName} - ${bond.isin}`;
 
   return (
     <div className="p-6">
@@ -64,7 +64,10 @@ const SingleBondPage: React.FC = () => {
         <div style={{ height: `${chartHeight}px` }}>
           <h2 className="text-lg font-bold mb-4 text-app-primary-2">Price Performance</h2>
           <div className="h-full">
-            <PortfolioPerformance chartName={chartName} bondPrice={bond.currentPrice} />
+            <PortfolioPerformance 
+              chartTitle={chartTitle}  // Pass the custom chart title here
+              onTimeRangeChange={() => {}}  // Add this if needed
+            />
           </div>
         </div>
 

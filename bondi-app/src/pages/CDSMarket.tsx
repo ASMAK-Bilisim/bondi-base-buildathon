@@ -8,10 +8,11 @@ import { baseSepolia } from 'thirdweb/chains';
 import { NotificationProvider } from '../components/contexts/NotificationContext';
 
 interface BondInfo {
-  hash: string;
+  hash: `0x${string}`;
   bondTokenAddress: string;
   nextCouponAmount: string;
   nextCouponDate: number;
+  baseName: string;
 }
 
 const CDSMarket: React.FC = () => {
@@ -48,25 +49,40 @@ const CDSMarket: React.FC = () => {
     params: [bondHashes[2] as `0x${string}`],
   });
 
-  useEffect(() => {
-    console.log('Bond 1 Data:', bond1Data);
-    console.log('Bond 2 Data:', bond2Data);
-    console.log('Bond 3 Data:', bond3Data);
+  const baseNameMap: { [key: string]: string } = {
+    "0xe48B71132F2E8df6De19C13Ed1D68b52D82f094A": "zetabondzz.basetest.eth",
+    "0x093A98F9fAeA01c73a51F978714a638708FFa90f": "betabondzz.basetest.eth",
+    "0x01Cf7c1C65A66f65A38893e831a3107EE842Ce81": "alphabondzz.basetest.eth"
+  };
 
-    if (bond1Data && bond2Data && bond3Data) {
-      const newBondsInfo = [bond1Data, bond2Data, bond3Data].map((data, index) => {
-        const bondInfo = {
-          hash: bondHashes[index],
-          bondTokenAddress: data[0],
-          nextCouponAmount: data[1].toString(),
-          nextCouponDate: Number(data[2]),
-        };
-        console.log(`Processed Bond ${index + 1} Info:`, bondInfo);
-        return bondInfo;
-      });
-      setBondsInfo(newBondsInfo);
-      console.log('Updated Bonds Info:', newBondsInfo);
-    }
+  //Fetching addresses from basenames resolver works but cannot fetch basenames from addresses
+
+  useEffect(() => {
+    const fetchBondInfo = async () => {
+      if (bond1Data && bond2Data && bond3Data) {
+        const newBondsInfo = [bond1Data, bond2Data, bond3Data].map((data, index) => {
+          const bondTokenAddress = data[0] as `0x${string}`;
+          if (!bondTokenAddress) {
+            console.error(`Bond token address is undefined for hash: ${bondHashes[index]}`);
+            return null;
+          }
+          
+          return {
+            hash: bondHashes[index] as `0x${string}`,
+            bondTokenAddress,
+            nextCouponAmount: data[1]?.toString() || '0',
+            nextCouponDate: Number(data[2]) || 0,
+            baseName: baseNameMap[bondTokenAddress] || bondTokenAddress,
+          };
+        });
+        
+        const validBondsInfo = newBondsInfo.filter(Boolean) as BondInfo[];
+        setBondsInfo(validBondsInfo);
+        console.log('Updated Bonds Info:', validBondsInfo);
+      }
+    };
+
+    fetchBondInfo();
   }, [bond1Data, bond2Data, bond3Data]);
 
   if (bondsInfo.length === 0) return (
@@ -82,7 +98,7 @@ const CDSMarket: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {bondsInfo.map((bondInfo) => (
               <div key={bondInfo.hash} className="flex justify-center">
-                <BondOrderBook bondInfo={bondInfo} bondHash={bondInfo.hash} />
+                <BondOrderBook bondInfo={bondInfo} />
               </div>
             ))}
           </div>

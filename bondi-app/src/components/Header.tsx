@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Notification03Icon } from '@hugeicons/react';
 import { ConnectButton, lightTheme, useActiveAccount, SendTransactionPayModalConfig } from "thirdweb/react";
 import { client } from "../client";
+import { ZETA_BOND_TOKEN, ALPHA_BOND_TOKEN, BETA_BOND_TOKEN, MOCK_USDC_ADDRESS } from "../constants/contractInfo";
 import { baseSepolia } from "thirdweb/chains";
 import { createWallet } from "thirdweb/wallets";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +11,6 @@ import NotificationDropdown from './NotificationComponents/NotificationDropdown'
 import UnreadNotification from './NotificationComponents/UnreadNotification';
 import { useKYC } from '../components/contexts/KYCContext';
 import { useNotifications } from '../components/contexts/NotificationContext';
-import { MOCK_USDC_ADDRESS } from "../constants/contractInfo";
 
 interface HeaderProps {
   isCompact: boolean;
@@ -94,32 +94,28 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
 
   const customTokens = [
     {
-      address: "0x161410d974A28dD839fb9175032538F62B258c4b",
+      address: MOCK_USDC_ADDRESS,
       name: "USD Coin",
       symbol: "USDC",
       decimals: 6,
-      icon: "https://example.com/usdc-icon.png", // Replace with actual USDC icon URL
     },
     {
-      address: "0x2eA4523B6D9b9920F0A544b6c10A58c583F01B65",
+      address: ALPHA_BOND_TOKEN,
       name: "Alpha Bond Token",
       symbol: "ALPHA",
       decimals: 18,
-      icon: "https://example.com/alpha-icon.png", // Replace with actual Alpha icon URL
     },
     {
-      address: "0xc41cB648A9bd0e4C4FCc9011218967fE8CB33107",
+      address: BETA_BOND_TOKEN,
       name: "Beta Bond Token",
       symbol: "BETA",
       decimals: 18,
-      icon: "https://example.com/beta-icon.png", // Replace with actual Beta icon URL
     },
     {
-      address: "0x63976d1fB668B646BA47e1Fd856E50D0853a1b2b",
+      address: ZETA_BOND_TOKEN,
       name: "Zeta Bond Token",
       symbol: "ZETA",
       decimals: 18,
-      icon: "https://example.com/zeta-icon.png", // Replace with actual Zeta icon URL
     },
   ];
 
@@ -128,13 +124,17 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
     supportedTokens: {
       [baseSepolia.id]: [
         {
-          address: "0x161410d974A28dD839fb9175032538F62B258c4b",
+          address: MOCK_USDC_ADDRESS,
           name: "USD Coin",
           symbol: "USDC",
           decimals: 6,
         },
       ],
     },
+  };
+
+  const supportedTokens = {
+    [baseSepolia.id]: customTokens
   };
 
   return (
@@ -185,11 +185,15 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
           )}
           <div className="rounded-lg border border-[#1C544E] overflow-hidden">
             <ConnectButton
+              appMetadata={{
+                name: "Bondi Finance",
+                logoUrl: "https://blush-secondary-stoat-221.mypinata.cloud/ipfs/QmQcbcT8rNeNboZXcw3t4BiUuZ5WDWmPydHkHhKqKGbNgv",
+              }}
               client={client}
               theme={customTheme}
               wallets={wallets}
               supportedChains={[baseSepolia]}
-              supportedTokens={customTokens}
+              supportedTokens={supportedTokens}
               connectButton={{
                 className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6]",
               }}
@@ -201,7 +205,6 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
               }}
               detailsModal={{
                 networkSelector: {
-                  popularChainIds: [1, 137, 10], // Ethereum, Polygon, Optimism
                   sections: [
                     { label: "Testnets", chains: [baseSepolia] },
                   ],

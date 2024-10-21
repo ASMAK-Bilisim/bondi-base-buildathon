@@ -29,6 +29,8 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
   const { addNotification } = useNotifications();
   const account = useActiveAccount();
 
+  const [isSuccess, setIsSuccess] = useState(false);
+
   const { RiveComponent, rive } = useRive({
     src: '/animations/minting.riv',
     stateMachines: 'State Machine 1',
@@ -133,7 +135,8 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
         message: `Successfully minted ${tokensToMint} ${bondTokenName} tokens.`,
       });
 
-      onClose();
+      setIsSuccess(true);
+      setShowAnimation(false);
     } catch (error) {
       console.error("Detailed error:", error);
       let errorMessage = "Unknown error occurred";
@@ -176,7 +179,7 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
 
         <div className="flex flex-col h-full p-6">
           <h2 className="text-xl font-bold text-[#1C544E] mb-4 text-left">
-            Mint Your Token
+            {isSuccess ? "Minting Successful!" : "Mint Your Token"}
           </h2>
 
           <div className="flex-grow flex flex-col justify-between items-center">
@@ -184,6 +187,13 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
               <div className="w-[280px] h-[280px]">
                 <RiveComponent />
               </div>
+            ) : isSuccess ? (
+              <>
+                <img src="/assets/SuccessIcon.png" alt="Success" className="w-32 h-32 mb-2" />
+                <p className="text-lg font-bold text-[#1C544E] mb-6">
+                  You have successfully minted {tokensToMint} {bondTokenName} tokens!
+                </p>
+              </>
             ) : (
               <>
                 <img src="/assets/TokenMint.png" alt="Token Mint" className="w-32 h-32 mb-2" />
@@ -206,14 +216,24 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
               </>
             )}
 
-            <Button
-              label={isMinting ? "Minting..." : "Mint Now"}
-              intent="primary"
-              size="large"
-              className="w-full py-3 text-lg font-semibold mt-6"
-              onClick={handleMint}
-              disabled={isMinting || tokensToMint === 0}
-            />
+            {isSuccess ? (
+              <Button
+                label="Close"
+                intent="primary"
+                size="large"
+                className="w-full py-3 text-lg font-semibold mt-6"
+                onClick={onClose}
+              />
+            ) : (
+              <Button
+                label={isMinting ? "Minting..." : "Mint Now"}
+                intent="primary"
+                size="large"
+                className="w-full py-3 text-lg font-semibold mt-6"
+                onClick={handleMint}
+                disabled={isMinting || tokensToMint === 0}
+              />
+            )}
           </div>
         </div>
       </div>

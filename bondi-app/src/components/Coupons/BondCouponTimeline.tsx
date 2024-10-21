@@ -1,90 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { format, isBefore } from 'date-fns';
 import { LinkSquare02Icon, CheckmarkBadge02Icon, SquareLock01Icon } from '@hugeicons/react';
-import { useActiveAccount, useSendTransaction, useWaitForReceipt } from "thirdweb/react";
-import { getContract } from "thirdweb";
-import { contractABI } from '../../constants/contractInfo';
 import TearingCoupon from './TearingCoupon';
 import { animated, useTransition } from 'react-spring';
-import { useCouponData } from '../../hooks/useCouponData';
 
 interface Coupon {
   id: string;
   date: Date;
   amount: number;
-  token: string;
   isRedeemable: boolean;
-  isRedeemed?: boolean;
+  isRedeemed: boolean;
 }
 
 interface BondCouponTimelineProps {
   tokenName: string;
-  contractAddress: string;
+  coupons: Coupon[];
 }
 
 const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
   tokenName,
-  contractAddress,
+  coupons,
 }) => {
   const currentDate = new Date();
   const [redeemedCoupons, setRedeemedCoupons] = useState<string[]>([]);
   const [tearingCouponId, setTearingCouponId] = useState<string | null>(null);
-  const account = useActiveAccount();
 
-  const bondContract = getContract({
-    address: contractAddress,
-    abi: contractABI,
-  });
-
-  const { mutateAsync: sendTransaction } = useSendTransaction();
-  const waitForReceipt = useWaitForReceipt();
-
-  const { coupons, bondTokens } = useCouponData();
-
-  const bondToken = bondTokens.find(token => token.address === contractAddress);
-  const bondCoupons = coupons.filter(coupon => coupon.token === tokenName && !coupon.isRedeemed);
-
-  const handleRedeemCoupon = async (couponId: string, amount: number) => {
-    if (!account) {
-      alert("Please connect your wallet to redeem coupons.");
-      return;
-    }
-
+  const handleRedeemCoupon = useCallback((couponId: string) => {
     setTearingCouponId(couponId);
+  }, []);
 
-    try {
-      const amountInWei = BigInt(Math.floor(amount * 1e6)); // Convert amount to smallest unit
-      const transaction = await sendTransaction({
-        contract: bondContract,
-        method: "redeemCoupon",
-        params: [couponId, amountInWei],
-      });
-
-      await waitForReceipt(transaction);
-
-      setRedeemedCoupons(prev => [...prev, couponId]);
-      setTearingCouponId(null);
-    } catch (error) {
-      console.error("Error redeeming coupon:", error);
-      setTearingCouponId(null);
-    }
-  };
-
-  const handleTearComplete = (couponId: string) => {
+  const handleTearComplete = useCallback((couponId: string) => {
     setRedeemedCoupons(prev => [...prev, couponId]);
     setTearingCouponId(null);
-  };
+  }, []);
 
-  const transitions = useTransition(bondCoupons, {
+  const transitions = useTransition(coupons, {
     keys: coupon => coupon.id,
     from: { opacity: 0, transform: 'translateX(50px)' },
     enter: { opacity: 1, transform: 'translateX(0px)' },
     leave: { opacity: 0, transform: 'translateX(-50px)' },
   });
 
-  if (!bondToken || bondToken.balance === 0) {
-    return null; // Don't render if the user hasn't invested
-  }
+  const redeemedContent = (coupon: Coupon) => (
+    <div className="flex flex-col items-center justify-center h-full">
+      <div className="w-16 h-16 bg-[#1c544e] rounded-full flex items-center justify-center mb-2">
+        <CheckmarkBadge02Icon size={32} color="#d4e7e2" variant="solid" />
+      </div>
+      <span className="text-[#1c544e] font-bold text-lg mb-1">Redeemed</span>
+      <span className="text-[#1c544e] text-sm mb-1">{format(coupon.date, 'dd MMM yyyy')}</span>
+      <span className="text-[#1c544e] font-bold text-lg">${coupon.amount.toFixed(2)}</span>
+    </div>
+  );
+
+  const couponContent = (coupon: Coupon, isRedeemable: boolean, isTearing: boolean) => (
+    <div className={`relative w-full h-full ${isRedeemable ? "text-[#1c544e]" : "text-[#a6d9ce]"}`}>
+      <svg className="absolute left-0 top-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path
+          d="M0 0 L2.5 5 L0 10 L2.5 15 L0 20 L2.5 25 L0 30 L2.5 35 L0 40 L2.5 45 L0 50 L2.5 55 L0 60 L2.5 65 L0 70 L2.5 75 L0 80 L2.5 85 L0 90 L2.5 95 L0 100
+             L100 100 L97.5 95 L100 90 L97.5 85 L100 80 L97.5 75 L100 70 L97.5 65 L100 60 L97.5 55 L100 50 L97.5 45 L100 40 L97.5 35 L100 30 L97.5 25 L100 20 L97.5 15 L100 10 L97.5 5 L100 0 Z"
+          fill="currentColor"
+        />
+      </svg>
+      <div className="relative z-10 h-full p-4">
+        <div className="flex flex-col h-full">
+          <div className="flex-grow px-2">
+            <div className={`absolute top-2 left-4 text-[15px] mt-1 ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>
+              {format(coupon.date, 'dd MMM yyyy')}
+            </div>
+            <div className="absolute top-2 right-4">
+              <div className="w-11 h-11 flex items-center justify-center -mt-2 mr-1">
+                <img 
+                  src={isRedeemable ? "/assets/turtle-light.png" : "/assets/Turtle.png"}
+                  alt={isRedeemable ? "Redeemable" : "Unredeemable"}
+                  className="max-w-full max-h-full object-contain transform"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="absolute bottom-4 left-6 right-6 z-30">
+            <div className="flex justify-between mb-2">
+              <div className="flex flex-col">
+                <span className={`text-[15px] ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>Token Name</span>
+                <span className={`text-[18px] font-bold ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>{tokenName}</span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className={`text-[15px] ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>Amount</span>
+                <span className={`text-[18px] font-bold ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>${coupon.amount.toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              {isRedeemable ? (
+                <button
+                  className="bg-[#d8feaa] text-[#1c544e] hover:bg-[#c2e594] border-none font-extrabold w-full flex items-center justify-center h-10 rounded"
+                  onClick={() => handleRedeemCoupon(coupon.id)}
+                  disabled={isTearing}
+                >
+                  {isTearing ? "Redeeming..." : "Redeem"}
+                </button>
+              ) : (
+                <div className="bg-[#1c544e] text-[#a6d9ce] w-full h-10 rounded flex items-center justify-center cursor-not-allowed">
+                  <SquareLock01Icon size={24} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-[#f2fbf9] rounded-lg shadow-md font-inter relative overflow-hidden">
@@ -130,99 +153,30 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
             {transitions((style, coupon, _, index) => {
               const couponDate = coupon.date;
               const isPastCoupon = isBefore(couponDate, currentDate);
-              const isRedeemable = isPastCoupon && !coupon.isRedeemable && !redeemedCoupons.includes(coupon.id);
-              const isRedeemed = coupon.isRedeemable || redeemedCoupons.includes(coupon.id);
+              const isRedeemable = isPastCoupon && !coupon.isRedeemed && !redeemedCoupons.includes(coupon.id);
+              const isRedeemed = coupon.isRedeemed || redeemedCoupons.includes(coupon.id);
               const isTearing = tearingCouponId === coupon.id;
               
-              const couponContent = (
-                <div className="flex-shrink-0 w-72 h-48 relative">
-                  {isRedeemed ? (
-                    <div className="flex flex-col items-center justify-center h-full">
-                      <div className="w-16 h-16 bg-[#1c544e] rounded-full flex items-center justify-center mb-2">
-                        <CheckmarkBadge02Icon size={32} color="#d4e7e2" variant="solid" />
-                      </div>
-                      <span className="text-[#1c544e] font-bold text-lg mb-1">Redeemed</span>
-                      <span className="text-[#1c544e] text-sm mb-1">{format(couponDate, 'dd MMM yyyy')}</span>
-                      <span className="text-[#1c544e] font-bold text-lg">${coupon.amount.toFixed(2)}</span>
-                    </div>
-                  ) : (
-                    <div className={`relative w-full h-full ${isRedeemable ? "text-[#1c544e]" : "text-[#a6d9ce]"}`}>
-                      <svg className="absolute left-0 top-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <path
-                          d="M0 0 L2.5 5 L0 10 L2.5 15 L0 20 L2.5 25 L0 30 L2.5 35 L0 40 L2.5 45 L0 50 L2.5 55 L0 60 L2.5 65 L0 70 L2.5 75 L0 80 L2.5 85 L0 90 L2.5 95 L0 100
-                             L100 100 L97.5 95 L100 90 L97.5 85 L100 80 L97.5 75 L100 70 L97.5 65 L100 60 L97.5 55 L100 50 L97.5 45 L100 40 L97.5 35 L100 30 L97.5 25 L100 20 L97.5 15 L100 10 L97.5 5 L100 0 Z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                      <div className="relative z-10 h-full p-4">
-                        <div className="flex flex-col h-full">
-                          <div className="flex-grow px-2">
-                            <div className={`absolute top-2 left-4 text-[15px] mt-1 ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>
-                              {format(couponDate, 'dd MMM yyyy')}
-                            </div>
-                            <div className="absolute top-2 right-4">
-                              <div className="w-11 h-11 flex items-center justify-center -mt-2 mr-1">
-                                <img 
-                                  src={isRedeemable ? "/assets/turtle-light.png" : "/assets/Turtle.png"}
-                                  alt={isRedeemable ? "Redeemable" : "Unredeemable"}
-                                  className="max-w-full max-h-full object-contain transform"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="absolute bottom-4 left-6 right-6 z-30">
-                            <div className="flex justify-between mb-2">
-                              <div className="flex flex-col">
-                                <span className={`text-[15px] ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>Token Name</span>
-                                <span className={`text-[18px] font-bold ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>{tokenName}</span>
-                              </div>
-                              <div className="flex flex-col items-end">
-                                <span className={`text-[15px] ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>Amount</span>
-                                <span className={`text-[18px] font-bold ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>${coupon.amount.toFixed(2)}</span>
-                              </div>
-                            </div>
-                            <div className="flex justify-center">
-                              {isRedeemable ? (
-                                <Button
-                                  intent="secondary"
-                                  size="large"
-                                  className="bg-[#d8feaa] text-[#1c544e] hover:bg-[#c2e594] border-none font-extrabold w-full flex items-center justify-center"
-                                  onClick={() => handleRedeemCoupon(coupon.id, coupon.amount)}
-                                  disabled={isTearing}
-                                >
-                                  {isTearing ? "Redeeming..." : "Redeem"}
-                                </Button>
-                              ) : (
-                                <div className="bg-[#1c544e] text-[#a6d9ce] w-full h-10 rounded flex items-center justify-center cursor-not-allowed">
-                                  <SquareLock01Icon size={24} />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-
               return (
                 <animated.div
                   key={coupon.id}
                   style={{
                     ...style,
-                    zIndex: isTearing ? 50 : bondCoupons.length - index,
+                    zIndex: isTearing ? 50 : coupons.length - index,
                   }}
                   className="relative flex-shrink-0 w-72 h-48"
                 >
                   {isTearing ? (
                     <TearingCoupon 
                       onTearComplete={() => handleTearComplete(coupon.id)}
+                      redeemedContent={redeemedContent(coupon)}
                     >
-                      {couponContent}
+                      {couponContent(coupon, isRedeemable, isTearing)}
                     </TearingCoupon>
                   ) : (
-                    couponContent
+                    <div className="flex-shrink-0 w-72 h-48 relative">
+                      {isRedeemed ? redeemedContent(coupon) : couponContent(coupon, isRedeemable, isTearing)}
+                    </div>
                   )}
                 </animated.div>
               );

@@ -1,82 +1,97 @@
 import React, { useState, useEffect } from 'react';
 import BondCouponTimeline from '../components/Coupons/BondCouponTimeline';
-import { usePrimaryMarketBonds } from '../hooks/usePrimaryMarketBonds';
 import { useActiveAccount } from 'thirdweb/react';
-import { getContract } from 'thirdweb';
+import { getContract, readContract } from 'thirdweb';
+import { client } from '../client';
+import { baseSepolia } from 'thirdweb/chains';
 import { contractABI } from '../constants/contractInfo';
+import { usePrimaryMarketBonds } from '../hooks/usePrimaryMarketBonds';
+
+interface Coupon {
+  id: string;
+  date: Date;
+  amount: number;
+  isRedeemable: boolean;
+  isRedeemed: boolean;
+}
+
+interface BondData {
+  tokenName: string;
+  contractAddress: string;
+  coupons: Coupon[];
+}
 
 const Coupons: React.FC = () => {
-  const { bonds, isLoading: isBondsLoading, error: bondsError } = usePrimaryMarketBonds();
+  const [investedBonds, setInvestedBonds] = useState<BondData[]>([]);
   const account = useActiveAccount();
-  const [investedBonds, setInvestedBonds] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { bonds, isLoading: isBondsLoading } = usePrimaryMarketBonds();
 
   useEffect(() => {
-    const fetchInvestedBonds = async () => {
-      if (!account || isBondsLoading || bondsError || bonds.length === 0) return;
-
-      setIsLoading(true);
-
-      try {
+    if (!isBondsLoading && bonds.length > 0 && account) {
+      const fetchInvestedAmounts = async () => {
         const investedBondsData = await Promise.all(
           bonds.map(async (bond) => {
             const fundingContract = getContract({
+              client,
               address: bond.contractAddress,
               abi: contractABI,
+              chain: baseSepolia,
             });
 
-            const investedAmountData = await fundingContract.call("investedAmountPerInvestor", account);
+            try {
+              const investedAmountData = await readContract({
+                contract: fundingContract,
+                method: "investedAmountPerInvestor",
+                params: [account.address],
+              });
 
-            if (investedAmountData && BigInt(investedAmountData.toString()) > BigInt(0)) {
-              const investedAmount = Number(investedAmountData.toString()) / 1e6; // Assuming 6 decimals
-              return { ...bond, investedAmount };
-            } else {
-              return null;
+              if (investedAmountData) {
+                const [investedAmount] = investedAmountData as [bigint];
+                if (typeof investedAmount === "bigint" && investedAmount > BigInt(0)) {
+                  // Calculate number of bond tokens
+                  const bondTokens = Number(investedAmount) / (bond.currentPrice * 1e6);
+                  // Calculate coupons based on bond data and invested amount
+                  const coupons = calculateCoupons(bond, bondTokens);
+                  return {
+                    tokenName: `bt${bond.companyName.split(' ')[0].toUpperCase()}`,
+                    contractAddress: bond.contractAddress,
+                    coupons,
+                  };
+                }
+              }
+            } catch (error) {
+              console.error(`Error fetching invested amount for ${bond.companyName}:`, error);
             }
+            return null;
           })
         );
 
-        const filteredInvestedBonds = investedBondsData.filter((bond) => bond !== null);
+        setInvestedBonds(investedBondsData.filter((bond): bond is BondData => bond !== null));
+      };
 
-        setInvestedBonds(filteredInvestedBonds);
-      } catch (error) {
-        console.error('Error fetching invested bonds:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      fetchInvestedAmounts();
+    }
+  }, [account, bonds, isBondsLoading]);
 
-    fetchInvestedBonds();
-  }, [account, bonds, isBondsLoading, bondsError]);
+  const calculateCoupons = (bond: Bond, bondTokens: number): Coupon[] => {
+    const currentDate = new Date();
+    const annualPayment = bond.faceValue * (bond.couponPercentage / 100) * bondTokens;
+    const semiAnnualPayment = annualPayment / 2;
 
-  if (isLoading || isBondsLoading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-app-primary-2"></div>
-      </div>
-    );
-  }
+    return bond.couponDates.map((date: string, index: number) => {
+      const couponDate = new Date(date);
+      return {
+        id: `${bond.isin}-${index + 1}`,
+        date: couponDate,
+        amount: parseFloat(semiAnnualPayment.toFixed(2)), // Round to 2 decimal places
+        isRedeemable: couponDate <= currentDate,
+        isRedeemed: false,
+      };
+    });
+  };
 
-  if (bondsError) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <div className="text-center text-[#1c544e]">
-          <h2 className="text-2xl font-bold mb-4">Error</h2>
-          <p>{bondsError.message}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (investedBonds.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <div className="text-center text-[#1c544e]">
-          <h2 className="text-2xl font-bold mb-4">No Active Investments</h2>
-          <p>You haven't invested in any bonds yet. Visit the Primary Market to start investing!</p>
-        </div>
-      </div>
-    );
+  if (isBondsLoading) {
+    return <div>Loading bonds...</div>;
   }
 
   return (
@@ -84,9 +99,9 @@ const Coupons: React.FC = () => {
       <div className="p-6 space-y-6">
         {investedBonds.map((bond) => (
           <BondCouponTimeline
-            key={bond.isin}
-            tokenName={`bt${bond.companyName.split(' ')[0].toUpperCase()}`}
-            contractAddress={bond.contractAddress}
+            key={bond.tokenName}
+            tokenName={bond.tokenName}
+            coupons={bond.coupons}
           />
         ))}
       </div>
