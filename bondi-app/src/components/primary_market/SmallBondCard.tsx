@@ -62,6 +62,12 @@ const calculateYTM = (couponRate: number, faceValue: number, price: number, year
   return ytm * 100; // Convert to percentage
 };
 
+const PhaseTooltip: React.FC<{ description: string }> = ({ description }) => (
+  <div className="absolute right-0 top-full mt-1 p-2 bg-white border border-app-primary-2 rounded-lg shadow-lg z-10 w-48">
+    <p className="text-[11px] text-[#071f1e]">{description}</p>
+  </div>
+);
+
 export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const {
     companyName,
@@ -96,7 +102,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const [realizedPrice, setRealizedPrice] = useState<string>('0.00');
   const [currentYTM, setCurrentYTM] = useState<number>(data.bondYield);
   const [hasInvested, setHasInvested] = useState(false);
-  const [showStatusInfo, setShowStatusInfo] = useState(false);
+  const [showPhaseInfo, setShowPhaseInfo] = useState(false);
 
   const account = useActiveAccount();
   const { isKYCCompleted } = useKYC();
@@ -339,23 +345,23 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     }
   };
 
-  const getStatusDescription = () => {
-    switch (bondState) {
-      case BondState.PaymentPending:
-        return 'Investors can contribute funds towards the bond purchase. The target amount has not yet been reached.';
-      case BondState.Purchase:
-        return 'The target amount has been reached. Funds are being used to purchase the bond in traditional markets.';
-      case BondState.Minting:
-        return 'The bond has been purchased. Investors can now mint their bond tokens.';
-    }
-  };
-
   const getCurrentPrice = () => {
     return bondState === BondState.Minting ? realizedPrice : data.currentPrice.toString();
   };
 
   const getCurrentYTM = () => {
     return currentYTM;
+  };
+
+  const getPhaseDescription = () => {
+    switch (bondState) {
+      case BondState.PaymentPending:
+        return "In this phase, investors can contribute funds to the smart contract to secure their share in the bond offering.";
+      case BondState.Purchase:
+        return "The funding target has been reached. The platform is now purchasing the bonds in the traditional market.";
+      case BondState.Minting:
+        return "Bonds have been purchased. Investors who contributed can now mint their bond tokens.";
+    }
   };
 
   return (
@@ -420,17 +426,15 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
               <div className="flex-grow overflow-hidden">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e]">Company Description</h2>
-                  <div className="flex items-center relative">
-                    <div className="relative">
+                  <div className="flex items-center">
+                    <div className="relative mr-2">
                       <InformationSquareIcon 
-                        className="w-4 h-4 mr-2 cursor-help text-app-primary-2"
-                        onMouseEnter={() => setShowStatusInfo(true)}
-                        onMouseLeave={() => setShowStatusInfo(false)}
+                        className="h-5 w-5 text-app-primary-2 cursor-help"
+                        onMouseEnter={() => setShowPhaseInfo(true)}
+                        onMouseLeave={() => setShowPhaseInfo(false)}
                       />
-                      {showStatusInfo && (
-                        <div className="absolute right-0 bottom-full mb-2 p-3 bg-white border border-app-primary-2 rounded-lg shadow-lg z-50 w-64">
-                          <p className="text-xs text-[#071f1e] whitespace-normal">{getStatusDescription()}</p>
-                        </div>
+                      {showPhaseInfo && (
+                        <PhaseTooltip description={getPhaseDescription()} />
                       )}
                     </div>
                     <span className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e] mr-2">{getStatusText()}</span>
