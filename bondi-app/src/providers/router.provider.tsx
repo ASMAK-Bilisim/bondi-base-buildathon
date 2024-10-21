@@ -17,7 +17,7 @@ export const router = createBrowserRouter([
 		),
 		children: [
 			{
-				path: "primary-market",
+				path: "/",
 				element: <PrimaryMarket />,
 			},
 			{

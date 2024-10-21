@@ -10,7 +10,7 @@ import {
 import { useKYC } from './contexts/KYCContext'; // Import the useKYC hook
 
 const menuItems = [
-  { icon: Store01Icon, label: "Primary Market", path: "/primary-market" },
+  { icon: Store01Icon, label: "Primary Market", path: "/" }, // Updated path to "/"
   { icon: MarketAnalysisIcon, label: "CDS Market", path: "/cds-market" },
 ];
 
@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCompact }) => {
                   <MenuItem
                     icon={item.icon}
                     label={item.label}
-                    active={location.pathname === item.path}
+                    active={location.pathname === item.path || (item.path === "/" && location.pathname === "/")} // Updated active check
                     isCompact={isCompact}
                   />
                 </Link>
