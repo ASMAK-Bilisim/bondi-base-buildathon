@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePrimaryMarketBonds } from '../hooks/usePrimaryMarketBonds';
 import PortfolioPerformance from '../components/PortfolioPerformance';
@@ -9,6 +9,23 @@ const SingleBondPage: React.FC = () => {
   const { bondId } = useParams<{ bondId: string }>();
   const { bonds, isLoading, error } = usePrimaryMarketBonds();
   const navigate = useNavigate();
+  const [chartHeight, setChartHeight] = useState<number>(0);
+  const bondDetailsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateChartHeight = () => {
+      if (bondDetailsRef.current) {
+        setChartHeight(bondDetailsRef.current.clientHeight);
+      }
+    };
+
+    updateChartHeight();
+    window.addEventListener('resize', updateChartHeight);
+
+    return () => {
+      window.removeEventListener('resize', updateChartHeight);
+    };
+  }, []);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
@@ -44,12 +61,14 @@ const SingleBondPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div>
+        <div style={{ height: `${chartHeight}px` }}>
           <h2 className="text-lg font-bold mb-4 text-app-primary-2">Price Performance</h2>
-          <PortfolioPerformance chartName={chartName} bondPrice={bond.currentPrice} />
+          <div className="h-full">
+            <PortfolioPerformance chartName={chartName} bondPrice={bond.currentPrice} />
+          </div>
         </div>
 
-        <div>
+        <div ref={bondDetailsRef}>
           <h2 className="text-lg font-bold mb-4 text-app-primary-2">Bond Details</h2>
           <div className="flex flex-col px-6 pt-5 pb-4 font-medium text-teal-900 bg-[#F2FBF9] rounded-xl border-teal-900 border-solid border-[0.25px]">
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -71,7 +90,7 @@ const SingleBondPage: React.FC = () => {
                 <PercentSquareIcon className="w-6 h-6 text-app-primary-2" />
                 <div>
                   <p className="text-sm text-gray-500">YTM</p>
-                  <p className="font-bold">{bond.yield}%</p>
+                  <p className="font-bold">{bond.bondYield}%</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">

@@ -41,13 +41,14 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   const [isAmountValid, setIsAmountValid] = useState(false);
   const [approvedAmount, setApprovedAmount] = useState<bigint>(BigInt(0));
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false);
+  const [isApprovalPending, setIsApprovalPending] = useState(false);
 
   const account = useActiveAccount();
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
 
   const { minInvestmentAmount, isLoading: isContractInfoLoading, 
-    contractAddress, mockUsdcAddress, ogNftAddress, whaleNftAddress, fundingContract } = useContractInfo(bondData.contractAddress);
+    contractAddress, ogNftAddress, whaleNftAddress, fundingContract } = useContractInfo(bondData.contractAddress);
 
   const usdcContract = getContract({
     client,
@@ -81,28 +82,25 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
   const WHALE_THRESHOLD = BigInt(5000 * 1e6); // 5000 USDC in wei
 
   useEffect(() => {
-    if (allowanceData) {
-      // Check if allowanceData is a valid number before converting to BigInt
-      const allowanceValue = typeof allowanceData === 'number' || typeof allowanceData === 'string' 
-        ? allowanceData 
-        : allowanceData?.toString();
+    const fetchAllowance = async () => {
+      if (allowanceData) {
+        const allowanceValue = typeof allowanceData === 'bigint' 
+          ? allowanceData 
+          : BigInt(allowanceData.toString());
 
-      if (allowanceValue && !isNaN(Number(allowanceValue))) {
-        const allowance = BigInt(allowanceValue);
-        setApprovedAmount(allowance);
-        setIsApproved(allowance > BigInt(0));
-      } else {
-        console.error('Invalid allowance data:', allowanceData);
-        setApprovedAmount(BigInt(0));
-        setIsApproved(false);
+        setApprovedAmount(allowanceValue);
+        setIsApproved(allowanceValue > BigInt(0));
+        setIsApprovalPending(false);
       }
-    }
+    };
+
+    fetchAllowance();
   }, [allowanceData]);
 
   useEffect(() => {
     if (investedAmountData) {
       // investedAmountData is now an array with two elements
-      const [investedAmount, investorIndex] = investedAmountData as [bigint, bigint];
+      const [investedAmount] = investedAmountData as [bigint];
 
       if (typeof investedAmount === 'bigint') {
         const formattedInvestedAmount = (Number(investedAmount) / 1e6).toFixed(2);
@@ -229,6 +227,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
       return;
     }
     setIsApproving(true);
+    setIsApprovalPending(true);
     try {
       const amountToApprove = parseUnits(amount, 6); // USDC has 6 decimal places
 
@@ -250,6 +249,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
         title: "Approval Failed",
         message: `Error approving USDC: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
+      setIsApprovalPending(false);
     } finally {
       setIsApproving(false);
     }
@@ -287,7 +287,6 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
       });
       const tx = await sendTx(transaction);
 
-      // Wait for the transaction receipt
       await waitForReceipt({
         client,
         chain: baseSepolia,
@@ -305,6 +304,12 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
         title: "Investment Successful",
         message: `Successfully invested ${amount} USDC in ${bondData.companyName} bond.`,
       });
+
+      // Reset approval after successful investment
+      setIsApproved(false);
+      setApprovedAmount(BigInt(0));
+      await refetchAllowance();
+      setAmount('0.0000'); // Reset the amount input
     } catch (error: any) {
       console.error("Error investing:", error);
       addNotification({
@@ -534,10 +539,10 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({ onClose, bondData }) 
                   ) : (
                     <button 
                       onClick={handleApprove}
-                      disabled={isApproving || !isAmountValid || !amount || amount === '0.0000'}
+                      disabled={isApproving || !isAmountValid || !amount || amount === '0.0000' || isApprovalPending}
                       className="w-full bg-[#1C544E] text-white text-xl font-medium py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
-                      {isApproving ? 'Approving...' : 'Approve USDC'}
+                      {isApproving ? 'Approving...' : isApprovalPending ? 'Approval Pending...' : 'Approve USDC'}
                     </button>
                   )}
                 </div>

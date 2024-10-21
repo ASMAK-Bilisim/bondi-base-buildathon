@@ -36,7 +36,6 @@ export const router = createBrowserRouter([
 				path: "kyc",
 				element: <KYCMenu />,
 			},
-			// Settings route can be added here when implemented
 		],
 	},
 ]);

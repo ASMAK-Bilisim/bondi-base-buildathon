@@ -6,10 +6,11 @@ import { InformationSquareIcon } from '@hugeicons/react';
 import useAnimatedProgress from '../../hooks/useAnimatedProgress';
 import CreditScoreDetails from './CreditScoreDetails';
 import InvestmentPopup from './InvestmentPopup';
+import MintNowPopup from './MintNowPopup';
 import { useActiveAccount, useReadContract } from "thirdweb/react";
 import { getContract } from "thirdweb";
 import { Bond } from '../../hooks/usePrimaryMarketBonds';
-import { MOCK_USDC_ADDRESS, contractABI } from '../../constants/contractInfo';
+import { MOCK_USDC_ADDRESS, contractABI, mockUsdcABI, bondDistributionABI } from '../../constants/contractInfo';
 import { useNavigate } from 'react-router-dom';
 import { useKYC } from '../contexts/KYCContext';
 import { client } from '../../client';
@@ -18,6 +19,48 @@ import { baseSepolia } from 'thirdweb/chains';
 interface SmallBondCardProps {
   data: Bond;
 }
+
+enum BondState {
+  PaymentPending,
+  Purchase,
+  Minting
+}
+
+// Add this function at the top of the file, outside the component
+const calculateYTM = (couponRate: number, faceValue: number, price: number, yearsToMaturity: number): number => {
+  const periodsPerYear = 2; // Semi-annual coupon payments
+  const totalPeriods = yearsToMaturity * periodsPerYear;
+  const couponPerPeriod = (couponRate / 100) * faceValue / periodsPerYear;
+
+  // Newton-Raphson method to approximate YTM
+  let ytm = couponRate / 100; // Initial guess
+  const tolerance = 0.0001;
+  let difference = 1;
+
+  while (Math.abs(difference) > tolerance) {
+    const ytmPerPeriod = ytm / periodsPerYear;
+    let bondPrice = 0;
+    for (let i = 1; i <= totalPeriods; i++) {
+      bondPrice += couponPerPeriod / Math.pow(1 + ytmPerPeriod, i);
+    }
+    bondPrice += faceValue / Math.pow(1 + ytmPerPeriod, totalPeriods);
+
+    difference = bondPrice - price;
+    
+    // Calculate the derivative of the bond price function
+    let derivativeBondPrice = 0;
+    for (let i = 1; i <= totalPeriods; i++) {
+      derivativeBondPrice -= i * couponPerPeriod / Math.pow(1 + ytmPerPeriod, i + 1);
+    }
+    derivativeBondPrice -= totalPeriods * faceValue / Math.pow(1 + ytmPerPeriod, totalPeriods + 1);
+    derivativeBondPrice /= periodsPerYear;
+
+    // Update YTM
+    ytm -= difference / derivativeBondPrice;
+  }
+
+  return ytm * 100; // Convert to percentage
+};
 
 export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const {
@@ -43,9 +86,17 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
 
   const [reachedInvestment, setReachedInvestment] = useState<number>(0);
   const [targetAmount, setTargetAmount] = useState<number>(0);
+  const [investedAmount, setInvestedAmount] = useState<string>('0.00');
   const animatedCreditScore = useAnimatedProgress(creditScore, 1500);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInvestmentPopupOpen, setIsInvestmentPopupOpen] = useState(false);
+  const [isTargetReached, setIsTargetReached] = useState(false);
+  const [isMintPopupOpen, setIsMintPopupOpen] = useState(false);
+  const [bondState, setBondState] = useState<BondState>(BondState.PaymentPending);
+  const [realizedPrice, setRealizedPrice] = useState<string>('0.00');
+  const [currentYTM, setCurrentYTM] = useState<number>(data.bondYield);
+  const [hasInvested, setHasInvested] = useState(false);
+  const [showStatusInfo, setShowStatusInfo] = useState(false);
 
   const account = useActiveAccount();
   const { isKYCCompleted } = useKYC();
@@ -54,6 +105,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const mockUsdcContract = getContract({
     client,
     address: MOCK_USDC_ADDRESS,
+    abi: mockUsdcABI, 
     chain: baseSepolia,
   });
 
@@ -61,6 +113,13 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     client,
     address: contractAddress,
     abi: contractABI,
+    chain: baseSepolia,
+  });
+
+  const bondDistributionContract = getContract({
+    client,
+    address: bondTokenAddress,
+    abi: bondDistributionABI,
     chain: baseSepolia,
   });
 
@@ -75,19 +134,89 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     method: "targetAmount",
   });
 
-  useEffect(() => {
-    if (fundingContractBalance && !isBalanceLoading) {
-      const balance = Number(fundingContractBalance.toString()) / 1e6;
-      setReachedInvestment(balance);
-    }
-  }, [fundingContractBalance, isBalanceLoading]);
+  const { data: investedAmountData, isLoading: isInvestedAmountLoading } = useReadContract({
+    contract: fundingContract,
+    method: "investedAmountPerInvestor",
+    params: [account?.address || '0x'],
+  });
+
+  const { data: bondPriceData, isLoading: isBondPriceLoading } = useReadContract({
+    contract: bondDistributionContract,
+    method: "bondPrice",
+  });
+
+  const { data: bondPriceSetData, isLoading: isBondPriceSetLoading } = useReadContract({
+    contract: bondDistributionContract,
+    method: "bondPriceSet",
+  });
 
   useEffect(() => {
-    if (targetAmountData && !isTargetAmountLoading) {
-      const target = Number(targetAmountData.toString()) / 1e6;
-      setTargetAmount(target);
+    if (fundingContractBalance && !isBalanceLoading && targetAmountData && !isTargetAmountLoading) {
+      const balance = typeof fundingContractBalance === 'bigint' 
+        ? Number(fundingContractBalance)
+        : Number(fundingContractBalance.toString());
+      setReachedInvestment(balance / 1e6);
+
+      const target = typeof targetAmountData === 'bigint'
+        ? Number(targetAmountData)
+        : Number(targetAmountData.toString());
+      setTargetAmount(target / 1e6);
+
+      if (balance >= target) {
+        if (bondPriceSetData) {
+          setBondState(BondState.Minting);
+        } else {
+          setBondState(BondState.Purchase);
+        }
+      } else {
+        setBondState(BondState.PaymentPending);
+      }
     }
-  }, [targetAmountData, isTargetAmountLoading]);
+  }, [fundingContractBalance, isBalanceLoading, targetAmountData, isTargetAmountLoading, bondPriceSetData]);
+
+  useEffect(() => {
+    if (bondState === BondState.Minting && bondPriceData && !isBondPriceLoading) {
+      const price = typeof bondPriceData === 'bigint' 
+        ? Number(bondPriceData) / 1e6 // Assuming 6 decimal places for USDC
+        : Number(bondPriceData.toString()) / 1e6;
+      setRealizedPrice(price.toFixed(2));
+      
+      // Calculate YTM based on the realized price
+      const maturityDate = new Date(data.maturityDate);
+      const now = new Date();
+      const yearsToMaturity = (maturityDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 365);
+      const calculatedYTM = calculateYTM(data.couponPercentage, 100, price, yearsToMaturity);
+      setCurrentYTM(calculatedYTM);
+    } else {
+      // Calculate YTM based on the current price for PaymentPending and Purchase phases
+      const yearsToMaturity = (new Date(data.maturityDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 365);
+      const calculatedYTM = calculateYTM(data.couponPercentage, 100, data.currentPrice, yearsToMaturity);
+      setCurrentYTM(calculatedYTM);
+    }
+  }, [bondState, bondPriceData, isBondPriceLoading, data.currentPrice, data.maturityDate, data.couponPercentage]);
+
+  useEffect(() => {
+    if (reachedInvestment >= targetAmount && targetAmount > 0) {
+      setIsTargetReached(true);
+    } else {
+      setIsTargetReached(false);
+    }
+  }, [reachedInvestment, targetAmount]);
+
+  useEffect(() => {
+    if (investedAmountData && !isInvestedAmountLoading) {
+      const [investedAmount, investorIndex] = investedAmountData as [bigint, bigint];
+      if (typeof investedAmount === 'bigint') {
+        const formattedInvestedAmount = (Number(investedAmount) / 1e6).toFixed(2);
+        setInvestedAmount(formattedInvestedAmount);
+        setHasInvested(Number(investedAmount) > 0);
+      } else {
+        console.error('Invalid invested amount data:', investedAmount);
+        setInvestedAmount('0.00');
+        setHasInvested(false);
+      }
+    }
+  }, [investedAmountData, isInvestedAmountLoading]);
 
   const investmentProgress = targetAmount > 0 ? (reachedInvestment / targetAmount) * 100 : 0;
 
@@ -101,11 +230,14 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
 
   const [startColor, midColor, endColor] = getColorsForCreditScore(animatedCreditScore);
 
-  const getProgressBarColor = (progress: number) => {
+  const getProgressBarColor = (progress: number, bondState: BondState) => {
+    if (bondState === BondState.Minting) {
+      return '#1C54B9';
+    }
     return progress < 10 ? '#e55f0b' : '#4fc484';
   };
 
-  const progressBarColor = getProgressBarColor(investmentProgress);
+  const progressBarColor = getProgressBarColor(investmentProgress, bondState);
   const trackColor = `${progressBarColor}33`; // 20% opacity
 
   const markerLineColor = investmentProgress < 10 ? '#f2fbf9' : '#1c544e';
@@ -128,12 +260,102 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     navigate(`/primary-market/${data.isin}`);
   };
 
-  const handleInvestOrKYC = () => {
-    if (isKYCCompleted) {
-      setIsInvestmentPopupOpen(true);
-    } else {
+  const handleInvestOrMintOrKYC = () => {
+    if (!account) {
+      // TODO: Implement wallet connection logic
+      console.log("Wallet connection functionality to be implemented");
+    } else if (!isKYCCompleted) {
       navigate('/kyc');
+    } else if (bondState === BondState.Minting && hasInvested) {
+      setIsMintPopupOpen(true);
+    } else if (bondState === BondState.PaymentPending) {
+      setIsInvestmentPopupOpen(true);
     }
+  };
+
+  const handleMint = () => {
+    // TODO: Implement minting logic
+    console.log("Minting functionality to be implemented");
+    setIsMintPopupOpen(false);
+  };
+
+  const getButtonLabel = () => {
+    if (!account) return "Connect Wallet";
+    if (!isKYCCompleted) return "Complete KYC";
+    switch (bondState) {
+      case BondState.PaymentPending:
+        return "Invest Now";
+      case BondState.Purchase:
+        return "Waiting Bond Purchase";
+      case BondState.Minting:
+        return hasInvested ? "Mint Now" : "You haven't invested";
+      default:
+        return "Invest Now";
+    }
+  };
+
+  const isButtonDisabled = () => {
+    if (!account) return true;
+    if (!isKYCCompleted) return false;
+    if (bondState === BondState.Purchase) return true;
+    if (bondState === BondState.Minting && !hasInvested) return true;
+    return false;
+  };
+
+  const getButtonIntent = () => {
+    if (!account) return "secondary";
+    if (!isKYCCompleted) return "secondary";
+    if (bondState === BondState.Purchase) return "secondary";
+    if (bondState === BondState.Minting && !hasInvested) return "secondary";
+    return "primary";
+  };
+
+  const getButtonStyle = () => {
+    if (bondState === BondState.Purchase) {
+      return "opacity-50 cursor-not-allowed bg-gray-400 text-white";
+    }
+    return "";
+  };
+
+  const getStatusIcon = () => {
+    switch (bondState) {
+      case BondState.PaymentPending:
+        return '/assets/OrangeStatus.png';
+      case BondState.Purchase:
+        return '/assets/GreenStatus.png';
+      case BondState.Minting:
+        return '/assets/BlueStatus.png';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (bondState) {
+      case BondState.PaymentPending:
+        return 'Payment Pending Phase';
+      case BondState.Purchase:
+        return 'Purchase Phase';
+      case BondState.Minting:
+        return 'Minting Phase';
+    }
+  };
+
+  const getStatusDescription = () => {
+    switch (bondState) {
+      case BondState.PaymentPending:
+        return 'Investors can contribute funds towards the bond purchase. The target amount has not yet been reached.';
+      case BondState.Purchase:
+        return 'The target amount has been reached. Funds are being used to purchase the bond in traditional markets.';
+      case BondState.Minting:
+        return 'The bond has been purchased. Investors can now mint their bond tokens.';
+    }
+  };
+
+  const getCurrentPrice = () => {
+    return bondState === BondState.Minting ? realizedPrice : data.currentPrice.toString();
+  };
+
+  const getCurrentYTM = () => {
+    return currentYTM;
   };
 
   return (
@@ -153,12 +375,12 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
               onClick={handleCheckDetails}
             />
             <Button 
-              label={isKYCCompleted ? "Invest Now" : "Complete KYC"}
-              intent={isKYCCompleted ? "primary" : "secondary"}
+              label={getButtonLabel()}
+              intent={getButtonIntent()}
               size="small" 
-              className={`w-36 xs:w-28 lg:w-40 py-0.5 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px] ${!isKYCCompleted && 'opacity-50 cursor-not-allowed'}`}
-              onClick={handleInvestOrKYC}
-              disabled={!isKYCCompleted}
+              className={`w-36 xs:w-28 lg:w-40 py-0.5 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px] ${isButtonDisabled() && 'opacity-50 cursor-not-allowed'} ${getButtonStyle()}`}
+              onClick={handleInvestOrMintOrKYC}
+              disabled={isButtonDisabled()}
             />
           </div>
         </div>
@@ -169,13 +391,19 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
             {/* Column 1: Bond Details */}
             <div className="w-full md:w-2/6 lg:w-1/3 flex flex-row md:flex-col justify-between md:justify-center mb-2 md:mb-0">
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full">
-                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">Current Price</h2>
-                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[16px] font-bold text-[#1c544e]">${currentPrice}</p>
+                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">
+                  {bondState === BondState.Minting ? "Realized Price" : "Current Price"}
+                </h2>
+                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[16px] font-bold text-[#1c544e]">
+                  ${getCurrentPrice()}
+                </p>
               </div>
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full md:my-4">
-                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">Yield to Maturity</h2>
+                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">
+                  {bondState === BondState.Minting ? "Realized YTM" : "Yield to Maturity"}
+                </h2>
                 <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[16px] font-bold text-[#1c544e]">
-                  {bondYield.toFixed(2)}%
+                  {getCurrentYTM().toFixed(2)}%
                 </p>
               </div>
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full">
@@ -192,10 +420,22 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
               <div className="flex-grow overflow-hidden">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e]">Company Description</h2>
-                  <div className="flex items-center">
-                    <span className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e] mr-2">Payment Pending Phase</span>
+                  <div className="flex items-center relative">
+                    <div className="relative">
+                      <InformationSquareIcon 
+                        className="w-4 h-4 mr-2 cursor-help text-app-primary-2"
+                        onMouseEnter={() => setShowStatusInfo(true)}
+                        onMouseLeave={() => setShowStatusInfo(false)}
+                      />
+                      {showStatusInfo && (
+                        <div className="absolute right-0 bottom-full mb-2 p-3 bg-white border border-app-primary-2 rounded-lg shadow-lg z-50 w-64">
+                          <p className="text-xs text-[#071f1e] whitespace-normal">{getStatusDescription()}</p>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e] mr-2">{getStatusText()}</span>
                     <img 
-                      src={statusIcon} 
+                      src={getStatusIcon()} 
                       alt="Status" 
                       className="w-6 h-6 animate-pulse"
                     />
@@ -232,7 +472,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                     className="absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-linear flex items-center justify-end pr-1 z-10"
                     style={{ 
                       width: `${investmentProgress}%`,
-                      backgroundColor: progressBarColor,
+                      backgroundColor: getProgressBarColor(investmentProgress, bondState),
                     }}
                   >
                     <span className="text-[10px] font-bold text-[#f2fbf9]">
@@ -349,6 +589,18 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
             bondTokenAddress,
             ogNftAddress,
             whaleNftAddress,
+          }}
+        />
+      )}
+
+      {isKYCCompleted && isMintPopupOpen && (
+        <MintNowPopup
+          onClose={() => setIsMintPopupOpen(false)}
+          bondData={{
+            companyName,
+            couponPercentage: data.couponPercentage, // Add this line
+            maturityDate,
+            contractAddress,
           }}
         />
       )}
