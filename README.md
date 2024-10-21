@@ -551,12 +551,12 @@ node src/index.js
 - **Limit Orders for CDS Buyers**: Implement limit order functionality.
 - **Capital Efficiency**: Route funds collected in funding contracts to a lending market like Aave.
 - **Coupon and Principal Repayment Vaults**: Create dedicated vaults.
-- **Full KYC Integration**: Including on-chain verification.
+- **Full KYC Integration**: Including onchain verification.
 - **Capital Efficiency Improvmeent**: Letting the creator deposit just the next coupon + principal – premium.
 
 ## Base-Specific Improvements
 
-- **On-Chain Reputation**: Use Base's reputation system to decrease collateral needed to issue CDS.
+- **Onchain Reputation**: Use Base's reputation system to decrease collateral needed to issue CDS.
 - **Basename Usage**: For vault, contract, and coupon naming.
 - **Multi-Currency Acceptance**:
   - Accept all major cryptocurrencies for BT and CDS funding.
@@ -574,7 +574,7 @@ Currently, the deployer (identified by the wallet using the private key on [mint
   - Approves crucial information about the bonds.
   - Can modify parameters in the funding phase smart contracts.
 
-- **Vision**: Transfer this role to **Bondi DAO** to perform tasks via on-chain voting.
+- **Vision**: Transfer this role to **Bondi DAO** to perform tasks via onchain voting.
 
 ## Withdraw Authority
 
