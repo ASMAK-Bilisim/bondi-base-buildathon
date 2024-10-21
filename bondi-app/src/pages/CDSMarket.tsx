@@ -7,6 +7,7 @@ import { client } from '../client';
 import { baseSepolia } from 'thirdweb/chains';
 import { NotificationProvider } from '../components/contexts/NotificationContext';
 
+
 interface BondInfo {
   hash: `0x${string}`;
   bondTokenAddress: string;
