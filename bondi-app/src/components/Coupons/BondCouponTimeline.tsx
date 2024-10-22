@@ -129,7 +129,7 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
         <div className="w-[2px] bg-gradient-to-b from-transparent via-[#1c544e] to-transparent opacity-30 relative z-20 self-stretch" />
 
         {/* Scrollable coupons section */}
-        <div className="flex-grow overflow-x-auto relative py-8 pl-4">
+        <div className="flex-grow overflow-x-auto relative py-4 pl-4">
           {/* Gridlines with fade effect */}
           <div className="absolute inset-0 bg-[#1c544e] opacity-5 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-b from-[#f2fbf9] via-transparent to-[#f2fbf9]">

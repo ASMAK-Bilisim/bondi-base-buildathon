@@ -17,10 +17,8 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ onComplete 
   const [isChecked, setIsChecked] = useState<boolean>(false);
 
   const isFormValid = () => {
-    if (selectedDocumentType === "Passport") {
-      return selectedCountry && selectedDocumentType && frontFile && isChecked;
-    }
-    return selectedCountry && selectedDocumentType && frontFile && backFile && isChecked;
+    // Remove the file upload requirements
+    return selectedCountry && selectedDocumentType && isChecked;
   };
 
   const handleContinue = () => {
@@ -35,11 +33,10 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ onComplete 
         <section className="flex flex-col items-center">
           <StepIndicator steps={3} currentStep={1} />
           <h1 className="mt-8 text-2xl sm:text-3xl font-bold text-teal-900 text-center">
-            Upload a proof of your identity
+            Identity Verification
           </h1>
           <p className="mt-4 text-sm sm:text-base font-medium text-center text-teal-900">
-            Please upload a valid government-issued ID (Driver's License,
-            Passport, or National ID) to complete your verification.
+            Please select your country and document type. Document upload is optional for this test app.
           </p>
           <form className="w-full mt-8">
             <div className="flex flex-col sm:flex-row gap-6">
@@ -49,13 +46,13 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ onComplete 
             <div className="mt-8">
               <div className={`flex flex-col sm:flex-row gap-6 ${selectedDocumentType === "Passport" ? "justify-center" : ""}`}>
                 <UploadField 
-                  label={selectedDocumentType === "Passport" ? "Passport photo page" : "Front of your ID"} 
+                  label={selectedDocumentType === "Passport" ? "Passport photo page (optional)" : "Front of your ID (optional)"} 
                   className={selectedDocumentType === "Passport" ? "w-full sm:w-1/2" : ""}
                   onFileSelect={setFrontFile}
                 />
                 {selectedDocumentType !== "Passport" && (
                   <UploadField 
-                    label="Back of your ID" 
+                    label="Back of your ID (optional)" 
                     onFileSelect={setBackFile}
                   />
                 )}
@@ -68,7 +65,8 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ onComplete 
                 checked={isChecked}
                 onChange={(e) => setIsChecked(e.target.checked)}
               />
-              I confirm that I have uploaded a valid government-issued photo ID.
+              I confirm that the information provided is accurate and complete. 
+              (You're not required to upload documents for this test app)
             </label>
             <div className="mt-8">
               <Button

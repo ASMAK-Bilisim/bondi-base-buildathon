@@ -54,7 +54,7 @@ const SingleBondPage: React.FC = () => {
         </div>
         <button
           onClick={() => navigate('/primary-market')}
-          className="bg-[#f49c4a] text-white px-3 py-1 rounded-lg text-xs font-semibold hover:bg-[#e58a38] transition-colors duration-300"
+          className="bg-[#f49c4a] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#e58a38] transition-colors duration-300"
         >
           See Other Bond Tokens
         </button>

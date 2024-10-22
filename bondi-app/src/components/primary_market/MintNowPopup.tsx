@@ -23,7 +23,7 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
   const [isMinting, setIsMinting] = useState(false);
   const [showAnimation, setShowAnimation] = useState(false);
   const [investedAmount, setInvestedAmount] = useState<string>('0.00');
-  const [tokensToMint, setTokensToMint] = useState<number>(0);
+  const [tokensToMint, setTokensToMint] = useState<string>('0.0000');
   const [bondPrice, setBondPrice] = useState<string>('0.00');
   const { mutateAsync: sendTx } = useSendTransaction();
   const { addNotification } = useNotifications();
@@ -46,7 +46,7 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
 
   const bondDistributionContract = getContract({
     client,
-    address: bondTokenAddress,
+    address: bondTokenAddress || '',
     abi: bondDistributionABI,
     chain: baseSepolia,
   });
@@ -72,7 +72,7 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
     if (bondPriceData) {
       const price = typeof bondPriceData === 'bigint' 
         ? Number(bondPriceData) / 1e6 // Assuming 6 decimal places for USDC
-        : Number(bondPriceData.toString()) / 1e6;
+        : Number(bondPriceData);
       setBondPrice(price.toFixed(2));
     }
   }, [bondPriceData]);
@@ -84,13 +84,13 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
         const formattedInvestedAmount = (Number(investedAmount) / 1e6).toFixed(2);
         setInvestedAmount(formattedInvestedAmount);
         
-        // Calculate tokens to mint
+        // Calculate tokens to mint with 4 decimal places
         const tokens = Number(formattedInvestedAmount) / Number(bondPrice);
-        setTokensToMint(Math.floor(tokens)); // Round down to nearest whole token
+        setTokensToMint(tokens.toFixed(4));
       } else {
         console.error('Invalid invested amount data:', investedAmount);
         setInvestedAmount('0.00');
-        setTokensToMint(0);
+        setTokensToMint('0.0000');
       }
     }
   }, [investedAmountData, bondPrice]);
@@ -100,6 +100,7 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
       addNotification({
         title: "Minting Failed",
         message: "Bond token address is not available.",
+        type: "error"
       });
       return;
     }
@@ -110,12 +111,7 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
       console.log("Bond Token Address:", bondTokenAddress);
       
       const transaction = await prepareContractCall({
-        contract: {
-          client,
-          address: bondTokenAddress,
-          abi: bondDistributionABI,
-          chain: baseSepolia,
-        },
+        contract: bondDistributionContract,
         method: "claimBondTokens",
         params: [],
       });
@@ -125,18 +121,21 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
       const tx = await sendTx(transaction);
       console.log("Transaction sent:", tx);
 
-      await waitForReceipt({
-        client,
-        chain: baseSepolia,
-        transactionHash: tx.transactionHash,
-      });
-      addNotification({
-        title: "Minting Successful",
-        message: `Successfully minted ${tokensToMint} ${bondTokenName} tokens.`,
-      });
+      // Wait for the transaction to be mined
+      const receipt = await tx.wait();
+      console.log("Transaction receipt:", receipt);
 
-      setIsSuccess(true);
-      setShowAnimation(false);
+      if (receipt.status === 1) { // Check if the transaction was successful
+        addNotification({
+          title: "Minting Successful",
+          message: `Successfully minted ${tokensToMint} ${bondTokenName} tokens.`,
+          type: "success"
+        });
+
+        setIsSuccess(true);
+      } else {
+        throw new Error("Transaction failed");
+      }
     } catch (error) {
       console.error("Detailed error:", error);
       let errorMessage = "Unknown error occurred";
@@ -147,10 +146,11 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
       addNotification({
         title: "Minting Failed",
         message: `Error minting bond tokens: ${errorMessage}`,
+        type: "error"
       });
-      setShowAnimation(false);
     } finally {
       setIsMinting(false);
+      setShowAnimation(false);
     }
   };
 
@@ -189,14 +189,18 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
               </div>
             ) : isSuccess ? (
               <>
-                <img src="/assets/SuccessIcon.png" alt="Success" className="w-32 h-32 mb-2" />
+                <div className="relative w-32 h-32 mb-2 shine-effect rounded-full overflow-hidden">
+                  <img src="/assets/SuccessIcon.png" alt="Success" className="w-full h-full object-cover" />
+                </div>
                 <p className="text-lg font-bold text-[#1C544E] mb-6">
                   You have successfully minted {tokensToMint} {bondTokenName} tokens!
                 </p>
               </>
             ) : (
               <>
-                <img src="/assets/TokenMint.png" alt="Token Mint" className="w-32 h-32 mb-2" />
+                <div className="relative w-32 h-32 mb-2 shine-effect rounded-full overflow-hidden">
+                  <img src="/assets/TokenMint.png" alt="Token Mint" className="w-full h-full object-cover" />
+                </div>
                 <p className="text-lg font-bold text-[#1C544E] mb-6">{bondTokenName}</p>
 
                 <div className="w-full space-y-4">
@@ -231,7 +235,7 @@ const MintNowPopup: React.FC<MintNowPopupProps> = ({ onClose, bondData }) => {
                 size="large"
                 className="w-full py-3 text-lg font-semibold mt-6"
                 onClick={handleMint}
-                disabled={isMinting || tokensToMint === 0}
+                disabled={isMinting || tokensToMint === '0.0000'}
               />
             )}
           </div>

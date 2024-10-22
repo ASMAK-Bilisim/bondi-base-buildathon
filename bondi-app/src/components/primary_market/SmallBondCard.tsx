@@ -103,6 +103,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const [currentYTM, setCurrentYTM] = useState<number>(data.bondYield);
   const [hasInvested, setHasInvested] = useState(false);
   const [showPhaseInfo, setShowPhaseInfo] = useState(false);
+  const [hasMinted, setHasMinted] = useState(false);
 
   const account = useActiveAccount();
   const { isKYCCompleted } = useKYC();
@@ -154,6 +155,12 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const { data: bondPriceSetData, isLoading: isBondPriceSetLoading } = useReadContract({
     contract: bondDistributionContract,
     method: "bondPriceSet",
+  });
+
+  const { data: claimableTokensData, isLoading: isClaimableTokensLoading } = useReadContract({
+    contract: bondDistributionContract,
+    method: "getClaimableTokens",
+    params: [account?.address || '0x'],
   });
 
   useEffect(() => {
@@ -223,6 +230,15 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
       }
     }
   }, [investedAmountData, isInvestedAmountLoading]);
+
+  useEffect(() => {
+    if (claimableTokensData !== undefined && !isClaimableTokensLoading) {
+      const claimableTokens = typeof claimableTokensData === 'bigint' 
+        ? Number(claimableTokensData)
+        : Number(claimableTokensData.toString());
+      setHasMinted(claimableTokens === 0);
+    }
+  }, [claimableTokensData, isClaimableTokensLoading]);
 
   const investmentProgress = targetAmount > 0 ? (reachedInvestment / targetAmount) * 100 : 0;
 
@@ -294,7 +310,9 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
       case BondState.Purchase:
         return "Waiting Bond Purchase";
       case BondState.Minting:
-        return hasInvested ? "Mint Now" : "You haven't invested";
+        if (!hasInvested) return "You haven't invested";
+        if (hasMinted) return "Already Minted";
+        return "Mint Now";
       default:
         return "Invest Now";
     }
@@ -304,7 +322,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     if (!account) return true;
     if (!isKYCCompleted) return false;
     if (bondState === BondState.Purchase) return true;
-    if (bondState === BondState.Minting && !hasInvested) return true;
+    if (bondState === BondState.Minting && (!hasInvested || hasMinted)) return true;
     return false;
   };
 
@@ -312,7 +330,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
     if (!account) return "secondary";
     if (!isKYCCompleted) return "secondary";
     if (bondState === BondState.Purchase) return "secondary";
-    if (bondState === BondState.Minting && !hasInvested) return "secondary";
+    if (bondState === BondState.Minting && (!hasInvested || hasMinted)) return "secondary";
     return "primary";
   };
 
@@ -427,9 +445,9 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e]">Company Description</h2>
                   <div className="flex items-center">
-                    <div className="relative mr-2">
+                    <div className="relative mr-1">
                       <InformationSquareIcon 
-                        className="h-5 w-5 text-app-primary-2 cursor-help"
+                        className="h-4 w-4 text-app-primary-2 cursor-help"
                         onMouseEnter={() => setShowPhaseInfo(true)}
                         onMouseLeave={() => setShowPhaseInfo(false)}
                       />

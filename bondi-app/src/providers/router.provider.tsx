@@ -21,6 +21,10 @@ export const router = createBrowserRouter([
 				element: <PrimaryMarket />,
 			},
 			{
+				path: "primary-market",
+				element: <PrimaryMarket />,
+			},
+			{
 				path: "primary-market/:bondId",
 				element: <SingleBondPage />,
 			},

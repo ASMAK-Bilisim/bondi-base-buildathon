@@ -96,7 +96,7 @@ const Coupons: React.FC = () => {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-6 space-y-6">
+      <div className="p-4 space-y-6">
         {investedBonds.map((bond) => (
           <BondCouponTimeline
             key={bond.tokenName}

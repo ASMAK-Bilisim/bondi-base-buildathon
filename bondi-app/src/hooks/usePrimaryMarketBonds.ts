@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useContractInfo } from './useContractInfo';
-import { ZETA_FUNDING_CONTRACT, ALPHA_FUNDING_CONTRACT, BETA_FUNDING_CONTRACT } from '../constants/contractInfo';
+import { ZETA_FUNDING_CONTRACT, ALPHA_FUNDING_CONTRACT, BETA_FUNDING_CONTRACT, ZETA_BOND_TOKEN, ALPHA_BOND_TOKEN, BETA_BOND_TOKEN } from '../constants/contractInfo';
 
 export interface Bond {
   companyName: string;
@@ -83,9 +83,9 @@ export const usePrimaryMarketBonds = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const zeta = useContractInfo(ZETA_FUNDING_CONTRACT);
-  const alpha = useContractInfo(ALPHA_FUNDING_CONTRACT);
-  const beta = useContractInfo(BETA_FUNDING_CONTRACT);
+  const zeta = useContractInfo(ZETA_FUNDING_CONTRACT, ZETA_BOND_TOKEN);
+  const alpha = useContractInfo(ALPHA_FUNDING_CONTRACT, ALPHA_BOND_TOKEN);
+  const beta = useContractInfo(BETA_FUNDING_CONTRACT, BETA_BOND_TOKEN);
 
   useEffect(() => {
     const fetchBondData = async () => {
