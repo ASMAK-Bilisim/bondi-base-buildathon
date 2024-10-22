@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePrimaryMarketBonds } from '../hooks/usePrimaryMarketBonds';
 import PortfolioPerformance from '../components/PortfolioPerformance';
-import BondCouponSchedule from '../components/primary_market/BondCouponSchedule';
+import BondCouponSchedule from '../components/primaryMarket/BondCouponSchedule';
 import { DollarSquareIcon, Calendar03Icon, PercentSquareIcon, DiplomaIcon, InformationSquareIcon } from '@hugeicons/react';
 
 const SingleBondPage: React.FC = () => {

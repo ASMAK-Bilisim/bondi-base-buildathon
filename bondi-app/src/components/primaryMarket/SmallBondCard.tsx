@@ -164,7 +164,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   });
 
   useEffect(() => {
-    if (fundingContractBalance && !isBalanceLoading && targetAmountData && !isTargetAmountLoading) {
+    if ((fundingContractBalance || fundingContractBalance === 0n) && !isBalanceLoading && targetAmountData && !isTargetAmountLoading) {
       const balance = typeof fundingContractBalance === 'bigint' 
         ? Number(fundingContractBalance)
         : Number(fundingContractBalance.toString());

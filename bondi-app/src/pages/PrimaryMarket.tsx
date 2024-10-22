@@ -1,5 +1,5 @@
 import React from "react";
-import { SmallBondCard } from "../components/primary_market/SmallBondCard";
+import { SmallBondCard } from "../components/primaryMarket/SmallBondCard";
 import { usePrimaryMarketBonds } from "../hooks/usePrimaryMarketBonds";
 
 const PrimaryMarket: React.FC = () => {
