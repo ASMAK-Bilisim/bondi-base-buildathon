@@ -62,42 +62,43 @@ We have deployed three websites on Vercel, with subdomains of our secondary doma
 
 #### 1. Primary Market
 
-- Displays the funding phase for each bond token offerings.
+- Displays the funding phase for each bond token offering.
 - View bond token offerings, check specifics, and choose bonds to invest in.
-- Bond offerings start in the **Payment Pending** phase until the target amount is reached.
-- Once the target is met, the offering moves to **Awaiting Real-Life Purchase** phase.
-- To simulate the real-life purchase and minting:
+- Bond offerings start in the **Payment** phase until the target amount is reached.
+- Once the target is met, the offering moves to the **Purchase** phase.
+- After real-life bonds are purchased, the offering moves to the **Minting** phase, where bond tokens are minted to investors.
 
-  - Go to [minter.democratize.bond](https://minter.democratize.bond).
-  - Enter the provided private key (this represents the deployer wallet or Bondi Authority).
-  - After assuming the role of Bondi Authority:
+##### Simulating Real-Life Purchase and Minting:
 
-    1. Choose the funding contract.
-    2. Click on **"Mint Bond Tokens"**.
-    3. Set the real-life purchase price.
-    4. Click on **"Set Bond Price and Initiate Minting"**.
+1. Go to [minter.democratize.bond](https://minter.democratize.bond).
+2. Enter the provided private key (this represents the deployer wallet or Bondi Authority).
+3. After assuming the role of Bondi Authority:
 
-  - Return to [democratize.bond](https://democratize.bond); the offering should now be in the **Minting Ready** phase.
-  - Users can now **mint (claim)** their bond tokens from the distribution contract.
+   - Choose the funding contract.
+   - Click on **"Mint Bond Tokens"**.
+   - Set the real-life purchase price.
+   - Click on **"Set Bond Price and Initiate Minting"**.
+4. Return to [democratize.bond](https://democratize.bond); the offering should now be in the **Minting** phase.
+5. Users can now **mint (claim)** their bond tokens from the distribution contract.
 
 #### 2. Insurance Market (CDS Market)
 
 - Access the CDS market for each bond token from the primary market.
-- Our CDS market currently operates as a one-sided order book:
+- The CDS market operates as a one-sided order book:
 
-  - **Sellers** set the premium (annualized percentage return) they're willing to accept for selling CDS.
-  - **Buyers** can view all offers and purchase the best existing offer.
+   - **Sellers** set the premium (annualized percentage return) they’re willing to accept for selling CDS.
+   - **Buyers** can view all offers and purchase the best existing offer.
 
 - The CDS market can be expanded into a synthetic CDS market for any existing bond, making it a fully decentralized product with zero real-world interaction.
 - **Note**: The decision process for CDS (whether a bond has defaulted) is not implemented in the front-end but exists in the smart contract in a basic form.
 
 #### 3. Coupon Page
 
-- Once users mint their bond tokens, they can view the coupons they will collect over the bond's lifecycle.
+- Once users mint their bond tokens, they can view the coupons they will collect over the bond’s lifecycle.
 - The nominal amount of coupons is determined by:
 
-  - The investment amount (set by the user).
-  - The real-life purchase price information (set by Bondi Authority).
+   - The investment amount (set by the user).
+   - The real-life purchase price information (set by Bondi Authority).
 
 # Local Running Information for Each Subdirectory
 
