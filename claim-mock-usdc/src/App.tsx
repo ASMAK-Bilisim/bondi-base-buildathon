@@ -179,20 +179,6 @@ function App() {
           Claim Tokens
         </button>
         
-        <button
-          onClick={addTokenToWallet}
-          className="bg-app-accent text-app-light px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md text-app-body-1 font-semibold mb-4"
-        >
-          Add Mock USDC to Wallet
-        </button>
-        
-        <button
-          onClick={addOrSwitchToBaseSepolia}
-          className="bg-app-primary-2 text-app-light px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ease-in-out shadow-md text-app-body-1 font-semibold mb-4"
-        >
-          Switch to / Add Base Sepolia Network
-        </button>
-        
         {claimStatus && (
           <p className="mt-4 text-app-body-2 text-app-dark">{claimStatus}</p>
         )}

@@ -355,7 +355,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const getStatusText = () => {
     switch (bondState) {
       case BondState.PaymentPending:
-        return 'Payment Pending Phase';
+        return 'Funding Phase';
       case BondState.Purchase:
         return 'Purchase Phase';
       case BondState.Minting:

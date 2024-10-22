@@ -6,7 +6,7 @@ Bondi Finance is revolutionizing the bond market by leveraging blockchain techno
 
 Also, our loyalty program rewards participants with unique NFTs that entitle holders to upcoming Bondi protocol token allocation.
 
-In this Base Buildathon project, we focused on creating an accessible bond insurance market, developing a **Credit Default Swap (CDS)** mechanism that can be made fully synthetic, eliminating the need for real-life bond purchases. Additionally, a decentralized court system can be integrated for dispute resolution, as outlined in the **Authority Specifications** below. Other advanced features include:
+In this Base Buildathon project, we focused on creating an accessible bond insurance market, developing a **Credit Default Swap (CDS)** mechanism that can be made fully synthetic, even eliminating the need for real-life bond purchases. Additionally, a decentralized court system can be integrated for dispute resolution, as outlined in the [**Authority Specifications**](#authority-specifications) below. When fully implemented, this approach makes our insurance market entirely decentralized, ensuring trustless operations. Buildathon specific features include:
 
 - **Coinbase Smart Wallet** integration to simplify user interaction with blockchain technology, making it accessible for both experienced and novice users.
 - A CDS market built from scratch.
@@ -26,11 +26,12 @@ Our main repository for the buildathon is named `bondi-base-buildathon`, and it 
 - `cds-contracts`
 - `claim-mock-usdc`
 - `base-namer`
+
 Each subdirectory focuses on different functionalities of the project.
 
 ## Access and Functionality
 
-We have deployed three websites on Vercel, with subdomains of our secondary domain pointing to each site to enable the functionalities outlined in this project. Our smart contracts are live on the Base Sepolia network.
+We have deployed three websites on Vercel, with subdomains of our secondary domain, [democratize.bond](https://democratize.bond), pointing to each site to enable the functionalities outlined in this project. Our smart contracts are live on the Base Sepolia network, and our main domain is [bondifinance.io](https://www.bondifinance.io/).
 
 ### Deployed Websites
 
@@ -40,38 +41,35 @@ We have deployed three websites on Vercel, with subdomains of our secondary doma
 
 ### How to Interact with Our Application
 
-#### Step 1: Claim Mock Tokens
+#### Step 1: Connect and Claim Mock Tokens
 
-- Navigate to [claim.democratize.bond](https://claim.democratize.bond).
-- If you're not on Base Sepolia or don't have it configured in your wallet, click on **"Switch to / Add Base Sepolia Network"** to add and switch to it.
+- Go to [democratize.bond](https://democratize.bond) and connect using **Coinbase Smart Wallet** to get your wallet address.
+- Then, navigate to [claim.democratize.bond](https://claim.democratize.bond).
 - Enter your wallet address and click on **"Claim Tokens"**. This will provide you with **10,000 Mock USDC** and some Base Sepolia ETH for gas.
 
 #### Step 2: Interact with the Bondi Web3 Application
 
-- Go to [democratize.bond](https://democratize.bond).
+- Go back to [democratize.bond](https://democratize.bond).
 - You should see your USDC balance and can interact with our web application.
-- If you don't see the USDC in your wallet, click on **"Add Mock USDC to Wallet"** on [claim.democratize.bond](https://claim.democratize.bond) or manually add the token using the address: `0xD0CE0FF07Dc2ca1AB1109C4cFC0fBb3741013911`.
-
-#### Step 3: Complete KYC Process
-
-- On [democratize.bond](https://democratize.bond), you need to complete a simple KYC to interact with the platform.
+- To interact with the platform, you will need to complete a simple KYC on [democratize.bond](https://democratize.bond).
 - Provide your nationality, document type, and upload any dummy file.
 - **Note**: This is a dummy process; we do not store these files and automatically accept your KYC.
+
 
 ### Main Features
 
 #### 1. Primary Market
 
-- Displays the funding phase for each bond token offering.
+- Displays the funding phase for each bond token (BT) offering.
 - View bond token offerings, check specifics, and choose bonds to invest in.
-- Bond offerings start in the **Payment** phase until the target amount is reached.
+- Bond offerings start in the **Funding** phase until the target amount is reached.
 - Once the target is met, the offering moves to the **Purchase** phase.
 - After real-life bonds are purchased, the offering moves to the **Minting** phase, where bond tokens are minted to investors.
 
 ##### Simulating Real-Life Purchase and Minting:
 
 1. Go to [minter.democratize.bond](https://minter.democratize.bond).
-2. Enter the provided private key (this represents the deployer wallet or Bondi Authority).
+2.  Enter the provided private key (this represents the deployer wallet, i.e **Bondi Authority**, see [**Authority Specifications**](#authority-specifications) below).
 3. After assuming the role of Bondi Authority:
 
    - Choose the funding contract.
@@ -89,7 +87,7 @@ We have deployed three websites on Vercel, with subdomains of our secondary doma
    - **Sellers** set the premium (annualized percentage return) they’re willing to accept for selling CDS.
    - **Buyers** can view all offers and purchase the best existing offer.
 
-- The CDS market can be expanded into a synthetic CDS market for any existing bond, making it a fully decentralized product with zero real-world interaction.
+- The CDS market can be expanded into a synthetic CDS market for any existing bond, and along with the decentralized court system implementation for the decision process, it will become a fully decentralized product with zero real-world interaction.
 - **Note**: The decision process for CDS (whether a bond has defaulted) is not implemented in the front-end but exists in the smart contract in a basic form.
 
 #### 3. Coupon Page
@@ -98,7 +96,7 @@ We have deployed three websites on Vercel, with subdomains of our secondary doma
 - The nominal amount of coupons is determined by:
 
    - The investment amount (set by the user).
-   - The real-life purchase price information (set by Bondi Authority).
+   - The real-life purchase price information (set by **Bondi Authority**, see [**Authority Specifications**](#authority-specifications) below).
 
 # Local Running Information for Each Subdirectory
 
@@ -270,7 +268,7 @@ There are two types of files to interact with the contracts:
    npx hardhat run scripts/[scriptName] --network baseSepolia
    ```
 
-   These scripts use the `.env` file at `bondi-contracts/.env`. Your `.env` should look something like this to run these scripts:
+   These scripts use the `.env` file at `bondi-contracts/scripts/.env`. Your `.env` should look something like this to run these scripts:
 
    ```plaintext
    OG_NFT_ADDRESS=
@@ -329,6 +327,8 @@ echidna ./ --contract [aFuzzContract] --test-mode assertion
 ```
 
 ## cds-contracts
+
+![CDS Contracts Diagram](cds-contracts-diagram.png)
 
 ### Basic Commands
 
@@ -418,6 +418,10 @@ You will also need to create a `.npmrc` file to use the icon set we utilize. You
 ```
 
 Replace `[YOUR_AUTH_TOKEN]` with your actual NPM authentication token.
+
+### Changing the Displayed Contracts
+
+To change the deployed contract addresses displayed in the application, open `contractInfo.ts` located at `bondi-app/src/constants` and update the contract addresses with the contracts you want to display.
 
 ### Deployment
 
@@ -553,7 +557,7 @@ node src/index.js
 - **Capital Efficiency**: Route funds collected in funding contracts to a lending market like Aave.
 - **Coupon and Principal Repayment Vaults**: Create dedicated vaults.
 - **Full KYC Integration**: Including onchain verification.
-- **Capital Efficiency Improvmeent**: Letting the creator deposit just the next coupon + principal – premium.
+- **Capital Efficiency Improvement**: Letting the creator deposit just the next coupon + principal – premium.
 
 ## Base-Specific Improvements
 
@@ -574,35 +578,32 @@ Currently, the deployer (identified by the wallet using the private key on [mint
   - Approves bonds to be offered in the funding phase.
   - Approves crucial information about the bonds.
   - Can modify parameters in the funding phase smart contracts.
-
-- **Vision**: Transfer this role to **Bondi DAO** to perform tasks via onchain voting.
+- **Vision**: Currently part of **Bondi Authority**, with plans to transfer this role to **Bondi DAO** to perform tasks via onchain voting.
 
 ## Withdraw Authority
 
 - **Responsibilities**:
   - Approves the withdrawal of funds to an offramp provider or the custodian/broker.
   - Can approve this transaction only if the target amount is reached within the funding period.
-
 - **Vision**: Transfer this role to a **multisig wallet** involving:
+  - Bondi DAO
   - Custodian/Broker
   - Auditing Firm
   - Consultant
   - Key Members of the Crypto Community
-  - Bondi DAO
 
 ## Mint Authority
 
 - **Responsibilities**:
   - Approves the minting information of the bonds after the realized purchase information is provided by the custodian/broker.
   - Approves the minting of BTs to the Minting Smart Contract, from which users will manually claim their share of BT.
-
-- **Control**: Initially under **Bondi Finance Inc.**
+- **Vision**: Currently part of **Bondi Authority**, with plans to transfer this role to a **multisig wallet** involving:
+  - Bondi DAO
+  - Bondi Finance Inc.
+  - Custodian/Broker
 
 ## CDS Decision Authority
 
 - **Responsibilities**:
   - Makes the final decision on whether the bond issuer has defaulted, impacting the CDS market.
-
 - **Vision**: A decentralized court system, such as **Kleros**, will be integrated in the future to have the final say on whether the bond issuer has defaulted. This will enable the CDS market to become fully decentralized.
-
-
