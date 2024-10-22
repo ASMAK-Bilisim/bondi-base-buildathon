@@ -143,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
         <nav className="flex flex-wrap gap-8 justify-start items-center">
           <a href="https://www.bondifinance.io" className={linkStyle}>Home</a>
           <a href="https://www.bondifinance.io/blog" className={linkStyle}>Blog</a>
-          <a href="https://www.bondifinance.io" className={linkStyle}>FAQ</a>
+          <a href="https://www.bondifinance.io/#faq" className={linkStyle}>FAQ</a>
         </nav>
         <div className="flex items-center gap-3 whitespace-nowrap">
           {account && (
