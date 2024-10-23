@@ -19,7 +19,7 @@ import "react-circular-progressbar/dist/styles.css";
 import { baseSepolia } from "thirdweb/chains";
 import { client } from "../../client";
 import { parseUnits } from "viem";
-import { useNotifications } from "../../components/contexts/NotificationContext";
+import { useNotifications } from "../contexts/NotificationContext";
 import { useNFTUrl } from "../../hooks/use-nft-url";
 
 interface InvestmentPopupProps {

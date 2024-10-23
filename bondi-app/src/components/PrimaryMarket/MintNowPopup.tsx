@@ -6,7 +6,7 @@ import { prepareContractCall, getContract } from "thirdweb";
 import { client } from '../../client';
 import { baseSepolia } from 'thirdweb/chains';
 import { bondDistributionABI } from '../../constants/contractInfo';
-import { useNotifications } from '../../components/contexts/NotificationContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { useRive } from '@rive-app/react-canvas';
 import { useContractInfo } from '../../hooks/useContractInfo';
 
