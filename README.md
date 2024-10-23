@@ -1,5 +1,58 @@
 # Bondi Base Buildathon
 
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Bonds and Bond Insurance (CDS)](#bonds-and-bond-insurance-cds)
+3. [Directory Structure](#directory-structure)
+4. [Access and Functionality](#access-and-functionality)
+   1. [Deployed Websites](#deployed-websites)
+   2. [How to Interact with Our Application](#how-to-interact-with-our-application)
+      1. [Step 1: Connect and Claim Mock Tokens](#step-1-connect-and-claim-mock-tokens)
+      2. [Step 2: Interact with the Bondi Web3 Application](#step-2-interact-with-the-bondi-web3-application)
+5. [Main Features](#main-features)
+   1. [Primary Market](#primary-market)
+      1. [Simulating Real-Life Purchase and Minting](#simulating-real-life-purchase-and-minting)
+   2. [Insurance Market (CDS Market)](#insurance-market-cds-market)
+   3. [Coupon Page](#coupon-page)
+6. [Local Running Information for Each Subdirectory](#local-running-information-for-each-subdirectory)
+   1. [bondi-contracts](#bondi-contracts)
+      1. [Basic Commands](#basic-commands)
+      2. [Cache and Deployment Cleanup](#cache-and-deployment-cleanup)
+      3. [Deployment](#deployment)
+      4. [Contract Interactions](#contract-interactions)
+      5. [Testing](#testing)
+      6. [Security](#security)
+   2. [cds-contracts](#cds-contracts)
+      1. [Basic Commands](#basic-commands-1)
+      2. [Deployment Setup](#deployment-setup)
+      3. [Testing](#testing-1)
+      4. [Deployed Addresses](#deployed-addresses)
+   3. [bondi-app](#bondi-app)
+      1. [Basic Commands](#basic-commands-2)
+      2. [Deployment Setup](#deployment-setup-1)
+      3. [Changing the Displayed Contracts](#changing-the-displayed-contracts)
+      4. [Deployment](#deployment-1)
+   4. [claim-mock-usdc](#claim-mock-usdc)
+      1. [Basic Commands](#basic-commands-3)
+      2. [Deployment Setup](#deployment-setup-2)
+      3. [Deployment](#deployment-2)
+   5. [admin-bondtoken-minting](#admin-bondtoken-minting)
+      1. [Basic Commands](#basic-commands-4)
+      2. [Deployment Setup](#deployment-setup-3)
+      3. [Deployment](#deployment-3)
+   6. [base-namer](#base-namer)
+      1. [Basic Commands](#basic-commands-5)
+      2. [Deployment Setup](#deployment-setup-4)
+      3. [Addresses with Corresponding Transactions and Basenames](#addresses-with-corresponding-transactions-and-basenames)
+7. [Future Integration and Improvements](#future-integration-and-improvements)
+   1. [General Improvements](#general-improvements)
+   2. [Base-Specific Improvements](#base-specific-improvements)
+8. [Authority Specifications](#authority-specifications)
+   1. [List Authority](#list-authority)
+   2. [Withdraw Authority](#withdraw-authority)
+   3. [Mint Authority](#mint-authority)
+   4. [CDS Decision Authority](#cds-decision-authority)
+
 ## Introduction
 
 Bondi Finance is revolutionizing the bond market by leveraging blockchain technology to tokenize corporate bonds, making traditionally inaccessible markets more open and transparent. We empower investors to seamlessly participate in our bond token ecosystem.
@@ -572,6 +625,12 @@ node src/index.js
 
 Currently, the deployer (identified by the wallet using the private key on [minter.democratize.bond](https://minter.democratize.bond)) holds multiple roles, including `PAUSER_ROLE` and `FREEZER_ROLE` on the bond token contract. However, the long-term vision is to separate these functions and roles across different authorities, each governed by multi-signature (multisig) structures that serve distinct purposes.
 
+## CDS Decision Authority
+
+- **Responsibilities**:
+  - Makes the final decision on whether the bond issuer has defaulted, impacting the CDS market.
+- **Vision**: A decentralized court system, such as **Kleros**, will be integrated in the future to have the final say on whether the bond issuer has defaulted. This will enable the CDS market to become fully decentralized.
+
 ## List Authority
 
 - **Responsibilities**:
@@ -601,9 +660,3 @@ Currently, the deployer (identified by the wallet using the private key on [mint
   - Bondi DAO
   - Bondi Finance Inc.
   - Custodian/Broker
-
-## CDS Decision Authority
-
-- **Responsibilities**:
-  - Makes the final decision on whether the bond issuer has defaulted, impacting the CDS market.
-- **Vision**: A decentralized court system, such as **Kleros**, will be integrated in the future to have the final say on whether the bond issuer has defaulted. This will enable the CDS market to become fully decentralized.
