@@ -4,6 +4,7 @@ import {
   SquareUnlock01Icon,
   SquareLock01Icon,
   Exchange01Icon,
+  InformationSquareIcon,
 } from "@hugeicons/react";
 import {
   useActiveAccount,
@@ -55,6 +56,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
   const [approvedAmount, setApprovedAmount] = useState<bigint>(BigInt(0));
   const [isTransactionInProgress, setIsTransactionInProgress] = useState(false);
   const [isApprovalPending, setIsApprovalPending] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
 
   const {
     data: nftUrl,
@@ -373,37 +375,90 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
     onClose("");
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-      <div className="bg-[#F2FBF9] rounded-xl w-full max-w-5xl h-[95vh] relative flex flex-col overflow-hidden">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-[#1C544E] hover:text-[#3EBAAD] transition-colors z-10"
-        >
-          <CancelSquareIcon
-            size={34}
-            variant="solid"
-            className="transition-colors duration-200"
-            color="currentColor"
-          />
-        </button>
+  const toggleDescription = () => {
+    setShowDescription(!showDescription);
+  };
 
-        <div className="flex h-full relative">
-          {/* Left Panel */}
-          <div className="w-1/2 overflow-y-auto relative">
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+      <div className="bg-[#F2FBF9] w-full h-full md:rounded-xl md:w-full md:max-w-5xl md:h-[95vh] relative flex flex-col overflow-hidden">
+        {!isInvestmentComplete && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-[#1C544E] hover:text-[#3EBAAD] transition-colors z-10"
+          >
+            <CancelSquareIcon
+              size={34}
+              variant="solid"
+              className="transition-colors duration-200"
+              color="currentColor"
+            />
+          </button>
+        )}
+
+        <div className="flex flex-col md:flex-row h-full relative">
+          {/* Mobile Description View */}
+          {showDescription && (
+            <div className="md:hidden w-full h-full overflow-y-auto p-4">
+              <button
+                onClick={toggleDescription}
+                className="self-start text-[#1C544E] font-medium mb-6"
+              >
+                ← Go Back
+              </button>
+              <h3 className="text-[#1C544E] text-lg font-bold mb-6">
+                Description
+              </h3>
+              <ol className="list-decimal list-inside space-y-6 text-[14px] text-[#1C544E]">
+                <div>
+                  You can buy Bond Tokens (BTs) by contributing to the funding
+                  contracts. Here’s how it works:
+                </div>
+                <li>
+                  You can send your funds to the smart contract during this
+                  period to secure your share in the bond offering.
+                </li>
+                <li>
+                  Once the funding target is reached, bond tokens (BTs) will
+                  be available for you to claim directly from the platform.
+                </li>
+                <li>
+                  If the funding target isn’t reached by the deadline, you’ll
+                  automatically get a refund, with your funds returned to your
+                  wallet.
+                </li>
+                <div>
+                  As a bonus, when you make your first deposit, you’ll receive
+                  an OG NFT as a reward. And if you deposit $5,000 or more,
+                  you’ll unlock a special Whale NFT, which will guarantee your
+                  allocation in the future Bondi protocol token.
+                </div>
+              </ol>
+            </div>
+          )}
+
+          {/* Left Panel (hidden when description is shown on mobile) */}
+          <div className={`w-full md:w-1/2 h-2/5 md:h-full md:overflow-y-auto relative flex items-center md:items-start ${showDescription ? 'hidden md:flex' : ''}`}>
             {isInvestmentComplete ? (
-              <div className="h-full bg-[#071f1e] flex flex-col items-center justify-center relative">
-                {/* NFT Images at the top, now twice as large */}
-                <div className="flex justify-center space-x-8 p-4 bg-[#071f1e] mb-8">
+              <div className="h-full w-full bg-[#071f1e] flex flex-col items-center justify-center relative">
+                {/* NFT Images at the top */}
+                <div className="flex justify-center space-x-4 md:space-x-8 p-4 bg-[#071f1e] mb-4 md:mb-8">
                   {nftUrl?.og?.imageUrl && (
-                    <img src={nftUrl.og.imageUrl} alt="OG NFT" className="w-32 h-32 rounded-full" />
+                    <img src={nftUrl.og.imageUrl} alt="OG NFT" className="w-16 h-16 md:w-32 md:h-32 rounded-full" />
                   )}
                   {nftUrl?.whale?.imageUrl && (
-                    <img src={nftUrl.whale.imageUrl} alt="Whale NFT" className="w-32 h-32 rounded-full" />
+                    <img src={nftUrl.whale.imageUrl} alt="Whale NFT" className="w-16 h-16 md:w-32 md:h-32 rounded-full" />
                   )}
                 </div>
-                <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#d8feaa] to-transparent opacity-30 rounded-t-md"></div>
-                <div className="flex flex-col items-center space-y-12 p-8 relative z-10">
+                <div
+                  className="absolute top-0 left-0 right-0 h-60 opacity-25"
+                  style={{
+                    background: 'radial-gradient(ellipse at top, #d8feaa 0%, rgba(216, 254, 170, 0) 55%)',
+                    transform: 'scaleY(1.8) scaleX(2.2)',
+                    transformOrigin: 'top'
+                  }}
+                />
+                <div className="flex flex-col items-left space-y-6 md:space-y-12 p-4 md:p-8 relative z-10">
                   <div className="flex items-center">
                     <div className="w-16">
                       {isOGNFTUnlocked ? (
@@ -457,23 +512,24 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                 </div>
               </div>
             ) : (
-              // Original left panel content (investment details)
-              <div className="h-full flex flex-col justify-center p-8">
-                <div className="mb-4">
-                  <img
-                    src={bondData.companyLogo}
-                    alt={`${bondData.companyName} logo`}
-                    className="w-14 h-14"
-                  />
+              <div className="w-full flex flex-col justify-center p-4 md:p-8 space-y-6 md:space-y-4">
+                <div>
+                  <div className="mb-4 md:mb-4">
+                    <img
+                      src={bondData.companyLogo}
+                      alt={`${bondData.companyName} logo`}
+                      className="w-12 h-12 md:w-14 md:h-14"
+                    />
+                  </div>
+                  <h2 className="text-[#1C544E] text-2xl md:text-[26px] font-medium">
+                    Invest in
+                  </h2>
+                  <h1 className="text-[#1C544E] text-2xl md:text-[26px] font-bold mt-2 mb-6 md:mb-8">
+                    {bondTokenName}
+                  </h1>
                 </div>
-                <h2 className="text-[#1C544E] text-[26px] font-medium">
-                  Invest in
-                </h2>
-                <h1 className="text-[#1C544E] text-[26px] font-bold mb-8">
-                  {bondTokenName}
-                </h1>
 
-                <div className="space-y-2 text-sm text-[#1C544E]">
+                <div className="space-y-3 md:space-y-2 text-sm md:text-sm text-[#1C544E]">
                   <div className="flex justify-between">
                     <span>Bond Price:</span>
                     <span>{formatCurrency(bondData.currentPrice)}</span>
@@ -488,10 +544,19 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                   </div>
                 </div>
 
-                <h3 className="mt-8 mb-4 text-[#1C544E] text-base font-bold">
-                  Description
-                </h3>
-                <ol className="list-decimal list-inside space-y-4 text-[14px] text-[#1C544E]">
+                <div className="mt-6 md:mt-8 flex items-center">
+                  <h3 className="text-[#1C544E] text-base md:text-base font-bold mr-2 md:mb-4">
+                    Description
+                  </h3>
+                  <button onClick={toggleDescription} className="md:hidden">
+                    <InformationSquareIcon
+                      size={28}
+                      color="#1C544E"
+                      variant="solid"
+                    />
+                  </button>
+                </div>
+                <ol className="hidden md:block list-decimal list-inside space-y-2 md:space-y-4 text-[12px] md:text-[14px] text-[#1C544E]">
                   <div>
                     You can buy Bond Tokens (BTs) by contributing to the funding
                     contracts. Here’s how it works:
@@ -520,15 +585,20 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
             )}
           </div>
 
-          {/* Middle line with shadow effect only to the left */}
+          {/* Divider for mobile (hidden when investment is complete) */}
           {!isInvestmentComplete && (
-            <div className="absolute top-0 bottom-0 right-1/2 w-6 pointer-events-none">
+            <div className="md:hidden w-full h-[1px] bg-gradient-to-r from-transparent via-[#1c544e] to-transparent opacity-40 my-2"></div>
+          )}
+
+          {/* Middle line with shadow effect only to the left (for desktop) */}
+          {!isInvestmentComplete && (
+            <div className="hidden md:block absolute top-0 bottom-0 right-1/2 w-6 pointer-events-none">
               <div className="absolute top-0 bottom-0 w-6 bg-gradient-to-l from-[#E0E0E0] to-transparent opacity-30"></div>
             </div>
           )}
 
-          {/* Right Panel */}
-          <div className="w-1/2 p-8 overflow-y-auto flex flex-col">
+          {/* Right Panel (hidden when description is shown on mobile) */}
+          <div className={`w-full md:w-1/2 h-3/5 md:h-full md:overflow-y-auto flex flex-col p-4 md:p-8 ${showDescription ? 'hidden md:flex' : ''}`}>
             {isInvestmentComplete ? (
               <div className="flex-grow flex flex-col justify-between items-center text-center">
                 <div className="w-full">
@@ -556,7 +626,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                     onClick={handleGoHome}
                     className="w-full bg-[#1C544E] text-white text-xl font-medium py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300"
                   >
-                    Go Home
+                    Go to Primary Market
                   </button>
                 </div>
               </div>
@@ -567,13 +637,13 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                     <div className="flex justify-between items-end mb-2">
                       <label
                         htmlFor="amount"
-                        className="text-[24px] font-medium text-[#1C544E]"
+                        className="text-lg md:text-[24px] font-medium text-[#1C544E]"
                       >
                         Amount
                       </label>
                       <div className="text-right">
-                        <p className="text-[#1C544E] text-xs mb-1">{today}</p>
-                        <p className="text-[#1C544E] text-sm font-bold">
+                        <p className="text-[#1C544E] text-[10px] md:text-xs mb-1">{today}</p>
+                        <p className="text-[#1C544E] text-xs md:text-sm font-bold">
                           1 {bondTokenName} ={" "}
                           {formatCurrency(bondData.currentPrice)}
                         </p>
@@ -583,28 +653,24 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                       <input
                         type="text"
                         id="amount"
-                        value={
-                          isFocused
-                            ? amount
-                            : `${amount} ${isUSDC ? "USDC" : bondTokenName}`
-                        }
+                        value={isFocused ? amount : `${amount} ${isUSDC ? "USDC" : bondTokenName}`}
                         onChange={handleInputChange}
                         onFocus={handleInputFocus}
                         onBlur={handleInputBlur}
-                        className="w-full p-4 border border-[#1C544E] rounded-xl text-xl font-bold text-[#1C544E] opacity-70"
+                        className="w-full p-2 md:p-4 border border-[#1C544E] rounded-xl text-base md:text-xl font-bold text-[#1C544E] opacity-70"
                       />
                       <button
                         onClick={toggleCurrency}
-                        className="absolute right-20 top-1/2 transform -translate-y-1/2 bg-[#D4E7E2] text-[#1C544E] p-2 rounded-xl hover:bg-[#B3D1C8] transition-colors duration-300"
+                        className="absolute right-16 md:right-20 top-1/2 transform -translate-y-1/2 bg-[#D4E7E2] text-[#1C544E] p-1 md:p-2 rounded-xl hover:bg-[#B3D1C8] transition-colors duration-300"
                       >
                         <Exchange01Icon
-                          size={24}
+                          size={18}
                           className="transition-transform duration-300 hover:rotate-180"
                         />
                       </button>
                       <button
                         onClick={handleMaxClick}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#D4E7E2] text-[#1C544E] px-4 py-2 rounded-xl font-bold hover:bg-[#B3D1C8] transition-colors duration-300"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#D4E7E2] text-[#1C544E] px-2 md:px-4 py-1 md:py-2 rounded-xl text-xs md:text-base font-bold hover:bg-[#B3D1C8] transition-colors duration-300"
                       >
                         Max
                       </button>
@@ -652,7 +718,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                 </div>
 
                 <div className="mt-auto">
-                  <p className="text-[9px] text-[#1C544E] mb-4">
+                  <p className="text-[8px] md:text-[9px] text-[#1C544E] mb-2 md:mb-4">
                     Please note that the price and Yield to Maturity (YTM)
                     indicated during the Funding Phase are provisional and do
                     not represent the final figures. Once the bonds are

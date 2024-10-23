@@ -21,7 +21,7 @@ interface SmallBondCardProps {
 }
 
 enum BondState {
-  PaymentPending,
+  Funding,
   Purchase,
   Minting
 }
@@ -63,7 +63,7 @@ const calculateYTM = (couponRate: number, faceValue: number, price: number, year
 };
 
 const PhaseTooltip: React.FC<{ description: string }> = ({ description }) => (
-  <div className="absolute right-0 top-full mt-1 p-2 bg-white border border-app-primary-2 rounded-lg shadow-lg z-10 w-48">
+  <div className="absolute right-0 top-full mt-1 p-2 bg-white border border-app-primary-2 rounded-lg shadow-lg z-50 w-48">
     <p className="text-[11px] text-[#071f1e]">{description}</p>
   </div>
 );
@@ -98,7 +98,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   const [isInvestmentPopupOpen, setIsInvestmentPopupOpen] = useState(false);
   const [isTargetReached, setIsTargetReached] = useState(false);
   const [isMintPopupOpen, setIsMintPopupOpen] = useState(false);
-  const [bondState, setBondState] = useState<BondState>(BondState.PaymentPending);
+  const [bondState, setBondState] = useState<BondState>(BondState.Funding);
   const [realizedPrice, setRealizedPrice] = useState<string>('0.00');
   const [currentYTM, setCurrentYTM] = useState<number>(data.bondYield);
   const [hasInvested, setHasInvested] = useState(false);
@@ -164,7 +164,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
   });
 
   useEffect(() => {
-    if ((fundingContractBalance || fundingContractBalance === 0n) && !isBalanceLoading && targetAmountData && !isTargetAmountLoading) {
+    if (fundingContractBalance && !isBalanceLoading && targetAmountData && !isTargetAmountLoading) {
       const balance = typeof fundingContractBalance === 'bigint' 
         ? Number(fundingContractBalance)
         : Number(fundingContractBalance.toString());
@@ -182,7 +182,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
           setBondState(BondState.Purchase);
         }
       } else {
-        setBondState(BondState.PaymentPending);
+        setBondState(BondState.Funding);
       }
     }
   }, [fundingContractBalance, isBalanceLoading, targetAmountData, isTargetAmountLoading, bondPriceSetData]);
@@ -201,7 +201,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
       const calculatedYTM = calculateYTM(data.couponPercentage, 100, price, yearsToMaturity);
       setCurrentYTM(calculatedYTM);
     } else {
-      // Calculate YTM based on the current price for PaymentPending and Purchase phases
+      // Calculate YTM based on the current price for Funding and Purchase phases
       const yearsToMaturity = (new Date(data.maturityDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 365);
       const calculatedYTM = calculateYTM(data.couponPercentage, 100, data.currentPrice, yearsToMaturity);
       setCurrentYTM(calculatedYTM);
@@ -290,7 +290,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
       navigate('/kyc');
     } else if (bondState === BondState.Minting && hasInvested) {
       setIsMintPopupOpen(true);
-    } else if (bondState === BondState.PaymentPending) {
+    } else if (bondState === BondState.Funding) {
       setIsInvestmentPopupOpen(true);
     }
   };
@@ -343,7 +343,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
 
   const getStatusIcon = () => {
     switch (bondState) {
-      case BondState.PaymentPending:
+      case BondState.Funding:
         return '/assets/OrangeStatus.png';
       case BondState.Purchase:
         return '/assets/GreenStatus.png';
@@ -354,7 +354,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
 
   const getStatusText = () => {
     switch (bondState) {
-      case BondState.PaymentPending:
+      case BondState.Funding:
         return 'Funding Phase';
       case BondState.Purchase:
         return 'Purchase Phase';
@@ -373,7 +373,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
 
   const getPhaseDescription = () => {
     switch (bondState) {
-      case BondState.PaymentPending:
+      case BondState.Funding:
         return "In this phase, investors can contribute funds to the smart contract to secure their share in the bond offering.";
       case BondState.Purchase:
         return "The funding target has been reached. The platform is now purchasing the bonds in the traditional market.";
@@ -395,14 +395,14 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
               label="Check Details" 
               intent="secondary" 
               size="small" 
-              className="w-36 xs:w-28 lg:w-40 py-0.5 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px]"
+              className="w-36 xs:w-28 lg:w-40 py-2 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px]"
               onClick={handleCheckDetails}
             />
             <Button 
               label={getButtonLabel()}
               intent={getButtonIntent()}
               size="small" 
-              className={`w-36 xs:w-28 lg:w-40 py-0.5 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px] ${isButtonDisabled() && 'opacity-50 cursor-not-allowed'} ${getButtonStyle()}`}
+              className={`w-36 xs:w-28 lg:w-40 py-2 text-[14px] xl:text-[14px] lg:text-[12px] md:text-[12px] sm:text-[12px] xs:text-[11px] ${isButtonDisabled() && 'opacity-50 cursor-not-allowed'} ${getButtonStyle()}`}
               onClick={handleInvestOrMintOrKYC}
               disabled={isButtonDisabled()}
             />
@@ -413,7 +413,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
           {/* Column 1 and 2 wrapper */}
           <div className="flex flex-col md:flex-row lg:w-3/5 mb-4 lg:mb-0">
             {/* Column 1: Bond Details */}
-            <div className="w-full md:w-2/6 lg:w-1/3 flex flex-row md:flex-col justify-between md:justify-center mb-2 md:mb-0">
+            <div className="w-full md:w-2/6 lg:w-1/3 flex flex-row md:flex-col justify-between md:justify-center md:mb-0 py-4 md:py-0">
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full">
                 <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">
                   {bondState === BondState.Minting ? "Realized Price" : "Current Price"}
@@ -437,10 +437,11 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
             </div>
 
             {/* Divider 1 */}
+            <div className="block md:hidden w-full h-[1px] bg-gradient-to-r from-transparent via-[#1c544e] to-transparent opacity-40 my-1"></div>
             <div className="hidden md:block w-[1px] bg-gradient-to-b from-transparent via-[#1c544e] to-transparent opacity-40 mx-2 my-2"></div>
 
             {/* Column 2: Company Description and Investment Progress */}
-            <div className="w-full md:w-4/6 lg:w-2/3 space-y-2 px-0 md:px-6 flex flex-col mb-4 md:mb-0">
+            <div className="w-full md:w-4/6 lg:w-2/3 space-y-2 px-0 md:px-6 flex flex-col mb-2 md:mb-0 py-2 md:py-0">
               <div className="flex-grow overflow-hidden">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e]">Company Description</h2>
@@ -467,8 +468,8 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                   <p className="text-[14px] xl:text-[13px] lg:text-[11px] md:text-[13px] sm:text-[14px] xs:text-[13px] text-[#1c544e] opacity-80 text-justify">{companyDescription}</p>
                 </div>
               </div>
-              <div>
-                <div className="flex justify-between items-center mb-4">
+              <div className="mb-1 md:mb-0"> 
+                <div className="flex justify-between items-center mb-3"> 
                   <div className="text-left">
                     <h3 className="text-[16px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[13px] font-bold text-[#1c544e]">Reached Investment (USDC)</h3>
                     <span className="text-[18px] xl:text-[18px] lg:text-[16px] md:text-[15px] sm:text-[14px] xs:text-[15px] text-[#1c544e] font-bold">
@@ -483,12 +484,6 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                   </div>
                 </div>
                 <div className="relative rounded-full h-4 overflow-hidden" style={{ backgroundColor: trackColor }}>
-                  {/* 10% marker line */}
-                  <div 
-                    className="absolute top-0 left-[10%] w-0.5 h-full z-20"
-                    style={{ backgroundColor: markerLineColor }}
-                  ></div>
-                  
                   {/* Progress bar */}
                   <div 
                     className="absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-linear flex items-center justify-end pr-1 z-10"
@@ -502,7 +497,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                     </span>
                   </div>
                 </div>
-                <p className="text-right text-[10px] xl:text-[10px] lg:text-[9px] md:text-[8px] sm:text-[7px] xs:text-[6px] text-[#1c544e] mt-1 opacity-70">
+                <p className="text-right text-[10px] xl:text-[10px] lg:text-[9px] md:text-[9px] sm:text-[9px] xs:text-[9px] text-[#1c544e] mt-1 mb-0 opacity-70">
                   {daysUntilDeadline === null 
                     ? 'Calculating days...' 
                     : `${daysUntilDeadline} Days Until Deadline`
@@ -513,16 +508,33 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
           </div>
 
           {/* Divider 2 */}
+          <div className="block lg:hidden w-full h-[1px] bg-gradient-to-r from-transparent via-[#1c544e] to-transparent opacity-40 mb-2"></div>
           <div className="hidden lg:block w-[1px] bg-gradient-to-b from-transparent via-[#1c544e] to-transparent opacity-40 mx-2 my-2"></div>
 
           {/* Column 3: Credit Score */}
-          <div className="w-full lg:w-2/5 pl-0 lg:pl-6 flex flex-col items-center lg:items-start justify-center mt-4 lg:mt-0">
+          <div className="w-full lg:w-2/5 pl-0 lg:pl-6 flex flex-col items-center lg:items-start justify-center mt-2 lg:mt-0">
             <div 
-              className="bg-[#071f1e] text-[#f2fbf9] p-4 px-5 rounded-lg flex flex-col md:justify-center md:flex-row h-auto md:h-[200px] relative w-full sm:w-[90%] md:w-[600px] lg:w-full lg:mx-0 lg:ml-auto"
+              className="bg-[#071f1e] text-[#f2fbf9] p-4 px-5 rounded-lg flex flex-col md:flex-row h-auto md:h-[200px] relative w-full sm:w-[90%] md:w-[600px] lg:w-full lg:mx-0 lg:ml-auto"
             >
-              <div className="flex flex-col justify-between flex-grow pr-4 mb-4 md:mb-0 md:w-1/2">
+              <div className="flex flex-col justify-between flex-grow pr-0 md:pr-4 mb-4 md:mb-0 md:w-1/2">
                 <div>
-                  <h2 className="text-14px xl:text-14px lg:text-12px md:text-12px sm:text-10px xs:text-9px font-semibold mb-2 whitespace-nowrap overflow-hidden text-ellipsis">Credit Score Overview</h2>
+                  <div className="flex justify-between items-center mb-2">
+                    <h2 className="text-14px xl:text-14px lg:text-12px md:text-12px sm:text-10px xs:text-9px font-semibold whitespace-nowrap overflow-hidden text-ellipsis mr-2">Credit Score Overview</h2>
+                    <Button 
+                      label="See Detailed Score"
+                      intent="darkOutline" 
+                      size="small" 
+                      className="md:hidden w-auto py-1 px-2 text-[10px] xs:text-[8px] flex items-center justify-center whitespace-nowrap"
+                      onClick={() => setIsModalOpen(true)}
+                    >
+                      <InformationSquareIcon 
+                        className="w-3 h-3 xs:w-3 xs:h-3 mr-1"
+                        variant="stroke"
+                        color="#f2fbf9"
+                      />
+                      <span>See Details</span>
+                    </Button>
+                  </div>
                   <div className="space-y-1 mt-2">
                     <p className="text-[12px] xl:text-[12px] lg:text-[12px] md:text-[13px] sm:text-[12px] xs:text-[11px] text-[#f2fbf9] opacity-80">
                       Debt Features: <span className="font-extrabold">{data.modificationCriteria.DebtFeatures}</span>
@@ -536,7 +548,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                   label="See Detailed Score"
                   intent="darkOutline" 
                   size="small" 
-                  className="w-full lg:w-auto py-0.5 text-[12px] xl:text-[12px] lg:text-[11px] md:text-[11px] sm:text-[10px] xs:text-[8px] mt-2 flex items-center justify-center whitespace-nowrap max-w-[160px]"
+                  className="hidden md:flex w-full lg:w-auto py-1 text-[12px] xl:text-[12px] lg:text-[11px] md:text-[11px] sm:text-[10px] xs:text-[8px] mt-2 items-center justify-center whitespace-nowrap max-w-[160px]"
                   onClick={() => setIsModalOpen(true)}
                 >
                   <InformationSquareIcon 
@@ -544,7 +556,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                     variant="stroke"
                     color="#f2fbf9"
                   />
-                  <span className="ml-2">See Detailed Score</span>
+                  <span className="ml-1">See Detailed Score</span>
                 </Button>
               </div>
               <div className="flex items-center justify-center md:justify-end w-full md:w-1/2">

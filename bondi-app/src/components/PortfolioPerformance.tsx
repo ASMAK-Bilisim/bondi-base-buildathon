@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar03Icon, ArrowDown01Icon, PieChartIcon } from "@hugeicons/react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -7,18 +7,18 @@ import { format } from 'date-fns';
 
 interface PortfolioPerformanceProps {
   onTimeRangeChange?: (range: string) => void;
-  chartTitle: string; // New prop for custom chart title
+  chartTitle: string;
 }
 
 const timeRanges = ["1 Day", "1 Week", "1 Month", "6 Months", "1 Year", "2 Years", "YTD"];
 
 const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
   onTimeRangeChange = () => {},
-  chartTitle, // Use the custom chart title
+  chartTitle,
 }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { portfolioValue, performanceData, timeRange, setTimeRange, isLoading, error } = usePortfolioData();
+  const { bondValue, performanceData, timeRange, setTimeRange, isLoading, error } = usePortfolioData();
 
   const handlePortfolioClick = () => {
     navigate("/portfolio");
@@ -30,23 +30,6 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
     setIsDropdownOpen(false);
   };
 
-  // Mock data generation (replace this with actual data fetching logic)
-  const generateMockData = (days: number) => {
-    const data = [];
-    const now = new Date();
-    for (let i = days; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      data.push({
-        date: date.getTime(),
-        value: portfolioValue + Math.random() * 5 - 2.5, // Random fluctuation
-        displayValue: portfolioValue + Math.random() * 5 - 2.5, // For tooltip display
-      });
-    }
-    return data;
-  };
-
-  const chartData = useMemo(() => generateMockData(30), [portfolioValue]);
-
   const formatTooltipLabel = (value: number) => {
     const date = new Date(value);
     return timeRange === '1 Day' ? format(date, 'MMM dd, HH:mm') : format(date, 'MMM dd, yyyy');
@@ -55,6 +38,9 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
   const formatTooltipValue = (value: number, name: string, props: { payload: { displayValue: number } }) => {
     return [`$${props.payload.displayValue.toFixed(2)}`, 'Price'];
   };
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
   return (
     <section className="flex overflow-hidden flex-col px-6 3xl:px-5 4xl:px-4 pt-5 3xl:pt-6 4xl:pt-7 pb-4 3xl:pb-5 4xl:pb-6 font-medium text-teal-900 bg-[#F2FBF9] rounded-xl border-teal-900 border-solid border-[0.25px] w-full h-[300px] 3xl:h-[350px] 4xl:h-[400px]">
@@ -96,11 +82,11 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
         </div>
       </header>
       <p className="self-start text-2xl font-extrabold leading-10 text-right">
-        ${portfolioValue.toFixed(2)}
+        ${bondValue.toFixed(2)}
       </p>
       <div className="h-44 w-full mt-4">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData}>
+          <AreaChart data={performanceData}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#1C544E" stopOpacity={0.4}/>
@@ -133,14 +119,14 @@ const PortfolioPerformance: React.FC<PortfolioPerformanceProps> = ({
         </ResponsiveContainer>
       </div>
       <footer className="flex gap-5 justify-between mt-2 text-xs leading-none text-teal-900 text-opacity-80">
-        {chartData[0]?.date && (
-          <time dateTime={new Date(chartData[0].date).toISOString()}>
-            {formatTooltipLabel(chartData[0].date)}
+        {performanceData[0]?.date && (
+          <time dateTime={new Date(performanceData[0].date).toISOString()}>
+            {formatTooltipLabel(performanceData[0].date)}
           </time>
         )}
-        {chartData[chartData.length - 1]?.date && (
-          <time dateTime={new Date(chartData[chartData.length - 1].date).toISOString()}>
-            {formatTooltipLabel(chartData[chartData.length - 1].date)}
+        {performanceData[performanceData.length - 1]?.date && (
+          <time dateTime={new Date(performanceData[performanceData.length - 1].date).toISOString()}>
+            {formatTooltipLabel(performanceData[performanceData.length - 1].date)}
           </time>
         )}
       </footer>

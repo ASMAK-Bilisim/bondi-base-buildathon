@@ -31,15 +31,17 @@ const KYCMenu: React.FC = () => {
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full w-full">
       <KYCDisclaimerPopup
         isOpen={showDisclaimer}
         onClose={handleCloseDisclaimer}
         onAccept={handleAcceptDisclaimer}
       />
-      {stage === 'identity' && <IdentityVerification onComplete={handleComplete} />}
-      {stage === 'review' && <KYCReview onComplete={handleComplete} />}
-      {stage === 'verified' && <KYCVerified />}
+      <div className="xs:px-4 xs:py-4 sm:px-0 sm:py-0">
+        {stage === 'identity' && <IdentityVerification onComplete={handleComplete} />}
+        {stage === 'review' && <KYCReview onComplete={handleComplete} />}
+        {stage === 'verified' && <KYCVerified />}
+      </div>
     </div>
   );
 };

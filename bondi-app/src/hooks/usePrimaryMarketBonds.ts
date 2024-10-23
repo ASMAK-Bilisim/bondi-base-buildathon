@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useContractInfo } from './useContractInfo';
-import { ZETA_FUNDING_CONTRACT, ALPHA_FUNDING_CONTRACT, BETA_FUNDING_CONTRACT, ZETA_BOND_TOKEN, ALPHA_BOND_TOKEN, BETA_BOND_TOKEN } from '../constants/contractInfo';
+import { ZETA_FUNDING_CONTRACT, 
+  ALPHA_FUNDING_CONTRACT, 
+  BETA_FUNDING_CONTRACT, 
+  ZETA_BOND_TOKEN, 
+  ALPHA_BOND_TOKEN, 
+  BETA_BOND_TOKEN } from '../constants/contractInfo';
+import { BetaIcon } from 'huge';
 
 export interface Bond {
   companyName: string;
@@ -122,7 +128,7 @@ export const usePrimaryMarketBonds = () => {
           },
           financialMetricsPeriod: "Q2 2023",
           companyDescription: "Zeta Corporation is a leading conglomerate in energy and infrastructure across Latin America. Founded in 1945, it specializes in renewable energy solutions and large-scale projects.",
-          isin: "USX101D4YWZ1",
+          isin: "XS2078641888",
           country: "Argentina",
           financialMetricsPdfLink: "https://www.bondifinance.io/assets/whitepaper.pdf",
           modificationCriteria: {

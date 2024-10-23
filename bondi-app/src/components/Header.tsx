@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useRef } from "react";
-import { Notification03Icon } from '@hugeicons/react';
+import { Notification03Icon, Menu01Icon, CancelSquareIcon } from '@hugeicons/react';
 import { ConnectButton, lightTheme, useActiveAccount, SendTransactionPayModalConfig } from "thirdweb/react";
 import { client } from "../client";
 import { ZETA_BOND_TOKEN, ALPHA_BOND_TOKEN, BETA_BOND_TOKEN, MOCK_USDC_ADDRESS } from "../constants/contractInfo";
@@ -20,6 +20,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const account = useActiveAccount();
@@ -91,6 +92,14 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
   };
 
   const linkStyle = "font-inter font-medium text-[16px] leading-[26px] text-[#1C544E] hover:underline transition-all duration-300";
+  const mobileLinkStyle = "font-inter font-semibold text-[24px] leading-[36px] text-[#1C544E] hover:underline transition-all duration-300 w-full text-center py-4";
+
+  const mobileMenuItems = [
+    { label: "Home", href: "https://www.bondifinance.io" },
+    { label: "Blog", href: "https://www.bondifinance.io/blog" },
+    { label: "FAQ", href: "https://www.bondifinance.io/#faq" },
+    { label: "About Us", href: "https://www.bondifinance.io/about" },
+  ];
 
   const customTokens = [
     {
@@ -140,15 +149,92 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
   return (
     <header className="w-full font-semibold py-4 px-6 relative bg-[#F2FBF9]">
       <div className="max-w-7xl 3xl:max-w-[1800px] 4xl:max-w-[1920px] mx-auto flex items-center justify-between">
-        <nav className="flex flex-wrap gap-8 justify-start items-center">
-          <a href="https://www.bondifinance.io" className={linkStyle}>Home</a>
-          <a href="https://www.bondifinance.io/blog" className={linkStyle}>Blog</a>
-          <a href="https://www.bondifinance.io/#faq" className={linkStyle}>FAQ</a>
-        </nav>
+        {isMobile ? (
+          <div className="relative">
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="text-[#1C544E] focus:outline-none"
+            >
+              {showMobileMenu ? (
+                <Menu01Icon size={32} />
+              ) : (
+                <Menu01Icon size={34} />
+              )}
+            </button>
+            {showMobileMenu && (
+              <div className="fixed inset-0 bg-[#F2FBF9] bg-opacity-95 z-50 flex items-center justify-center">
+                <div className="bg-[#F2FBF9] border-2 border-[#1C544E] rounded-lg p-6 w-[90%] max-w-md">
+                  <button
+                    onClick={() => setShowMobileMenu(false)}
+                    className="absolute top-4 right-4 text-[#1C544E] focus:outline-none"
+                  >
+                    <CancelSquareIcon 
+                      size={36} 
+                      color={"#1c544e"}
+                      variant={"solid"}
+                    />
+                  </button>
+                  <div className="flex flex-col items-center justify-center w-full">
+                    {mobileMenuItems.map((item, index) => (
+                      <React.Fragment key={index}>
+                        <a
+                          href={item.href}
+                          className={`${mobileLinkStyle} text-center`}
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          {item.label}
+                        </a>
+                        {index < mobileMenuItems.length - 1 && (
+                          <div className="w-full h-px bg-[#1C544E] opacity-50 my-2" />
+                        )}
+                      </React.Fragment>
+                    ))}
+                    <div className="mt-6 w-full">
+                      <ConnectButton
+                        appMetadata={{
+                          name: "Bondi Finance",
+                          logoUrl: "https://blush-secondary-stoat-221.mypinata.cloud/ipfs/QmQcbcT8rNeNboZXcw3t4BiUuZ5WDWmPydHkHhKqKGbNgv",
+                        }}
+                        client={client}
+                        theme={customTheme}
+                        wallets={wallets}
+                        supportedChains={[baseSepolia]}
+                        supportedTokens={supportedTokens}
+                        connectButton={{
+                          className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6] !h-12 !w-full !text-lg",
+                        }}
+                        detailsButton={{
+                          className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6] !h-12 !w-full !text-lg",
+                          displayBalanceToken: {
+                            [baseSepolia.id]: tokenAddress,
+                          },
+                        }}
+                        detailsModal={{
+                          networkSelector: {
+                            sections: [
+                              { label: "Testnets", chains: [baseSepolia] },
+                            ],
+                          },
+                        }}
+                        payModal={payModalConfig}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <nav className="flex flex-wrap gap-8 justify-start items-center">
+            <a href="https://www.bondifinance.io" className={linkStyle}>Home</a>
+            <a href="https://www.bondifinance.io/blog" className={linkStyle}>Blog</a>
+            <a href="https://www.bondifinance.io/#faq" className={linkStyle}>FAQ</a>
+          </nav>
+        )}
         <div className="flex items-center gap-3 whitespace-nowrap">
           {account && (
             <div className="relative flex items-center" ref={notificationRef}>
-              <div className="flex items-center bg-[#F2FBF9] rounded-lg border border-[#1C544E] overflow-visible">
+              <div className="flex items-center bg-[#F2FBF9] rounded-lg border border-[#1C544E] overflow-visible h-10">
                 <button
                   onClick={toggleNotifications}
                   className="w-10 h-10 flex items-center justify-center cursor-pointer group"
@@ -183,36 +269,38 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
               />
             </div>
           )}
-          <div className="rounded-lg border border-[#1C544E] overflow-hidden">
-            <ConnectButton
-              appMetadata={{
-                name: "Bondi Finance",
-                logoUrl: "https://blush-secondary-stoat-221.mypinata.cloud/ipfs/QmQcbcT8rNeNboZXcw3t4BiUuZ5WDWmPydHkHhKqKGbNgv",
-              }}
-              client={client}
-              theme={customTheme}
-              wallets={wallets}
-              supportedChains={[baseSepolia]}
-              supportedTokens={supportedTokens}
-              connectButton={{
-                className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6]",
-              }}
-              detailsButton={{
-                className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6]",
-                displayBalanceToken: {
-                  [baseSepolia.id]: tokenAddress,
-                },
-              }}
-              detailsModal={{
-                networkSelector: {
-                  sections: [
-                    { label: "Testnets", chains: [baseSepolia] },
-                  ],
-                },
-              }}
-              payModal={payModalConfig}
-            /> 
-          </div>
+          {!isMobile && (
+            <div className="rounded-lg border border-[#1C544E] overflow-hidden h-10">
+              <ConnectButton
+                appMetadata={{
+                  name: "Bondi Finance",
+                  logoUrl: "https://blush-secondary-stoat-221.mypinata.cloud/ipfs/QmQcbcT8rNeNboZXcw3t4BiUuZ5WDWmPydHkHhKqKGbNgv",
+                }}
+                client={client}
+                theme={customTheme}
+                wallets={wallets}
+                supportedChains={[baseSepolia]}
+                supportedTokens={supportedTokens}
+                connectButton={{
+                  className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6] !h-10 !px-3 !text-sm",
+                }}
+                detailsButton={{
+                  className: "!bg-[#F2FBF9] !text-[#1C544E] hover:!bg-[#D9E8E6] !h-10 !px-3 !text-sm",
+                  displayBalanceToken: {
+                    [baseSepolia.id]: tokenAddress,
+                  },
+                }}
+                detailsModal={{
+                  networkSelector: {
+                    sections: [
+                      { label: "Testnets", chains: [baseSepolia] },
+                    ],
+                  },
+                }}
+                payModal={payModalConfig}
+              /> 
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -112,7 +112,7 @@ const CountrySelect: React.FC<CountrySelectProps> = ({ onSelect }) => {
   };
 
   return (
-    <div className="flex flex-col flex-1 grow shrink-0 basis-0 w-fit relative" ref={dropdownRef}>
+    <div className="flex flex-col flex-1 grow shrink-0 basis-0 w-full relative" ref={dropdownRef}>
       <label
         htmlFor="country"
         className="self-start text-sm font-bold leading-6 text-[#1C544E]"

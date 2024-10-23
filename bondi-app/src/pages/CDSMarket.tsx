@@ -94,9 +94,9 @@ const CDSMarket: React.FC = () => {
 
   return (
     <NotificationProvider>
-      <div className="min-h-screen p-4 sm:p-6 md:p-8">
+      <div className="min-h-screen p-2 sm:p-3 md:p-4">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {bondsInfo.map((bondInfo) => (
               <div key={bondInfo.hash} className="flex justify-center">
                 <BondOrderBook bondInfo={bondInfo} />

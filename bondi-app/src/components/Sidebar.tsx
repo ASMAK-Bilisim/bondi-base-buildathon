@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import MenuItem from "./MenuItem";
 import {
@@ -25,11 +25,52 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isCompact }) => {
   const location = useLocation();
   const { isKYCCompleted } = useKYC(); // Use the KYC context
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Add Coupons menu item only if KYC is completed
   const fullMenuItems = isKYCCompleted
     ? [...menuItems, { icon: CouponPercentIcon, label: "Coupons", path: "/coupons" }]
     : menuItems;
+
+  const allItems = [...fullMenuItems, ...otherItems];
+
+  if (isMobile) {
+    return (
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#f2fbf9] border-t-2 border-[#1C544E] border-opacity-50 z-50">
+        <div className="flex items-stretch">
+          {allItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const isDocsItem = item.label === "Docs";
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center justify-center flex-1 py-2 px-2 ${
+                  isActive || isDocsItem ? 'text-[#1C544E] font-medium' : 'text-[#1C544E] font-medium opacity-60'
+                } ${isDocsItem ? 'bg-[#1C544E] text-[#F2FBF9]' : ''}`}
+              >
+                <item.icon 
+                  className="w-6 h-6"
+                  variant={isDocsItem ? "stroke" : "solid"}
+                />
+                <span className="text-[10px] mt-1 text-center w-full truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <aside 
@@ -45,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCompact }) => {
             className="object-contain w-[103px] aspect-[1.98]"
           />
         </div>
-        <nav className={`flex flex-col h-full ${isCompact ? 'px-0.5' : 'px-3'} pt-4 pb-3 mt-7 rounded-xl ${isCompact ? 'mx-1' : 'mx-2'}`}>
+        <nav className={`flex flex-col h-full ${isCompact ? 'px-0.5' : 'px-3'} pt-4 pb-4 mt-7 rounded-xl ${isCompact ? 'mx-1' : 'mx-2'}`}>
           <div className="flex flex-col w-full">
             <h2 className={`text-[18px] font-extrabold leading-none mb-4 transition-all duration-300 ${isCompact ? 'text-center text-xs' : ''}`}>
               Menu
@@ -56,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCompact }) => {
                   <MenuItem
                     icon={item.icon}
                     label={item.label}
-                    active={location.pathname === item.path || (item.path === "/" && location.pathname === "/")} // Updated active check
+                    active={location.pathname === item.path || (item.path === "/" && location.pathname === "/")}
                     isCompact={isCompact}
                   />
                 </Link>

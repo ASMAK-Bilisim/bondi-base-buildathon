@@ -9,10 +9,12 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isCompact, setIsCompact] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsCompact(window.innerWidth < 1400); // Changed from 1024px to 1400px
+      setIsCompact(window.innerWidth < 1400);
+      setIsMobile(window.innerWidth < 640);
     };
 
     handleResize();
@@ -27,8 +29,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex flex-col flex-grow overflow-hidden">
           <Header isCompact={isCompact} setIsCompact={setIsCompact} />
           <main className="flex-grow overflow-hidden">
-            <div className="h-full bg-[#D4E7E2] rounded-tl-[12px] p-6 pb-0 overflow-hidden">
-              <div className="max-w-[1450px] mx-auto h-full overflow-y-auto">
+            <div className={`h-full bg-[#D4E7E2] rounded-tl-[12px] ${isMobile ? 'p-2' : 'p-6'} pb-0 overflow-hidden`}>
+              <div className={`max-w-[1450px] mx-auto h-full overflow-y-auto ${isMobile ? 'pb-14' : ''}`}>
                 {children || <Outlet />}
               </div>
             </div>

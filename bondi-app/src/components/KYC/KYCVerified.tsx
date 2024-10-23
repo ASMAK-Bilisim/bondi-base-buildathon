@@ -24,7 +24,7 @@ const KYCVerified: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center mt-10 xs:mt-8">
       <StepIndicator steps={3} currentStep={3} />
       <PassportValidIcon
         size={128} 

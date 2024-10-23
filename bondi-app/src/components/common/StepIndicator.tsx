@@ -7,7 +7,7 @@ interface StepIndicatorProps {
 
 const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep }) => {
   return (
-    <div className="relative w-full max-w-md mx-auto my-8">
+    <div className="relative w-full max-w-md mx-auto my-4 xs:my-0">
       <div className="h-1 bg-[#679b96] rounded-full">
         <div
           className="h-full bg-[#1c544e] rounded-full transition-all duration-300 ease-in-out"

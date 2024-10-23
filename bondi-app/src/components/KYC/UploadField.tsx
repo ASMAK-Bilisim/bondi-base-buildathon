@@ -86,7 +86,7 @@ const UploadField: React.FC<UploadFieldProps> = ({ label, className = "", onFile
         )}
         <label
           htmlFor={`upload-${label}`}
-          className="mt-2 px-3 py-1 text-xs leading-5 text-center border border-teal-900 border-solid rounded-full cursor-pointer hover:bg-teal-900 hover:text-white transition-colors"
+          className="mt-2 px-3 xs py-1 text-xs leading-5 text-center border border-teal-900 border-solid rounded-full cursor-pointer hover:bg-teal-900 hover:text-white transition-colors"
         >
           {file ? "Change File" : "Upload a File"}
         </label>

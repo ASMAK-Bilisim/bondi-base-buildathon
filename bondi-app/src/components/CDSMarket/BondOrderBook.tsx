@@ -13,6 +13,7 @@ import { useReadContract, useSendTransaction, useActiveAccount } from 'thirdweb/
 import { getContract, prepareContractCall, readContract } from 'thirdweb';
 import { parseEther, parseUnits } from "viem";
 import { useNotifications } from '../../components/contexts/NotificationContext';
+import Button from '../common/Button';  // Make sure to import the Button component
 
 interface BondInfo {
   hash: `0x${string}`;
@@ -343,8 +344,52 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
     return (interest / 100 * 100).toFixed(2);
   };
 
+  const getButtonLabel = () => {
+    if (!account) return "Connect Wallet";
+    if (isBuyMode) {
+      return isBuyApproved ? "Buy Best Offer" : "Authorize Spending";
+    } else {
+      return isApproved ? "Place Offer" : "Authorize Collateral";
+    }
+  };
+
+  const isButtonDisabled = () => {
+    if (!account) return true; // Changed to true
+    if (isBuyMode) {
+      return isBuying || isBuyApproving || cdsOffers.length === 0;
+    } else {
+      return isCreatingOffer || isApproving || !premium || parseFloat(premium) === 0;
+    }
+  };
+
+  const getButtonIntent = () => {
+    if (!account) return "secondary";
+    return isBuyMode ? "buy" : "sell";
+  };
+
+  const getButtonStyle = () => {
+    if (!account) {
+      return "opacity-50 cursor-not-allowed text-[#071f1e]";
+    }
+    return isBuyMode ? "bg-[#4fc484] hover:bg-[#45b076] text-white" : "bg-[#f49c4a] hover:bg-[#e08d3d] text-white";
+  };
+
+  const handleButtonClick = () => {
+    if (!account) {
+      // TODO: Implement wallet connection logic
+      console.log("Wallet connection functionality to be implemented");
+      return;
+    }
+
+    if (isBuyMode) {
+      isBuyApproved ? handleBuyCDS() : handleBuyApprove();
+    } else {
+      isApproved ? handleCreateOffer() : handleApprove();
+    }
+  };
+
   return (
-    <div className="bg-app-light rounded-lg shadow-lg overflow-hidden w-full xs:w-[360px] sm:w-[440px] md:w-[440px] lg:w-[400px] xl:w-[380px] h-[610px] flex flex-col">
+    <div className="bg-app-light rounded-lg shadow-lg overflow-hidden w-full xs:w-[460px] sm:w-[440px] md:w-[440px] lg:w-[400px] xl:w-[380px] h-[610px] flex flex-col">
       <div className="p-4 flex-grow">
         <h2 className="text-xl font-bold text-app-primary-2 mb-4">CDS Order Book</h2>
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -404,21 +449,13 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
       </div>
 
       <div className="p-4 bg-app-dark-mint bg-opacity-20">
-        <ActionButton
-          isBuyMode={isBuyMode}
-          isBuyApproved={isBuyApproved}
-          isApproved={isApproved}
-          handleBuyCDS={handleBuyCDS}
-          handleBuyApprove={handleBuyApprove}
-          handleCreateOffer={handleCreateOffer}
-          handleApprove={handleApprove}
-          isBuying={isBuying}
-          isBuyApproving={isBuyApproving}
-          isCreatingOffer={isCreatingOffer}
-          isApproving={isApproving}
-          cdsOffers={cdsOffers}
-          premium={premium}
-          bondInfo={bondInfo}
+        <Button
+          label={getButtonLabel()}
+          intent={getButtonIntent()}
+          size="small"
+          className={`w-full py-2 text-sm ${getButtonStyle()}`}
+          onClick={handleButtonClick}
+          disabled={isButtonDisabled()}
         />
       </div>
     </div>
@@ -552,75 +589,5 @@ const PremiumInput: React.FC<{ premium: string; handleInputChange: (e: React.Cha
     />
   </div>
 );
-
-const ActionButton: React.FC<{
-  isBuyMode: boolean;
-  isBuyApproved: boolean;
-  isApproved: boolean;
-  handleBuyCDS: () => Promise<void>;
-  handleBuyApprove: () => Promise<void>;
-  handleCreateOffer: () => Promise<void>;
-  handleApprove: () => Promise<void>;
-  isBuying: boolean;
-  isBuyApproving: boolean;
-  isCreatingOffer: boolean;
-  isApproving: boolean;
-  cdsOffers: CDSInfo[];
-  premium: string;
-  bondInfo: BondInfo;
-}> = ({
-  isBuyMode,
-  isBuyApproved,
-  isApproved,
-  handleBuyCDS,
-  handleBuyApprove,
-  handleCreateOffer,
-  handleApprove,
-  isBuying,
-  isBuyApproving,
-  isCreatingOffer,
-  isApproving,
-  cdsOffers,
-  premium,
-  bondInfo,
-}) => {
-  if (isBuyMode) {
-    return isBuyApproved ? (
-      <button
-        onClick={handleBuyCDS}
-        disabled={isBuying || cdsOffers.length === 0}
-        className="w-full bg-[#4fc484] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-[#3a9362] transition-colors duration-300 disabled:bg-opacity-50 disabled:cursor-not-allowed border border-[#1c544e] border-opacity-20"
-      >
-        {isBuying ? 'Buying...' : 'Buy Best Offer'}
-      </button>
-    ) : (
-      <button
-        onClick={handleBuyApprove}
-        disabled={isBuyApproving || cdsOffers.length === 0}
-        className="w-full bg-[#4fc484] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-[#3a9362] transition-colors duration-300 disabled:bg-opacity-50 disabled:cursor-not-allowed border border-[#1c544e] border-opacity-20"
-      >
-        {isBuyApproving ? 'Authorizing...' : 'Authorize Spending'}
-      </button>
-    );
-  } else {
-    return isApproved ? (
-      <button
-        onClick={handleCreateOffer}
-        disabled={isCreatingOffer || !premium || parseFloat(premium) === 0}
-        className="w-full bg-[#f49c4a] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-[#dc8c42] transition-colors duration-300 disabled:bg-opacity-50 disabled:cursor-not-allowed border border-white border-opacity-20"
-      >
-        {isCreatingOffer ? 'Placing Offer...' : 'Place Offer'}
-      </button>
-    ) : (
-      <button
-        onClick={handleApprove}
-        disabled={isApproving}
-        className="w-full bg-[#f49c4a] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-[#dc8c42] transition-colors duration-300 disabled:bg-opacity-50 disabled:cursor-not-allowed border border-white border-opacity-20"
-      >
-        {isApproving ? 'Authorizing...' : 'Authorize Collateral'}
-      </button>
-    );
-  }
-};
 
 export default BondOrderBook;

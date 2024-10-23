@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { format, isBefore } from 'date-fns';
-import { LinkSquare02Icon, CheckmarkBadge02Icon, SquareLock01Icon } from '@hugeicons/react';
+import { CheckmarkBadge02Icon, SquareLock01Icon } from '@hugeicons/react';
 import TearingCoupon from './TearingCoupon';
 import { animated, useTransition } from 'react-spring';
 
@@ -15,11 +15,13 @@ interface Coupon {
 interface BondCouponTimelineProps {
   tokenName: string;
   coupons: Coupon[];
+  displayPercentage?: boolean; // New prop
 }
 
 const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
   tokenName,
   coupons,
+  displayPercentage = false, // Default to false for backward compatibility
 }) => {
   const currentDate = new Date();
   const [redeemedCoupons, setRedeemedCoupons] = useState<string[]>([]);
@@ -41,6 +43,14 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
     leave: { opacity: 0, transform: 'translateX(-50px)' },
   });
 
+  const formatAmount = (amount: number) => {
+    if (displayPercentage) {
+      return `${amount.toFixed(2)}%`;
+    } else {
+      return `$${amount.toFixed(2)}`;
+    }
+  };
+
   const redeemedContent = (coupon: Coupon) => (
     <div className="flex flex-col items-center justify-center h-full">
       <div className="w-16 h-16 bg-[#1c544e] rounded-full flex items-center justify-center mb-2">
@@ -48,7 +58,7 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
       </div>
       <span className="text-[#1c544e] font-bold text-lg mb-1">Redeemed</span>
       <span className="text-[#1c544e] text-sm mb-1">{format(coupon.date, 'dd MMM yyyy')}</span>
-      <span className="text-[#1c544e] font-bold text-lg">${coupon.amount.toFixed(2)}</span>
+      <span className="text-[#1c544e] font-bold text-lg">{formatAmount(coupon.amount)}</span>
     </div>
   );
 
@@ -84,8 +94,12 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
                 <span className={`text-[18px] font-bold ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>{tokenName}</span>
               </div>
               <div className="flex flex-col items-end">
-                <span className={`text-[15px] ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>Amount</span>
-                <span className={`text-[18px] font-bold ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>${coupon.amount.toFixed(2)}</span>
+                <span className={`text-[15px] ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>
+                  {displayPercentage ? "Coupon" : "Amount"}
+                </span>
+                <span className={`text-[18px] font-bold ${isRedeemable ? "text-[#a6d9ce]" : "text-[#1c544e]"}`}>
+                  {formatAmount(coupon.amount)}
+                </span>
               </div>
             </div>
             <div className="flex justify-center">
@@ -111,25 +125,17 @@ const BondCouponTimeline: React.FC<BondCouponTimelineProps> = ({
 
   return (
     <div className="bg-[#f2fbf9] rounded-lg shadow-md font-inter relative overflow-hidden">
-      <div className="flex relative z-10">
-        {/* Left section with bond token name */}
-        <div className="w-64 flex-shrink-0 flex flex-col justify-center items-center pr-4 bg-[#f2fbf9] relative z-20">
-          <h2 className="text-[32px] font-bold text-[#1c544e]">{tokenName}</h2>
-          <div className="absolute top-4 right-4">
-            <LinkSquare02Icon 
-              className="cursor-pointer hover:scale-110 transition-all duration-200 ease-in-out" 
-              size={24} 
-              color="#1c544e"
-              variant="stroke"
-            />
-          </div>
+      <div className="flex flex-col sm:flex-row relative z-10">
+        {/* Bond token name section - now at the top for mobile with smaller text */}
+        <div className="w-full sm:w-64 flex-shrink-0 flex flex-col justify-center items-center p-4 sm:pr-4 bg-[#f2fbf9] relative z-20">
+          <h2 className="text-2xl sm:text-[32px] font-bold text-[#1c544e]">{tokenName}</h2>
         </div>
 
-        {/* Divider */}
-        <div className="w-[2px] bg-gradient-to-b from-transparent via-[#1c544e] to-transparent opacity-30 relative z-20 self-stretch" />
+        {/* Divider - horizontal for mobile, vertical for larger screens */}
+        <div className="w-full h-[2px] sm:w-[2px] sm:h-auto bg-gradient-to-r sm:bg-gradient-to-b from-transparent via-[#1c544e] to-transparent opacity-30 relative z-20" />
 
         {/* Scrollable coupons section */}
-        <div className="flex-grow overflow-x-auto relative py-4 pl-4">
+        <div className="flex-grow overflow-x-auto relative py-4 px-4 sm:pl-4">
           {/* Gridlines with fade effect */}
           <div className="absolute inset-0 bg-[#1c544e] opacity-5 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-b from-[#f2fbf9] via-transparent to-[#f2fbf9]">

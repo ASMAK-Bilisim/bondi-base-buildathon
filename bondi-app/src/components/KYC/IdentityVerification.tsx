@@ -28,23 +28,23 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ onComplete 
   };
 
   return (
-    <div className="h-full flex items-center justify-center bg-[#D4E7E2] rounded-tl-[12px] overflow-y-auto">
-      <main className="w-full max-w-[678px] px-4 py-8 sm:px-6 lg:px-8">
+    <div className="h-full flex items-center justify-center bg-[#D4E7E2] rounded-tl-[12px] xs:pb-10 overflow-y-auto">
+      <main className="w-full max-w-[678px] px-4 xs:px-2 py-8 sm:px-6 lg:px-8">
         <section className="flex flex-col items-center">
           <StepIndicator steps={3} currentStep={1} />
-          <h1 className="mt-8 text-2xl sm:text-3xl font-bold text-teal-900 text-center">
+          <h1 className="mt-8 text-2xl sm:text-[24px] xs:text-[18px] font-bold text-teal-900 text-center">
             Identity Verification
           </h1>
-          <p className="mt-4 text-sm sm:text-base font-medium text-center text-teal-900">
+          <p className="mt-4 text-sm sm:text-[16px] xs:text-[12px] font-medium text-center text-teal-900">
             Please select your country and document type. Document upload is optional for this test app.
           </p>
-          <form className="w-full mt-8">
-            <div className="flex flex-col sm:flex-row gap-6">
+          <form className="w-full sm:mt-8 xs:mt-4">
+            <div className="flex flex-col sm:flex-row sm:w-full sm:gap-6 xs:gap-2">
               <CountrySelect onSelect={setSelectedCountry} />
               <DocumentTypeSelect onSelect={setSelectedDocumentType} />
             </div>
-            <div className="mt-8">
-              <div className={`flex flex-col sm:flex-row gap-6 ${selectedDocumentType === "Passport" ? "justify-center" : ""}`}>
+            <div className="sm:mt-8 xs:mt-4">
+              <div className={`flex flex-col sm:flex-row sm:gap-6 xs:gap-2 ${selectedDocumentType === "Passport" ? "justify-center" : ""}`}>
                 <UploadField 
                   label={selectedDocumentType === "Passport" ? "Passport photo page (optional)" : "Front of your ID (optional)"} 
                   className={selectedDocumentType === "Passport" ? "w-full sm:w-1/2" : ""}
@@ -58,7 +58,7 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ onComplete 
                 )}
               </div>
             </div>
-            <label className="flex items-center mt-8 text-xs font-medium text-teal-900">
+            <label className="flex items-center sm:mt-8 xs:mt-4 sm:text-[14px] xs:text-[12px] font-medium text-teal-900">
               <input 
                 type="checkbox" 
                 className="mr-2" 
@@ -68,7 +68,7 @@ const IdentityVerification: React.FC<IdentityVerificationProps> = ({ onComplete 
               I confirm that the information provided is accurate and complete. 
               (You're not required to upload documents for this test app)
             </label>
-            <div className="mt-8">
+            <div className="sm:mt-8 xs:mt-4">
               <Button
                 label="Continue"
                 intent="primary"

@@ -1,31 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { useActiveAccount } from "thirdweb/react";
 import axios from 'axios';
 import { subYears, subMonths, subDays, startOfYear, parseISO, isValid } from 'date-fns';
 
-interface GoogleFinanceData {
+interface ShortQuoteData {
   symbol: string;
   price: number;
-  changesPercentage: number;
-  change: number;
-  dayLow: number;
-  dayHigh: number;
-  yearHigh: number;
-  yearLow: number;
-  marketCap: number;
-  priceAvg50: number;
-  priceAvg200: number;
   volume: number;
-  avgVolume: number;
-  exchange: string;
-  open: number;
-  previousClose: number;
-  eps: number;
-  pe: number;
-  earningsAnnouncement: string;
-  sharesOutstanding: number;
-  timestamp: number;
 }
 
 interface HistoricalData {
@@ -43,68 +24,61 @@ interface PerformanceData {
   displayValue: number;
 }
 
-const API_KEY = 'egUoc96squua1JFhSmVWHsr4FpYeVUdU';
+const API_KEY = import.meta.env.VITE_FINANCIAL_MODELING_PREP_API_KEY;
+const SYMBOL = 'EMHY';
 
-const fetchBTCUSDPrice = async (): Promise<GoogleFinanceData> => {
-  const response = await axios.get(`https://financialmodelingprep.com/api/v3/quote/BTCUSD?apikey=${API_KEY}`);
+const fetchEMHYPrice = async (): Promise<ShortQuoteData> => {
+  const response = await axios.get(`https://financialmodelingprep.com/api/v3/quote-short/${SYMBOL}?apikey=${API_KEY}`);
   return response.data[0];
 };
 
 const fetchHistoricalData = async (): Promise<HistoricalData[]> => {
-  const response = await axios.get(`https://financialmodelingprep.com/api/v3/historical-price-full/BTCUSD?apikey=${API_KEY}`);
+  const response = await axios.get(`https://financialmodelingprep.com/api/v3/historical-price-full/${SYMBOL}?apikey=${API_KEY}`);
   return response.data.historical;
 };
 
-const fetch5MinData = async (symbol: string, from: string, to: string): Promise<HistoricalData[]> => {
-  const response = await axios.get(`https://financialmodelingprep.com/api/v3/historical-chart/5min/${symbol}?from=${from}&to=${to}&apikey=${API_KEY}`);
+const fetch5MinData = async (from: string, to: string): Promise<HistoricalData[]> => {
+  const response = await axios.get(`https://financialmodelingprep.com/api/v3/historical-chart/5min/${SYMBOL}?from=${from}&to=${to}&apikey=${API_KEY}`);
   return response.data;
 };
 
-const fetch30MinData = async (symbol: string, from: string, to: string): Promise<HistoricalData[]> => {
-  const response = await axios.get(`https://financialmodelingprep.com/api/v3/historical-chart/30min/${symbol}?from=${from}&to=${to}&apikey=${API_KEY}`);
+const fetch30MinData = async (from: string, to: string): Promise<HistoricalData[]> => {
+  const response = await axios.get(`https://financialmodelingprep.com/api/v3/historical-chart/30min/${SYMBOL}?from=${from}&to=${to}&apikey=${API_KEY}`);
   return response.data;
 };
+
 export const usePortfolioData = () => {
-  let account;
-  try {
-    account = useActiveAccount();
-  } catch (error) {
-    console.error("useActiveAccount() hook error:", error);
-    // Handle the error or set a default value for address
-    account = null;
-  }
-
   const [timeRange, setTimeRange] = useState('YTD');
 
   const { data: currentPriceData, isLoading: isLoadingCurrentPrice, error: currentPriceError } = useQuery({
-    queryKey: ['btcusdPrice'],
-    queryFn: fetchBTCUSDPrice,
+    queryKey: ['EMHYPrice'],
+    queryFn: fetchEMHYPrice,
     refetchInterval: 60000, // Refetch every minute
   });
 
   const { data: historicalData, isLoading: isLoadingHistorical, error: historicalError } = useQuery({
-    queryKey: ['btcusdHistorical'],
+    queryKey: ['EMHYHistorical'],
     queryFn: fetchHistoricalData,
     refetchInterval: 24 * 60 * 60 * 1000, // Refetch once a day
   });
 
   const { data: fiveMinData, isLoading: isLoading5Min, error: error5Min } = useQuery({
-    queryKey: ['btcusd5Min', timeRange],
+    queryKey: ['EMHY5Min', timeRange],
     queryFn: async () => {
       const now = new Date();
       const from = subDays(now, 1);
-      return fetch5MinData('BTCUSD', from.toISOString().split('T')[0], now.toISOString().split('T')[0]);
+      return fetch5MinData(from.toISOString().split('T')[0], now.toISOString().split('T')[0]);
     },
     enabled: timeRange === '1 Day',
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
   const { data: thirtyMinData, isLoading: isLoading30Min, error: error30Min } = useQuery({
-    queryKey: ['btcusd30Min', timeRange],
+    queryKey: ['EMHY30Min', timeRange],
     queryFn: async () => {
       const now = new Date();
       const from = subDays(now, 7);
-      return fetch30MinData('BTCUSD', from.toISOString().split('T')[0], now.toISOString().split('T')[0]);
+      return fetch30MinData(from.toISOString().split('T')[0], now.toISOString().split('T')[0]);
     },
     enabled: timeRange === '1 Week',
     refetchInterval: 30 * 60 * 1000, // Refetch every 30 minutes
@@ -206,7 +180,7 @@ export const usePortfolioData = () => {
   const error = currentPriceError || historicalError || error5Min || error30Min;
 
   return {
-    portfolioValue: currentPrice,
+    bondValue: currentPrice,
     performanceData,
     timeRange,
     setTimeRange,

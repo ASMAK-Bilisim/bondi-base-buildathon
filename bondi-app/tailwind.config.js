@@ -71,10 +71,10 @@ export default {
 					'pulse-border': 'pulse-border 3s ease-in-out infinite',
 			},
 			screens: {
-				'xs': '480px',
-				// => @media (min-width: 480px) { ... }
+				'xs': '350px',
+				// => @media (min-width: 350px) { ... }
 		  
-				'sm': '640px',
+				'sm': '600px',
 				// => @media (min-width: 640px) { ... }
 		  
 				'md': '768px',
