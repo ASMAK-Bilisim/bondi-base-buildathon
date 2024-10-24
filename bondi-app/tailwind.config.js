@@ -31,7 +31,6 @@ export default {
 				'app-dark': '#071F1E',
 				'app-light': '#F2FBF9',
 				'app-dark-mint': '#D4E7E2',
-
 				// credit-score colors
 				'app-credit-100': '#4280F0',
 				'app-credit-90': '#4FC484',
@@ -50,8 +49,8 @@ export default {
 				},
 				shake: {
 					'0%, 100%': { transform: 'rotate(0deg)' },
-					'20%, 60%': { transform: 'rotate(-7deg)' },
-					'40%, 80%': { transform: 'rotate(7deg)' },
+					'25%, 75%': { transform: 'rotate(-7deg)' },
+					'50%': { transform: 'rotate(7deg)' },
 				},
 				'pulse-subtle': {
 					'0%, 100%': { opacity: '1' },
@@ -59,22 +58,20 @@ export default {
 				},
 				'pulse-border': {
 					'0%, 100%': { borderColor: '#f2fbf9', opacity: '1' },
-					'15%, 85%': { borderColor: '#f2fbf9', opacity: '0.9' },
-					'30%, 70%': { borderColor: '#f2fbf9', opacity: '0.8' },
 					'50%': { borderColor: '#f2fbf9', opacity: '0.7' },
 				}
 			},
 			animation: {
 				pulseGlow: 'pulseGlow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-					shake: 'shake 0.5s ease-in-out',
-					'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-					'pulse-border': 'pulse-border 3s ease-in-out infinite',
+				shake: 'shake 0.5s ease-in-out',
+				'pulse-subtle': 'pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'pulse-border': 'pulse-border 3s ease-in-out infinite',
 			},
 			screens: {
-				'xs': '350px',
-				// => @media (min-width: 350px) { ... }
+				'xs': '150px',
+				// => @media (min-width: 150px) { ... }
 		  
-				'sm': '600px',
+				'sm': '640px',
 				// => @media (min-width: 640px) { ... }
 		  
 				'md': '768px',

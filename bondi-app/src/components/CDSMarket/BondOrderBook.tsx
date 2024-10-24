@@ -391,7 +391,6 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
   return (
     <div className="bg-app-light rounded-lg shadow-lg overflow-hidden w-full xs:w-[460px] sm:w-[440px] md:w-[440px] lg:w-[400px] xl:w-[380px] h-[610px] flex flex-col">
       <div className="p-4 flex-grow">
-        <h2 className="text-xl font-bold text-app-primary-2 mb-4">CDS Order Book</h2>
         <div className="grid grid-cols-2 gap-3 mb-4">
           <InfoCard
             icon={<DollarSquareIcon className="h-5 w-5 text-app-primary-2" />}
@@ -413,7 +412,7 @@ const BondOrderBook: React.FC<BondOrderBookProps> = ({ bondInfo }) => {
             title="Bond"
             value={bondInfo.baseName}
             tooltip={truncateAddress(bondInfo.bondTokenAddress)}
-            fullAddress={bondInfo.bondTokenAddress}  // Pass the full address here
+            fullAddress={bondInfo.bondTokenAddress}
           />
         </div>
 

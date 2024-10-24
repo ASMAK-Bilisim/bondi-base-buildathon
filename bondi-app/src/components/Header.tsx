@@ -147,7 +147,7 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
   };
 
   return (
-    <header className="w-full font-semibold py-4 px-6 relative bg-[#F2FBF9]">
+    <header className="w-full font-semibold sm:py-4 xs:py-2 px-6 relative bg-[#F2FBF9]">
       <div className="max-w-7xl 3xl:max-w-[1800px] 4xl:max-w-[1920px] mx-auto flex items-center justify-between">
         {isMobile ? (
           <div className="relative">
@@ -155,11 +155,7 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="text-[#1C544E] focus:outline-none"
             >
-              {showMobileMenu ? (
-                <Menu01Icon size={32} />
-              ) : (
-                <Menu01Icon size={34} />
-              )}
+              <Menu01Icon size={24} />
             </button>
             {showMobileMenu && (
               <div className="fixed inset-0 bg-[#F2FBF9] bg-opacity-95 z-50 flex items-center justify-center">
@@ -234,17 +230,17 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
         <div className="flex items-center gap-3 whitespace-nowrap">
           {account && (
             <div className="relative flex items-center" ref={notificationRef}>
-              <div className="flex items-center bg-[#F2FBF9] rounded-lg border border-[#1C544E] overflow-visible h-10">
+              <div className="flex items-center bg-[#F2FBF9] rounded-lg border border-[#1C544E] overflow-visible sm:h-10 xs:h-8">
                 <button
                   onClick={toggleNotifications}
                   className="w-10 h-10 flex items-center justify-center cursor-pointer group"
                 >
-                  <Notification03Icon className="w-6 h-6 text-[#1C544E] group-hover:animate-shake" />
+                  <Notification03Icon className="sm:w-6 sm:h-6 xs:w-5 xs:h-5 text-[#1C544E] group-hover:animate-shake" />
                 </button>
                 {!isKYCCompleted && (
                   <button
                     onClick={handleKYCRedirect}
-                    className="px-2 h-6 bg-red-500 text-white text-[14px] font-inter hover:bg-red-600 transition-colors duration-300 flex items-center rounded-[4px] mr-2 cursor-pointer animate-pulseGlow shadow-red-glow"
+                    className="px-2 sm:h-6 xs:h-5 bg-red-500 text-white sm:text-[14px] xs:text-[11px] font-inter hover:bg-red-600 transition-colors duration-300 flex items-center rounded-[4px] mr-2 cursor-pointer animate-pulseGlow shadow-red-glow"
                   >
                     Complete KYC
                   </button>
@@ -252,7 +248,7 @@ const Header: React.FC<HeaderProps> = ({ isCompact, setIsCompact }) => {
                 {isKYCCompleted && (
                   <button
                     onClick={handleResetKYC}
-                    className="px-2 h-6 bg-blue-500 text-white text-[14px] font-inter hover:bg-blue-600 transition-colors duration-300 flex items-center rounded-[4px] mr-2 cursor-pointer"
+                    className="px-2 sm:h-6 xs:h-5 bg-blue-500 text-white sm:text-[14px] xs:text-[11px] font-inter hover:bg-blue-600 transition-colors duration-300 flex items-center rounded-[4px] mr-2 cursor-pointer"
                   >
                     Reset KYC
                   </button>

@@ -20,7 +20,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOpen, onC
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="absolute top-full right-0 mt-2 w-72 bg-app-light rounded-lg shadow-lg overflow-hidden z-10 border border-app-primary-2"
+          className="absolute top-full right-0 mt-2 w-80 bg-app-light rounded-lg shadow-lg overflow-hidden z-10 border border-app-primary-2"
         >
           <div className="relative p-2">
             <button 

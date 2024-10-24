@@ -11,7 +11,7 @@ import { useKYC } from './contexts/KYCContext'; // Import the useKYC hook
 
 const menuItems = [
   { icon: Store01Icon, label: "Primary Market", path: "/" }, // Updated path to "/"
-  { icon: MarketAnalysisIcon, label: "CDS Market", path: "/cds-market" },
+  { icon: MarketAnalysisIcon, label: "Bond Insurance", path: "/cds-market" }, // Changed from "CDS Market" to "Bond Insurance"
 ];
 
 const otherItems = [

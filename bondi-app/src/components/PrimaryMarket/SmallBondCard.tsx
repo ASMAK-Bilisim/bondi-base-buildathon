@@ -415,24 +415,24 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
             {/* Column 1: Bond Details */}
             <div className="w-full md:w-2/6 lg:w-1/3 flex flex-row md:flex-col justify-between md:justify-center md:mb-0 py-4 md:py-0">
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full">
-                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">
+                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[11px] text-[#1c544e] text-center">
                   {bondState === BondState.Minting ? "Realized Price" : "Current Price"}
                 </h2>
-                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[16px] font-bold text-[#1c544e]">
+                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[18px] font-bold text-[#1c544e]">
                   ${getCurrentPrice()}
                 </p>
               </div>
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full md:my-4">
-                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">
+                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[11px] text-[#1c544e] text-center">
                   {bondState === BondState.Minting ? "Realized YTM" : "Yield to Maturity"}
                 </h2>
-                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[16px] font-bold text-[#1c544e]">
+                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[18px] font-bold text-[#1c544e]">
                   {getCurrentYTM().toFixed(2)}%
                 </p>
               </div>
               <div className="flex flex-col lg:flex-col items-center lg:items-center justify-center lg:justify-center h-full">
-                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[9px] text-[#1c544e] text-center">Maturity Date</h2>
-                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[16px] font-bold text-[#1c544e]">{maturityDate}</p>
+                <h2 className="text-[14px] xl:text-[14px] lg:text-[12px] md:text-[11px] sm:text-[10px] xs:text-[11px] text-[#1c544e] text-center">Maturity Date</h2>
+                <p className="text-[24px] xl:text-[24px] lg:text-[22px] md:text-[20px] sm:text-[18px] xs:text-[18px] font-bold text-[#1c544e]">{maturityDate}</p>
               </div>
             </div>
 
@@ -444,7 +444,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
             <div className="w-full md:w-4/6 lg:w-2/3 space-y-2 px-0 md:px-6 flex flex-col mb-2 md:mb-0 py-2 md:py-0">
               <div className="flex-grow overflow-hidden">
                 <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e]">Company Description</h2>
+                  <h2 className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[13px] font-semibold text-[#1c544e]">Company Description</h2>
                   <div className="flex items-center">
                     <div className="relative mr-1">
                       <InformationSquareIcon 
@@ -456,7 +456,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                         <PhaseTooltip description={getPhaseDescription()} />
                       )}
                     </div>
-                    <span className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[12px] font-semibold text-[#1c544e] mr-2">{getStatusText()}</span>
+                    <span className="text-[14px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[13px] font-semibold text-[#1c544e] mr-2">{getStatusText()}</span>
                     <img 
                       src={getStatusIcon()} 
                       alt="Status" 
@@ -464,11 +464,11 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                     />
                   </div>
                 </div>
-                <div className="h-[140px] overflow-y-auto pr-2">
-                  <p className="text-[14px] xl:text-[13px] lg:text-[11px] md:text-[13px] sm:text-[14px] xs:text-[13px] text-[#1c544e] opacity-80 text-justify">{companyDescription}</p>
+                <div className="h-auto py-5 overflow-y-auto pr-2">
+                  <p className="text-[14px] xl:text-[13px] lg:text-[11px] md:text-[13px] sm:text-[14px] xs:text-[12px] text-[#1c544e] opacity-80 text-justify">{companyDescription}</p>
                 </div>
               </div>
-              <div className="mb-1 md:mb-0"> 
+              <div className="mb-1"> 
                 <div className="flex justify-between items-center mb-3"> 
                   <div className="text-left">
                     <h3 className="text-[16px] xl:text-[14px] lg:text-[13px] md:text-[13px] sm:text-[14px] xs:text-[13px] font-bold text-[#1c544e]">Reached Investment (USDC)</h3>
@@ -497,7 +497,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                     </span>
                   </div>
                 </div>
-                <p className="text-right text-[10px] xl:text-[10px] lg:text-[9px] md:text-[9px] sm:text-[9px] xs:text-[9px] text-[#1c544e] mt-1 mb-0 opacity-70">
+                <p className="text-right text-[10px] xl:text-[10px] lg:text-[9px] md:text-[9px] sm:text-[9px] xs:text-[9px] text-[#1c544e] mt-1 md:mb-0 xs:-mb-4 opacity-70">
                   {daysUntilDeadline === null 
                     ? 'Calculating days...' 
                     : `${daysUntilDeadline} Days Until Deadline`
@@ -519,7 +519,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
               <div className="flex flex-col justify-between flex-grow pr-0 md:pr-4 mb-4 md:mb-0 md:w-1/2">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-14px xl:text-14px lg:text-12px md:text-12px sm:text-10px xs:text-9px font-semibold whitespace-nowrap overflow-hidden text-ellipsis mr-2">Credit Score Overview</h2>
+                    <h2 className="text-[14px] xl:text-[15px] lg:text-[12px] md:text-[15px] sm:text-[15px] xs:text-[14px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis mr-2">Credit Score Overview</h2>
                     <Button 
                       label="See Detailed Score"
                       intent="darkOutline" 
@@ -536,10 +536,10 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                     </Button>
                   </div>
                   <div className="space-y-1 mt-2">
-                    <p className="text-[12px] xl:text-[12px] lg:text-[12px] md:text-[13px] sm:text-[12px] xs:text-[11px] text-[#f2fbf9] opacity-80">
+                    <p className="text-[12px] xl:text-[11px] lg:text-[10px] md:text-[10px] sm:text-[12px] xs:text-[9px] text-[#f2fbf9] opacity-80">
                       Debt Features: <span className="font-extrabold">{data.modificationCriteria.DebtFeatures}</span>
                     </p>
-                    <p className="text-[12px] xl:text-[12px] lg:text-[12px] md:text-[13px] sm:text-[12px] xs:text-[11px] text-[#f2fbf9] opacity-80">
+                    <p className="text-[12px] xl:text-[11px] lg:text-[10px] md:text-[10px] sm:text-[12px] xs:text-[9px] text-[#f2fbf9] opacity-80">
                       ISIN: <span className="font-extrabold">{data.isin}</span>
                     </p>
                   </div>
@@ -560,7 +560,7 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                 </Button>
               </div>
               <div className="flex items-center justify-center md:justify-end w-full md:w-1/2">
-                <div className="w-40 h-40 xl:w-40 xl:h-40 lg:w-36 lg:h-36 md:w-40 md:h-40 sm:w-40 sm:h-40 xs:w-36 xs:h-36 relative">
+                <div className="w-40 h-40 xl:w-40 xl:h-40 lg:w-36 lg:h-36 md:w-40 md:h-40 sm:w-40 sm:h-40 xs:w-28 xs:h-28 relative">
                   <CircularProgressbar
                     value={animatedCreditScore}
                     text={`${Math.round(animatedCreditScore)}`}
@@ -582,9 +582,9 @@ export const SmallBondCard: React.FC<SmallBondCardProps> = ({ data }) => {
                       </linearGradient>
                     </defs>
                   </svg>
-                  <div className="absolute bottom-7 left-0 right-0 text-center">
-                    <p className="text-[10px] xl:text-[10px] lg:text-[9px] md:text-[9px] sm:text-[7px] xs:text-[6px] leading-tight text-[#f2fbf9] opacity-50">Updated:</p>
-                    <p className="text-[10px] xl:text-[10px] lg:text-[9px] md:text-[9px] sm:text-[7px] xs:text-[6px] leading-tight text-[#f2fbf9] opacity-50">{today}</p>
+                  <div className="absolute md:bottom-7 xs:bottom-5 left-0 right-0 text-center">
+                    <p className="text-[10px] xl:text-[10px] lg:text-[9px] md:text-[9px] sm:text-[7px] xs:text-[7px] leading-tight text-[#f2fbf9] opacity-50">Updated:</p>
+                    <p className="text-[10px] xl:text-[10px] lg:text-[9px] md:text-[9px] sm:text-[7px] xs:text-[7px] leading-tight text-[#f2fbf9] opacity-50">{today}</p>
                   </div>
                 </div>
               </div>

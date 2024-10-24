@@ -385,10 +385,10 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
         {!isInvestmentComplete && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-[#1C544E] hover:text-[#3EBAAD] transition-colors z-10"
+            className="absolute top-2 right-2 md:top-4 md:right-4 text-[#1C544E] hover:text-[#3EBAAD] transition-colors z-10"
           >
             <CancelSquareIcon
-              size={34}
+              size={28}
               variant="solid"
               className="transition-colors duration-200"
               color="currentColor"
@@ -402,14 +402,14 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
             <div className="md:hidden w-full h-full overflow-y-auto p-4">
               <button
                 onClick={toggleDescription}
-                className="self-start text-[#1C544E] font-medium mb-6"
+                className="self-start text-[#1C544E] font-medium mb-4"
               >
                 ← Go Back
               </button>
-              <h3 className="text-[#1C544E] text-lg font-bold mb-6">
+              <h3 className="text-[#1C544E] text-lg font-bold mb-4">
                 Description
               </h3>
-              <ol className="list-decimal list-inside space-y-6 text-[14px] text-[#1C544E]">
+              <ol className="list-decimal list-inside space-y-4 text-[14px] text-[#1C544E]">
                 <div>
                   You can buy Bond Tokens (BTs) by contributing to the funding
                   contracts. Here’s how it works:
@@ -440,9 +440,9 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
           {/* Left Panel (hidden when description is shown on mobile) */}
           <div className={`w-full md:w-1/2 h-2/5 md:h-full md:overflow-y-auto relative flex items-center md:items-start ${showDescription ? 'hidden md:flex' : ''}`}>
             {isInvestmentComplete ? (
-              <div className="h-full w-full bg-[#071f1e] flex flex-col items-center justify-center relative">
+              <div className="h-full w-full bg-[#071f1e] flex flex-col items-center justify-center relative p-4">
                 {/* NFT Images at the top */}
-                <div className="flex justify-center space-x-4 md:space-x-8 p-4 bg-[#071f1e] mb-4 md:mb-8">
+                <div className="flex justify-center space-x-4 md:space-x-8 mb-4 md:mb-8">
                   {nftUrl?.og?.imageUrl && (
                     <img src={nftUrl.og.imageUrl} alt="OG NFT" className="w-16 h-16 md:w-32 md:h-32 rounded-full" />
                   )}
@@ -512,24 +512,24 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="w-full flex flex-col justify-center p-4 md:p-8 space-y-6 md:space-y-4">
+              <div className="w-full flex flex-col justify-center p-4 md:p-8 space-y-4 md:space-y-6">
                 <div>
-                  <div className="mb-4 md:mb-4">
+                  <div className="mb-4">
                     <img
                       src={bondData.companyLogo}
                       alt={`${bondData.companyName} logo`}
                       className="w-12 h-12 md:w-14 md:h-14"
                     />
                   </div>
-                  <h2 className="text-[#1C544E] text-2xl md:text-[26px] font-medium">
+                  <h2 className="text-[#1C544E] text-xl md:text-2xl font-medium">
                     Invest in
                   </h2>
-                  <h1 className="text-[#1C544E] text-2xl md:text-[26px] font-bold mt-2 mb-6 md:mb-8">
+                  <h1 className="text-[#1C544E] text-2xl md:text-[26px] font-bold mt-2 mb-4 md:mb-6">
                     {bondTokenName}
                   </h1>
                 </div>
 
-                <div className="space-y-3 md:space-y-2 text-sm md:text-sm text-[#1C544E]">
+                <div className="space-y-2 md:space-y-3 md:text-[16px] xs:text-[12px] text-[#1C544E]">
                   <div className="flex justify-between">
                     <span>Bond Price:</span>
                     <span>{formatCurrency(bondData.currentPrice)}</span>
@@ -544,13 +544,13 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-6 md:mt-8 flex items-center">
-                  <h3 className="text-[#1C544E] text-base md:text-base font-bold mr-2 md:mb-4">
+                <div className="mt-4 md:mt-6 xs:text-[12px] md:text-[16px] flex items-center">
+                  <h3 className="text-[#1C544E] text-base md:text-lg font-bold mr-2">
                     Description
                   </h3>
                   <button onClick={toggleDescription} className="md:hidden">
                     <InformationSquareIcon
-                      size={28}
+                      size={16}
                       color="#1C544E"
                       variant="solid"
                     />
@@ -681,11 +681,11 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                     {calculateEquivalent()}
                   </p>
                   {!isAmountValid && (
-                    <p className="text-sm text-red-500 mb-4">
+                    <p className="md:text-[14px] xs:text-[10px] font-medium text-red-500 mb-4">
                       Please enter at least the minimum investment amount.
                     </p>
                   )}
-                  <div className="space-y-4 text-xs text-[#1C544E] mb-8">
+                  <div className="space-y-2 md:space-y-4 text-[12px] md:text-[16px] text-[#1C544E] mb-4 md:mb-8">
                     <div className="flex justify-between items-center">
                       <span>Minimum investment:</span>
                       <p className="font-bold">
@@ -735,7 +735,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                     <button
                       onClick={handleInvest}
                       disabled={isInvesting || !isAmountValid}
-                      className="w-full bg-[#1C544E] text-white text-xl font-medium py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="w-full bg-[#1C544E] text-white text-lg md:text-xl font-medium py-3 md:py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       {isInvesting ? "Investing..." : "Invest"}
                     </button>
@@ -749,7 +749,7 @@ const InvestmentPopup: React.FC<InvestmentPopupProps> = ({
                         amount === "0.0000" ||
                         isApprovalPending
                       }
-                      className="w-full bg-[#1C544E] text-white text-xl font-medium py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="w-full bg-[#1C544E] text-white text-lg md:text-xl font-medium py-3 md:py-4 rounded-xl hover:bg-[#164039] transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       {isApproving
                         ? "Approving..."
